@@ -2,10 +2,10 @@
 # Session `adede7d2-9fc1-585c-a838-bea822978308`
 
 - Started (UTC): 2026-09-15T07:29:43.798Z  
-- Last event (UTC): 2026-09-15T13:24:05.608Z (span 5 h 54 min)  
+- Last event (UTC): 2026-09-15T13:40:02.149Z (span 6 h 10 min)  
 - User: jan@brogger.no; source: claude-code-remote; branch: `claude/zen-lovelace-vq1to3`  
 - Models: claude-fable-5-1; Claude Code 2.1.272  
-- Prompts: 11; transcript: transcript.jsonl (6.0 MB)
+- Prompts: 12; transcript: transcript.jsonl (6.1 MB)
 
 This file is derived from the transcript for readers without an LLM. Prompts are verbatim; responses are the assistant's text messages (tool calls and their output are only summarised - see the JSONL for those).
 
@@ -429,4 +429,44 @@ Two things you may want to adjust before sending: the repository URL, in case yo
 **[13:24 UTC]**
 
 Done. The pending changes were only the session log files under `llm-logs/` staged by the Stop hook after the email draft; they are committed as a log-only commit and pushed to `claude/zen-lovelace-vq1to3`, and the working tree is clean.
+
+
+## Prompt 12 - 2026-09-15 13:37:34 UTC
+
+```text
+Apparently it is an issue that the Cadwell export is Cz-referenced (so, effectively bipolar). Most EEG systems have a separate "REF" channel, and I believe Cadwell does to, but it doesn't appear in the export. Investigate for the presence of a "REF" channel, and estimate if we can export the data as "REF" referenced instead of Cz referenced.
+```
+
+_Tools used in this turn: Bash ×2_
+
+### Response 12
+
+**[13:38 UTC]**
+
+I'll look for any trace of a reference channel in the native files: the channel table, the amplifier layout blob, the montage definitions and all strings in the databases, and confirm what the stored Cz column contains across the whole recording.
+
+**[13:40 UTC]**
+
+No tool calls needed beyond these two; the evidence is enough for an assessment.
+
+**Is there a REF channel? No, not in the stored data.**
+
+- All three recordings store exactly 32 inputs, and in all three the input labelled Cz (amplifier input 15) is identically 0.0 for the whole recording, encoded as zero deltas. Nothing else is constant.
+- The Cz channel record looks like every other channel record. There is no 33rd channel, no hidden track with a reference signal, and the auxiliary track 1 holds low-rate data, not a waveform.
+- Searching every string in the index, events and data databases for "REF", "GND", "Reference", "common" or "average" finds nothing except the montage names and one "Avg" inside the Referential montage definition, which is Cadwell's average-reference option for montage traces.
+- The amplifier layout blob lists inputs 1 to 32, second poles 10026 to 10032 for the differential auxiliary inputs (that is why the vendor labels them 1A-1R and so on), and one special entry with id 50000. That entry is the best candidate for the headbox's physical REF or ground input, but it has no data behind it.
+
+**What this means physically.** The headbox does have a hardware reference input, otherwise it could not record. But the recording software applies the protocol's "recording reference", here Cz, and stores X minus Cz for every input, which is why Cz comes out as an exact digital zero rather than being absent. The signal Cz minus REF is discarded at acquisition time and cannot be reconstructed from anything in the export. This is my inference from the data; the Arc acquisition protocol settings on your system would confirm whether "recording reference" is a selectable option there.
+
+**Can we export REF-referenced data instead? No, and only one signal is actually missing.**
+
+- Any montage that Cadwell, Holberg or anyone else derives from REF-referenced data is exactly reproducible from Cz-referenced data: bipolar chains, linked ears, and the average reference all cancel the common reference algebraically. Cz-containing derivations are correct too, since the stored Cz-Cz is zero, which is its true value.
+- The only quantity lost is Cz relative to the physical reference electrode, that is, one channel out of the set. A 19-channel average-referenced export computed from these files is identical to what an average-referenced export from a REF-referenced recording would give.
+- What we cannot produce is a file that honestly says "EEG Cz-REF" with a non-zero Cz. Relabelling the Cz-referenced channels as "-REF" would be a lie, and the zero Cz channel would remain.
+
+**Recommendations**
+
+1. Ask Holberg what SCORE-AI actually consumes. If its first step is a montage transformation, such as average reference or bipolar, the Cz-referenced files are equivalent input and the problem is only the label parsing. If it consumes referential channels directly, it is reference-dependent for any vendor and Cz is then a well-defined reference, better than an unspecified REF.
+2. I can add a `--reference` option to the converter in about 30 lines: average of the 19 standard 10-20 electrodes, linked ears from the recorded A1 and A2, or any named electrode, with labels such as `EEG Fp1-AVG` and the transformation recorded in the report. Say the word and I will implement and test it.
+3. For future research recordings, check whether the Arc protocol allows the hardware REF as recording reference. If it does, the stored data would be X minus REF and Cz would appear as a real channel, recovering the one signal that is lost today.
 
