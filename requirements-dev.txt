@@ -1,4 +1,5 @@
 # Development tooling (installed into the gitignored .venv by ./setup.sh)
+-r requirements.txt
 doorstop==3.2
 pytest>=8
 pyyaml>=6

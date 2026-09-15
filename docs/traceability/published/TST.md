@@ -36,13 +36,16 @@ mapping table documents as intentionally different.
 
 # 3.0 Sample equivalence with native EDF export _(TST003)_ {#TST003}
 
-For each test recording and each channel compare all physical sample values
-of our EDF export with the native EDF export. Pass if the number of samples
-matches (within the documented edge tolerance) and the maximum absolute
-difference does not exceed one digital quantisation step of the native
-export. Report the maximum and mean difference per channel.
+For each test recording and each channel compare the physical sample values
+of our EDF export with the native EDF export. In vendor-compatible mode
+(REQ020) the sample counts must match and the maximum absolute difference
+must not exceed one digital quantisation step of the native export. In raw
+fidelity mode, align segment by segment (the native export drops one
+sample by interpolation at a regular interval), require the same bound on
+every aligned sample, and report the drop positions and the number of
+interpolated samples. Report the maximum and mean difference per channel.
 
-*Parent links: REQ003, REQ008*
+*Parent links: REQ003, REQ008, REQ020*
 
 # 4.0 Annotation equivalence with native EDF export _(TST004)_ {#TST004}
 
@@ -55,10 +58,14 @@ normalising whitespace; list every unmatched annotation on failure.
 # 5.0 Sample equivalence with native CSV/text export _(TST005)_ {#TST005}
 
 For each test recording parse the native CSV/text export, map its column
-names to EDF channel labels, and compare the physical values with our EDF
-export over the common time range. Pass if the maximum absolute difference
-is within the numeric precision of the text export and every column maps to
-exactly one channel.
+order (amplifier input order) to EDF channel labels, and compare the
+physical values with our decoded samples over the full common range,
+sample by sample without any alignment (the text export keeps every raw
+sample). Pass if the maximum absolute difference is within the numeric
+precision of the text export (0.05 µV for 4 decimals of mV) plus a
+documented allowance for the microvolt scale constant, and every column
+maps to exactly one channel. Implemented for the public export in
+tests/test_ezdata_public.py.
 
 *Parent links: REQ009*
 

@@ -260,14 +260,70 @@ blobs, 70 B to 393 kB, each starting with a 48-byte header `d0ca6245 …`).
 The `.ezdata` data file presumably has the same `FrameInfo(DataKey, Data)`
 layout with one blob per 1-second EEG frame.
 
-## Open questions that the missing `.ezdata` file will answer
+## `.ezdata` - the EEG frames (decoded 2026-09-15, `cwelleegread/ezdata.py`)
 
-1. Blob layout of an EEG frame: header, sample type (int16/int32/float),
-   channel interleaving, and whether `WaveformNonlinearDeltaCompression`
-   is used (constant blob size ≈ 250 × 32 × 2 or × 4 bytes + header would
-   mean no compression).
-2. Physical scaling: does float32 `0.32909` from `TrackInfo` convert raw
-   units to µV, and does the result match the text export (mV, 4
-   decimals) and the EDF export?
-3. Whether the first frame's time stamp or the `Start Recording` event
-   defines the EDF start time (7.9 ms apart here).
+`FrameInfo(DataKey, FrameKey, Data)`, one row per frame; `FrameKey` is the
+GUID in the index's `FrameInfo`. Every blob (18-19 kB for 32 ch × 250
+samples) has this layout (all little-endian):
+
+| offset | field |
+|---|---|
+| 0x00 | u32 magic `0x033149bd`, u32 0, u8 1, 8-byte id, f64 1.0, u8 1 |
+| 0x1a | u32 payload length (blob length − 55) |
+| 0x1e | 8 bytes constant, 8-byte id (same as above) |
+| 0x2e | u32 channel count (32) |
+| 0x32 | u64 frame start, u64 frame end, in 100-ns ticks from the record origin (frame 0 = 0 .. 10031816) |
+| 0x42 | channel blocks, in channel-number order |
+| end | 25-byte footer (`00710ac0 …`, frame number, 8-byte id) |
+
+Channel block = the 81-byte channel record known from `TrackInfo`
+(8-byte tag `ab792193de4225a2`, 16 × u32 with [1] channel, [4] amplifier
+input, [10] rate, [12] f32 0.32909, 8 zero bytes, `01`), then a 13-byte
+sub-header: u8 **delta type** (1 = int16 deltas, 2 = int8 deltas), u32
+length (8 + delta bytes), f32 **first sample**, f32 scale (1.0), then the
+deltas. Samples = first + cumsum(deltas) × scale. This is Cadwell's
+"WaveformNonlinearDeltaCompression": per channel and frame the narrowest
+delta width that fits is chosen (the constant Cz reference channel takes
+1 byte per sample, the noisy inputs 2 bytes).
+
+**Scale**: the samples are in amplifier units; **0.72998046 µV per unit**
+converts them to the values of the vendor's text export (all 7755 × 31
+samples within the export's 0.05 µV rounding; the rounding bounds the
+constant to [0.729980459, 0.729980461]). It is 2.2182 × the 0.32909 stored
+in the channel record and no closed form was found; whether it depends on
+amplifier model or gain must be checked on other recordings.
+
+**Sample counts**: frame 0 had 248 samples, later frames 250 or 251 (every
+fourth), i.e. 11258 samples in 45 frames whose time stamps span
+45.0002 s: the amplifier clock runs ~0.08 % faster than the PC frame
+clock. The text export keeps every sample (7755 rows for frames 0-30 =
+248 + 23 × 250 + 7 × 251). The EDF export writes exactly 250 samples per
+second: it resamples by linear interpolation, dropping one sample every
+1224 samples (rows 1222-1223, 2446-2447, ... are each the mean of two
+neighbouring raw samples, then the stream continues one sample later).
+This is why sample-by-sample equivalence against the vendor EDF needs
+alignment (REQ008, REQ020) while equivalence against the text export is
+exact.
+
+**EDF export facts** (`edf/test.edf`, EDF+C): 32 signals labelled `EEG
+<name>-Cz` in amplifier-input order (`EEG 27-2R`, `29-2R`, `31-3R` for
+three non-EEG inputs), 250 Hz, physical range ±562500 µV over 16 bits
+(**17.17 µV per step** - coarse; the text export at 0.1 µV is the better
+ground truth), 44 one-second records, start 14:37:50 local time (the
+database time stamps are UTC), patient `test test`, technician `Admin,
+CadLink`, equipment GUID, 7 annotations (the events with `Priority` 7 that
+fall inside the exported range; the amplifier-configuration and
+`Reviewed Data` events are omitted) with onsets in seconds from the frame-0
+origin, matching the `.ezevents` tick offsets.
+
+## Remaining unknowns
+
+1. Channel labels (E1, Fp1, ...): not in any readable file; taken from the
+   EDF/text export for now. Probably in the encrypted `EEG.db` or implied
+   by the amplifier layout name (`LB161EKG` in the montage event).
+2. Whether `UNIT_UV` is constant across amplifiers and gains, and what the
+   record fields [9] (`0x53673fbf`) and [2] (2028 on one channel) mean.
+3. Which time base the vendor uses when resampling for EDF (the 1224:1225
+   ratio does not follow directly from the frame ticks); irrelevant if we
+   keep raw samples.
+4. The 8-byte "id" values (sequential GUID halves) and the frame footer.
