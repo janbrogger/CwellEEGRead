@@ -1,0 +1,90 @@
+{
+  "SchemaVersion": 1.0,
+  "ExportSettings": {
+    "IncludePatientInformation": true,
+    "IncludeCaseFields": true,
+    "IncludeEvents": true,
+    "IncludeRecordAnnotations": false,
+    "EDFType": "EDFPlusContinuous",
+    "IncludedModeTypes": [
+      "EEG"
+    ]
+  },
+  "AssociatedFiles": [
+    "test.edf"
+  ],
+  "PatientInformation": {
+    "PatientLastName": "test",
+    "PatientFirstName": "test",
+    "PatientMiddleInitial": null,
+    "DisplayName": "test test",
+    "PatientBirthDate": null,
+    "PatientGender": "Unspecified",
+    "PatientHospitalCode": null
+  },
+  "CaseInformation": {
+    "RecordCreateDate": 1761921462444351,
+    "HospitalAdministrationCode": null,
+    "RecordingTechID": "Admin, CadLink",
+    "EquipmentUsed": "a020b888-dea7-41a9-ae7b-aee18a27b317",
+    "EDFLocalRecordingID": null,
+    "CustomCaseFields": []
+  },
+  "Events": [
+    {
+      "Timestamp": 1761921470268763,
+      "Author": "X",
+      "Message": "Start Recording"
+    },
+    {
+      "Timestamp": 1761921470613825,
+      "Author": "X",
+      "Message": "Montage 1) Double Banana"
+    },
+    {
+      "Timestamp": 1761921470276648,
+      "Author": "X",
+      "Message": "Paper Speed 10 sec/page"
+    },
+    {
+      "Timestamp": 1761921470627214,
+      "Author": "X",
+      "Message": "Battery 1%. Without USB connection, the device will shut down."
+    },
+    {
+      "Timestamp": 1761921477859713,
+      "Author": "X",
+      "Message": "Start Video Recording [Hikvision large]"
+    },
+    {
+      "Timestamp": 1761921477874455,
+      "Author": "X",
+      "Message": "Added AV channel: Hikvision large. Video: Hikvision large"
+    },
+    {
+      "Timestamp": 1761921499129043,
+      "Author": "X",
+      "Message": "Start Video Recording [Hikvision Small]"
+    },
+    {
+      "Timestamp": 1761921499129451,
+      "Author": "X",
+      "Message": "Added AV channel: Hikvision Small. Video: Hikvision Small"
+    },
+    {
+      "Timestamp": 1761921516330232,
+      "Author": "X",
+      "Message": "Stop Video Recording [Hikvision large]"
+    },
+    {
+      "Timestamp": 1761921516330275,
+      "Author": "X",
+      "Message": "Stop Video Recording [Hikvision Small]"
+    },
+    {
+      "Timestamp": 1761921516335224,
+      "Author": "X",
+      "Message": "Stop Recording"
+    }
+  ]
+}
