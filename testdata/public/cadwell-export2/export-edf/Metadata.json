@@ -1,0 +1,320 @@
+{
+  "SchemaVersion": 1.0,
+  "ExportSettings": {
+    "IncludePatientInformation": true,
+    "IncludeCaseFields": true,
+    "IncludeEvents": true,
+    "IncludeRecordAnnotations": false,
+    "EDFType": "EDFPlusContinuous",
+    "IncludedModeTypes": [
+      "EEG"
+    ]
+  },
+  "AssociatedFiles": [
+    "cadwell2.edf"
+  ],
+  "PatientInformation": {
+    "PatientLastName": "tgeSArZLTB",
+    "PatientFirstName": "QHTkhE7e2Q",
+    "PatientMiddleInitial": null,
+    "DisplayName": "QHTkhE7e2Q tgeSArZLTB",
+    "PatientBirthDate": null,
+    "PatientGender": "Unspecified",
+    "PatientHospitalCode": null
+  },
+  "CaseInformation": {
+    "RecordCreateDate": 1781267890782569,
+    "HospitalAdministrationCode": null,
+    "RecordingTechID": null,
+    "EquipmentUsed": "04157f11-7191-4894-b109-8045db7de6f2",
+    "EDFLocalRecordingID": null,
+    "CustomCaseFields": []
+  },
+  "Events": [
+    {
+      "Timestamp": 1781268018928551,
+      "Author": "X",
+      "Message": "Impedance"
+    },
+    {
+      "Timestamp": 1781269133771720,
+      "Author": "X",
+      "Message": "Start Recording"
+    },
+    {
+      "Timestamp": 1781269133803828,
+      "Author": "X",
+      "Message": "Montage Referential"
+    },
+    {
+      "Timestamp": 1781269133772364,
+      "Author": "X",
+      "Message": "Paper Speed 30 mm/sec"
+    },
+    {
+      "Timestamp": 1781269143421334,
+      "Author": "X",
+      "Message": "Montage Longitudinal"
+    },
+    {
+      "Timestamp": 1781269156670010,
+      "Author": "X",
+      "Message": "Montage Transverse"
+    },
+    {
+      "Timestamp": 1781269170834014,
+      "Author": "X",
+      "Message": "Montage Referential"
+    },
+    {
+      "Timestamp": 1781269173690873,
+      "Author": "X",
+      "Message": "Øyne lukket"
+    },
+    {
+      "Timestamp": 1781269460122553,
+      "Author": "X",
+      "Message": "Begin Hyperventilation"
+    },
+    {
+      "Timestamp": 1781269470123475,
+      "Author": "X",
+      "Message": "HV Time Elapsed: 00:00:10"
+    },
+    {
+      "Timestamp": 1781269480123931,
+      "Author": "X",
+      "Message": "HV Time Elapsed: 00:00:20"
+    },
+    {
+      "Timestamp": 1781269490137504,
+      "Author": "X",
+      "Message": "HV Time Elapsed: 00:00:30"
+    },
+    {
+      "Timestamp": 1781269500151932,
+      "Author": "X",
+      "Message": "HV Time Elapsed: 00:00:40"
+    },
+    {
+      "Timestamp": 1781269510167641,
+      "Author": "X",
+      "Message": "HV Time Elapsed: 00:00:50"
+    },
+    {
+      "Timestamp": 1781269520171014,
+      "Author": "X",
+      "Message": "HV Time Elapsed: 00:01:00"
+    },
+    {
+      "Timestamp": 1781269530171083,
+      "Author": "X",
+      "Message": "HV Time Elapsed: 00:01:10"
+    },
+    {
+      "Timestamp": 1781269540171549,
+      "Author": "X",
+      "Message": "HV Time Elapsed: 00:01:20"
+    },
+    {
+      "Timestamp": 1781269550184559,
+      "Author": "X",
+      "Message": "HV Time Elapsed: 00:01:30"
+    },
+    {
+      "Timestamp": 1781269560185786,
+      "Author": "X",
+      "Message": "HV Time Elapsed: 00:01:40"
+    },
+    {
+      "Timestamp": 1781269570186659,
+      "Author": "X",
+      "Message": "HV Time Elapsed: 00:01:50"
+    },
+    {
+      "Timestamp": 1781269580198405,
+      "Author": "X",
+      "Message": "HV Time Elapsed: 00:02:00"
+    },
+    {
+      "Timestamp": 1781269590197895,
+      "Author": "X",
+      "Message": "HV Time Elapsed: 00:02:10"
+    },
+    {
+      "Timestamp": 1781269600199397,
+      "Author": "X",
+      "Message": "HV Time Elapsed: 00:02:20"
+    },
+    {
+      "Timestamp": 1781269610200270,
+      "Author": "X",
+      "Message": "HV Time Elapsed: 00:02:30"
+    },
+    {
+      "Timestamp": 1781269620200837,
+      "Author": "X",
+      "Message": "HV Time Elapsed: 00:02:40"
+    },
+    {
+      "Timestamp": 1781269630215108,
+      "Author": "X",
+      "Message": "HV Time Elapsed: 00:02:50"
+    },
+    {
+      "Timestamp": 1781269640137933,
+      "Author": "X",
+      "Message": "End Hyperventilation"
+    },
+    {
+      "Timestamp": 1781269650139161,
+      "Author": "X",
+      "Message": "Post HV Time Elapsed: 00:00:10"
+    },
+    {
+      "Timestamp": 1781269660139760,
+      "Author": "X",
+      "Message": "Post HV Time Elapsed: 00:00:20"
+    },
+    {
+      "Timestamp": 1781269670154511,
+      "Author": "X",
+      "Message": "Post HV Time Elapsed: 00:00:30"
+    },
+    {
+      "Timestamp": 1781269680154746,
+      "Author": "X",
+      "Message": "Post HV Time Elapsed: 00:00:40"
+    },
+    {
+      "Timestamp": 1781269690166999,
+      "Author": "X",
+      "Message": "Post HV Time Elapsed: 00:00:50"
+    },
+    {
+      "Timestamp": 1781269700168667,
+      "Author": "X",
+      "Message": "Post HV Time Elapsed: 00:01:00"
+    },
+    {
+      "Timestamp": 1781269710167672,
+      "Author": "X",
+      "Message": "Post HV Time Elapsed: 00:01:10"
+    },
+    {
+      "Timestamp": 1781269720169282,
+      "Author": "X",
+      "Message": "Post HV Time Elapsed: 00:01:20"
+    },
+    {
+      "Timestamp": 1781269730173337,
+      "Author": "X",
+      "Message": "Post HV Time Elapsed: 00:01:30"
+    },
+    {
+      "Timestamp": 1781269740185731,
+      "Author": "X",
+      "Message": "Post HV Time Elapsed: 00:01:40"
+    },
+    {
+      "Timestamp": 1781269750199311,
+      "Author": "X",
+      "Message": "Post HV Time Elapsed: 00:01:50"
+    },
+    {
+      "Timestamp": 1781269760139518,
+      "Author": "X",
+      "Message": "End Post Hyperventilation"
+    },
+    {
+      "Timestamp": 1781269940614199,
+      "Author": "X",
+      "Message": "Photic Start 2Hz"
+    },
+    {
+      "Timestamp": 1781269947820552,
+      "Author": "X",
+      "Message": "Photic Stop"
+    },
+    {
+      "Timestamp": 1781269952857664,
+      "Author": "X",
+      "Message": "Photic Start 8Hz"
+    },
+    {
+      "Timestamp": 1781269960058707,
+      "Author": "X",
+      "Message": "Photic Stop"
+    },
+    {
+      "Timestamp": 1781269965090785,
+      "Author": "X",
+      "Message": "Photic Start 10Hz"
+    },
+    {
+      "Timestamp": 1781269972291737,
+      "Author": "X",
+      "Message": "Photic Stop"
+    },
+    {
+      "Timestamp": 1781269977309330,
+      "Author": "X",
+      "Message": "Photic Start 15Hz"
+    },
+    {
+      "Timestamp": 1781269984509968,
+      "Author": "X",
+      "Message": "Photic Stop"
+    },
+    {
+      "Timestamp": 1781269989530566,
+      "Author": "X",
+      "Message": "Photic Start 18Hz"
+    },
+    {
+      "Timestamp": 1781269996731967,
+      "Author": "X",
+      "Message": "Photic Stop"
+    },
+    {
+      "Timestamp": 1781270001764017,
+      "Author": "X",
+      "Message": "Photic Start 20Hz"
+    },
+    {
+      "Timestamp": 1781270008966276,
+      "Author": "X",
+      "Message": "Photic Stop"
+    },
+    {
+      "Timestamp": 1781270014013181,
+      "Author": "X",
+      "Message": "Photic Start 25Hz"
+    },
+    {
+      "Timestamp": 1781270021214633,
+      "Author": "X",
+      "Message": "Photic Stop"
+    },
+    {
+      "Timestamp": 1781270026246863,
+      "Author": "X",
+      "Message": "Photic Start 40Hz"
+    },
+    {
+      "Timestamp": 1781270033448115,
+      "Author": "X",
+      "Message": "Photic Stop"
+    },
+    {
+      "Timestamp": 1781270096201131,
+      "Author": "X",
+      "Message": "Stop Recording"
+    },
+    {
+      "Timestamp": 1781269307029782,
+      "Author": "X",
+      "Message": "kødder"
+    }
+  ]
+}
