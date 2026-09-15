@@ -14,18 +14,18 @@
     "cadwell3-withfilter.edf"
   ],
   "PatientInformation": {
-    "PatientLastName": "tNoQOR6pWG",
-    "PatientFirstName": "wrGHAeZUZs",
+    "PatientLastName": "Testesen",
+    "PatientFirstName": "test",
     "PatientMiddleInitial": null,
-    "DisplayName": "wrGHAeZUZs tNoQOR6pWG",
-    "PatientBirthDate": null,
+    "DisplayName": "test Testesen",
+    "PatientBirthDate": 0,
     "PatientGender": "Unspecified",
-    "PatientHospitalCode": null
+    "PatientHospitalCode": "123456789"
   },
   "CaseInformation": {
     "RecordCreateDate": 1781259699934447,
     "HospitalAdministrationCode": null,
-    "RecordingTechID": null,
+    "RecordingTechID": "Marquardt, Lynn Anne",
     "EquipmentUsed": "04157f11-7191-4894-b109-8045db7de6f2",
     "EDFLocalRecordingID": null,
     "CustomCaseFields": []
