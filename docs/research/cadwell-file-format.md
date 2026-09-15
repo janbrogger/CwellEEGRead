@@ -444,9 +444,18 @@ samples when it is 1.0 across the band).
 Export 3 was exported twice: with the viewer unfiltered and with a 10 Hz
 high-pass / 15 Hz low-pass viewer filter. Findings:
 
-1. **Text export = raw data.** Both text exports (and the export-2 text)
-   equal the decoded frames within their 0.05 µV rounding in every band.
+1. **Text export = raw data.** The full-range text exports of export 3
+   (603000 rows, made with and without the 10-15 Hz viewer filter) are
+   byte-identical in every data row and equal the decoded frames within
+   their 0.05 µV rounding in every band; the export-2 text likewise.
    Viewer filters, montage and sensitivity do not reach the text export.
+   Text-export range policy: from the first stored frame (or the dialog's
+   start) to the frame before the last one, **gaps omitted** (the 1-second
+   time stamps simply jump, here from 10:34:36 to 10:34:47), whereas the
+   EDF export pads gaps with zeros. The text dialog defaults to a 30 s
+   window from the viewer's current page; the whole recording must be
+   selected by hand. "Anonymize Information" only affects the header's
+   patient name/id line.
 2. **EDF export ignores the viewer filter** but applies its own high-pass.
    The two export-3 EDFs are identical (≤ 1 step) except for the first
    ~10 s of the later-starting one: the filter's start-up.

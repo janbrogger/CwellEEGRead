@@ -11,14 +11,15 @@ events (329 events), and a **10-second break**: recording stopped at
 | `native-export/CadLink/Data/<guid>-2026-06-12-08-21-39.ezdataindex` | index with frames 1-1217 on tracks 0 and 1, frames 328-337 missing; `GapInfo` row (track 0, offsets 328-338) |
 | `native-export/CadLink/Data/<guid>-2026-06-12-08-21-39-1.ezdata` | 2414 frame blobs (1207 EEG + 1207 auxiliary) |
 | `native-export/CadLink/Data/<guid>-2026-06-12-08-21-39.ezevents` | 329 events |
-| `text/cadwell3.txt` | vendor text export, 10:29:39-10:30:10 local (frames 30-61), 32 columns, 4 decimals of mV |
+| `text/cadwell3.zip` | vendor text export of the **whole recording** (replaces the earlier 30 s file): 10:29:10-10:49:25 local = frames 1-1216, 603000 rows, 32 columns, 4 decimals of mV, 167 MB unzipped; the 10 s break is omitted (time stamps jump from 10:34:36 to 10:34:47), the last frame is not exported |
 | `export-edf/cadwell3.edf`, `Metadata.json` | vendor EDF+C export starting 10:29:39.8525803 local (frame 30), 1187 records, ±23919 µV range (one amplifier unit per step), 69 annotations |
 
 What it showed (details in `docs/research/cadwell-file-format.md`):
 
-- The text export equals the decoder output for all 16000 × 32 samples
-  within its 0.05 µV rounding, with the same scale constant as the 250 Hz
-  Apollo recording (the two rounding bounds overlap at 0.72998046 µV/unit).
+- The full text export equals the decoder output for all 603000 × 32
+  samples within its 0.05 µV rounding, with the same scale constant as the
+  250 Hz Apollo recording (the two rounding bounds overlap at
+  0.72998046 µV/unit). Frame by frame, across the break, without alignment.
 - The break is exactly the missing frame numbers 328-337 (10 s). The vendor
   EDF keeps the time axis continuous by writing digital zero for those
   seconds (EDF+C, no discontinuity), which is what our raw mode now does,

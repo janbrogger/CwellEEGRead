@@ -14,7 +14,7 @@ from cwelleegread.ezdata import UNIT_UV
 
 ROOT = Path(__file__).resolve().parents[1]
 E3 = ROOT / "testdata" / "public" / "cadwell-export3"
-TEXT = E3 / "text" / "cadwell3.txt"
+TEXT_ZIP = E3 / "text" / "cadwell3.zip"
 NATIVE = E3 / "export-edf" / "cadwell3.edf"
 
 pytestmark = pytest.mark.skipif(not (E3 / "native-export").exists(), reason="public test export 3 missing")
@@ -44,13 +44,20 @@ def test_gap_in_index(rec):
     assert numbers[0] == 1 and numbers[-1] == 1217 and set(range(328, 338)).isdisjoint(numbers)
 
 
-def test_text_export_equivalence_at_500hz(rec):
-    """The vendor text export (frames 30-61) equals the decoded samples within its 0.05 µV rounding."""
-    frames = {fr.number: fr for fr in rec.frames() if 30 <= fr.number <= 61}
-    dec = np.column_stack([np.concatenate([frames[k].samples[a] for k in range(30, 62)]) for a in rec.amp_inputs]) * UNIT_UV
-    rows = [l.rstrip("\n") for l in open(TEXT, encoding="utf-8", errors="replace") if not l.startswith("%") and l.strip()]
-    txt = np.array([[float(x.replace(",", ".")) for x in l.split("\t")[1:]] for l in rows]) * 1000.0
-    assert txt.shape == dec.shape == (16000, 32)
+def test_full_text_export_equivalence_at_500hz(rec):
+    """The vendor's full-range text export (frames 1-1216, gap omitted) equals the decoded samples
+    within its 0.05 µV rounding - all 603000 x 32 samples."""
+    import zipfile
+    with zipfile.ZipFile(TEXT_ZIP) as z:
+        name = [n for n in z.namelist() if n.endswith(".txt")][0]
+        lines = z.read(name).decode("utf-8", "replace").split("\n")
+    rows = [l for l in lines if not l.startswith("%") and l.strip()]
+    stamps = [r.split("\t", 1)[0] for r in rows]
+    txt = np.array([r.replace(",", ".").split("\t")[1:] for r in rows], dtype=np.float64) * 1000.0
+    assert stamps[0] == "12.06.2026 10:29:10" and stamps[-1] == "12.06.2026 10:49:25" and len(set(stamps)) == 1206
+    dec = np.column_stack([np.concatenate([fr.samples[a] for fr in rec.frames() if fr.number <= 1216])
+                           for a in rec.amp_inputs]) * UNIT_UV
+    assert txt.shape == dec.shape == (603000, 32)
     assert np.abs(dec - txt).max() <= 0.06
 
 

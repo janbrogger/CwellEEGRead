@@ -19,10 +19,16 @@ pytestmark = pytest.mark.skipif(not (E3F / "native-export").exists(), reason="pu
 
 
 def read_text(path):
-    lines = open(path, encoding="utf-8", errors="replace").read().split("\n")
+    if str(path).endswith(".zip"):
+        import zipfile
+        with zipfile.ZipFile(path) as z:
+            name = [n for n in z.namelist() if n.endswith(".txt")][0]
+            lines = z.read(name).decode("utf-8", "replace").split("\n")
+    else:
+        lines = open(path, encoding="utf-8", errors="replace").read().split("\n")
     rows = [l for l in lines if not l.startswith("%") and l.strip()]
     stamps = [r.split("\t")[0] for r in rows]
-    return stamps, np.array([[float(x.replace(",", ".")) for x in l.split("\t")[1:]] for l in rows]) * 1000.0
+    return stamps, np.array([l.replace(",", ".").split("\t")[1:] for l in rows], dtype=np.float64) * 1000.0
 
 
 def frames_from(rec, first_stamp, n_frames):
@@ -34,14 +40,31 @@ def frames_from(rec, first_stamp, n_frames):
                             for a in rec.amp_inputs]) * UNIT_UV, n0
 
 
-@pytest.mark.parametrize("export, text", [(E2, E2 / "cadwell2.txt"), (E3F, E3F / "cadwell3-withfilter.txt")])
+@pytest.mark.parametrize("export, text", [(E2, E2 / "cadwell2.txt"), (E3F, E3F / "text" / "cadwell3-with-filter.zip")])
 def test_text_export_is_raw_even_with_viewer_filters(export, text):
-    """TST005: text exports equal the raw frames within 0.05 µV rounding - also the one made with a 10-15 Hz viewer filter."""
+    """TST005: text exports equal the raw frames within 0.05 µV rounding - also the full-range one made
+    with a 10-15 Hz viewer filter (the gap is omitted in the text, so compare frame by frame)."""
     rec = open_recording(str(export))
     stamps, txt = read_text(text)
-    dec, n0 = frames_from(rec, stamps[0], len(txt) // rec.sample_rate)
+    t0 = dt.datetime.strptime(stamps[0], "%d.%m.%Y %H:%M:%S").replace(tzinfo=TZ)
+    frames = [fr for fr in rec.frames() if (fr.timestamp - t0).total_seconds() >= 0]
+    n_frames = len(txt) // rec.sample_rate
+    dec = np.column_stack([np.concatenate([fr.samples[a] for fr in frames[:n_frames]]) for a in rec.amp_inputs]) * UNIT_UV
     assert dec.shape == txt.shape
     assert np.abs(dec - txt).max() <= 0.06
+
+
+def test_full_text_exports_identical_and_differ_only_in_header():
+    """The two full-range text exports (viewer unfiltered / 10-15 Hz) have identical data rows; only the
+    patient header differs (one was exported without 'Anonymize Information')."""
+    import zipfile
+    def lines(p):
+        with zipfile.ZipFile(p) as z:
+            return z.read([n for n in z.namelist() if n.endswith(".txt")][0]).decode("utf-8", "replace").split("\n")
+    a = lines(E3 / "text" / "cadwell3.zip"); b = lines(E3F / "text" / "cadwell3-with-filter.zip")
+    assert [l for l in a if not l.startswith("%")] == [l for l in b if not l.startswith("%")]
+    diff = [(x, y) for x, y in zip(a, b) if x.startswith("%") and x != y]
+    assert all("Patient" in x for x, _ in diff) and diff
 
 
 def test_native_files_identical_between_export3_versions():

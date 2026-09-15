@@ -72,11 +72,14 @@ For each test recording parse the native CSV/text export, map its column
 order (amplifier input order) to EDF channel labels, and compare the
 physical values with our decoded samples over the full common range,
 sample by sample without any alignment (the text export keeps every raw
-sample). Pass if the maximum absolute difference is within the numeric
-precision of the text export (0.05 µV for 4 decimals of mV) plus a
-documented allowance for the microvolt scale constant, and every column
-maps to exactly one channel. Implemented for the public export in
-tests/test_ezdata_public.py.
+sample and omits recording gaps, so compare frame by frame). Pass if the
+maximum absolute difference is within the numeric precision of the text
+export (0.05 µV for 4 decimals of mV) plus a documented allowance for the
+microvolt scale constant, and every column maps to exactly one channel.
+Implemented for the public exports: cadwell-export1 (7755 rows),
+cadwell-export2 (15500 rows) and the whole of cadwell-export3 (603000
+rows, across the break) in tests/test_ezdata_public.py,
+tests/test_export3_gap.py and tests/test_vendor_exports_filtering.py.
 
 *Parent links: REQ009*
 
