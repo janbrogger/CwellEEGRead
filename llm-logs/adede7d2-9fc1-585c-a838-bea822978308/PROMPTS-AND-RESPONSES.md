@@ -2,10 +2,10 @@
 # Session `adede7d2-9fc1-585c-a838-bea822978308`
 
 - Started (UTC): 2026-09-15T07:29:43.798Z  
-- Last event (UTC): 2026-09-15T10:45:03.417Z (span 3 h 15 min)  
+- Last event (UTC): 2026-09-15T10:54:49.751Z (span 3 h 25 min)  
 - User: jan@brogger.no; source: claude-code-remote; branch: `claude/zen-lovelace-vq1to3`  
 - Models: claude-fable-5-1; Claude Code 2.1.272  
-- Prompts: 7; transcript: transcript.jsonl (5.6 MB)
+- Prompts: 8; transcript: transcript.jsonl (5.7 MB)
 
 This file is derived from the transcript for readers without an LLM. Prompts are verbatim; responses are the assistant's text messages (tool calls and their output are only summarised - see the JSONL for those).
 
@@ -229,6 +229,8 @@ The research note, both READMEs, REQ008, REQ020, TST003 and TST004 record all of
 Now let me double check something. Export-3 and Export3-with-filter were the exact same file. The only difference is: for Export-3 I opened Arc from the Arc database view on that EEG, right-clicked to ,"Export to EDF+" and "Export to text", and for for Export-3-with filter I opened Arc viewer from the Arc database view on the same EEG, set filters to 10-15, then right-clicked to "Export to EDF+" and "Export to text". Where there in fact any differences between export3 and export-3-with-filter?
 ```
 
+_Tools used in this turn: Bash ×2_
+
 ### Response 7
 
 **[10:45 UTC]**
@@ -248,4 +250,46 @@ Both EDFs carry the export's own 0.16 Hz high-pass, and each export primes that 
 A 10 Hz high-pass with a 15 Hz low-pass would have removed nearly everything below 8 Hz and above 20 Hz. The filtered EDF keeps 1 to 3 Hz and 20 to 30 Hz content at the same amplitude as the raw data, and the filtered text is bit-for-bit raw. So the viewer's filter setting is purely a display setting for Arc Review, and the two right-click exports do not read it.
 
 One practical consequence: since the exports ignore the viewer state, the only export-time variables that matter for equivalence testing are the time range and, for EDF, the built-in high-pass and the vendor's event policy, all of which are now modelled in vendor mode.
+
+**[10:45 UTC]**
+
+Done. The pending changes were only the session log files under `llm-logs/` that the Stop hook had staged after my last reply. They are now committed as a log-only commit and pushed to `claude/zen-lovelace-vq1to3`, and the working tree is clean.
+
+
+## Prompt 8 - 2026-09-15 10:53:47 UTC
+
+```text
+Why do the text export time ranges differ? Did I do a SNAFU when exporting? Give me time ranges. Time ranges are supposed to be listed in the info.txt file (export 3 is right, export3-filtered is just a copy with a added note about filtering)
+```
+
+_Tools used in this turn: Bash ×1_
+
+### Response 8
+
+**[10:54 UTC]**
+
+Nothing went wrong with the data. The two exports differ only in where each export dialog started, and that comes from where the viewer was positioned when you right-clicked, not from the filter.
+
+**Time ranges (local time, UTC+2)**
+
+| Source | export 3 | export 3-withfilter |
+|---|---|---|
+| Recording, from the native files | origin 10:29:09.844, first stored frame 10:29:10.844, last frame starts 10:49:26.728, break 10:34:37 to 10:34:47 | identical files |
+| Text header "Original file start/end" | 10:29:09 to 10:49:26 | 10:29:09 to 10:49:26 |
+| Text header "Exported file start/end" | 10:29:40 to 10:30:10 | 10:29:09 to 10:29:39 |
+| Text rows actually written | 10:29:39 to 10:30:10, 16000 rows = 32 s (frames 30 to 61) | 10:29:10 to 10:29:39, 15000 rows = 30 s (frames 1 to 30) |
+| EDF start | 10:29:39.853 (frame 30) | 10:29:09.855 (record origin, first second padded) |
+| EDF end | 10:49:26.853, 1187 records | 10:49:26.855, 1217 records |
+| info..txt | start 10:21, end 10:49, 20 min 6 s, 500 Hz | no info file in the repo |
+
+**What this means**
+
+- The withfilter export started at the recording origin, which is the natural default when the viewer sits on the first page. The first export 3 started about 30 s in, so the viewer was most likely positioned one or a few pages into the recording when you right-clicked. Exports 1 and 2 also started at the viewer position of the first page, and their text exports also covered exactly 30 s, so the text dialog's default length is 30 s from the current page and the EDF dialog's default end is the end of the recording.
+- Both EDFs end at the same instant because the last, partial frame is never exported.
+- The text dialog rounds the displayed start up to the next whole second (10:29:40) but writes the frame that contains the start, so the rows begin at 10:29:39. Export 1 showed the same off-by-one-second display.
+- The info..txt "10:21" is when the record was created, when the impedance check ran; EEG acquisition began at 10:29:09. Its 20 min 6 s matches the 1207 stored frames, which excludes the 10 s break.
+
+So no SNAFU for the comparison itself: the overlapping second and the overlapping 1187 s of EDF are identical, and the differing ranges are the only difference. The only housekeeping item is that the export 3-withfilter folder has no info..txt in the repository, so if you wrote one with the filter note, it did not get committed.
+
+One oddity worth knowing for later: the Metadata.json timestamps of the June 2026 exports are local time written as if UTC, whereas the October 2025 export wrote true UTC. I will treat those files as informational only and keep taking times from the SQLite files.
 
