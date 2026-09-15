@@ -2,10 +2,10 @@
 # Session `adede7d2-9fc1-585c-a838-bea822978308`
 
 - Started (UTC): 2026-09-15T07:29:43.798Z  
-- Last event (UTC): 2026-09-15T11:12:05.002Z (span 3 h 42 min)  
+- Last event (UTC): 2026-09-15T11:23:40.844Z (span 3 h 53 min)  
 - User: jan@brogger.no; source: claude-code-remote; branch: `claude/zen-lovelace-vq1to3`  
 - Models: claude-fable-5-1; Claude Code 2.1.272  
-- Prompts: 9; transcript: transcript.jsonl (5.7 MB)
+- Prompts: 10; transcript: transcript.jsonl (5.9 MB)
 
 This file is derived from the transcript for readers without an LLM. Prompts are verbatim; responses are the assistant's text messages (tool calls and their output are only summarised - see the JSONL for those).
 
@@ -327,4 +327,41 @@ For reference, the answer for the files already in the repo is: the native frame
 **[11:12 UTC]**
 
 Done. The only pending changes were the session log files under `llm-logs/` staged by the Stop hook; they are committed as a log-only commit and pushed, and the working tree is clean. The full-range text exports still have not appeared on the remote, so the comparison waits for that push.
+
+
+## Prompt 10 - 2026-09-15 11:16:58 UTC
+
+```text
+Pushed now, do a git pull and redo the analysis
+```
+
+_Tools used in this turn: Bash ×12_
+
+### Response 10
+
+**[11:23 UTC]**
+
+Yes, with two systematic exceptions that come from the vendor's export rules, not from the filter or from anything you did. The analysis is committed and pushed, and all 30 tests pass.
+
+**Do the sources now cover the same whole range?**
+
+| Source | Start (local) | End | Break 10:34:37 to 10:34:47 | Last frame |
+|---|---|---|---|---|
+| Native frames | 10:29:10.844 (frame 1) | 10:49:27.7 (frame 1217) | frames 328 to 337 absent | present |
+| Text, unfiltered and filtered | 10:29:10 | 10:49:25 (frame 1216) | omitted, time stamps jump | dropped |
+| EDF, filtered version | 10:29:09.855 (record origin, first second padded) | 10:49:26.855 | padded with zeros | dropped |
+| EDF, unfiltered version | 10:29:39.853 (frame 30, viewer position) | 10:49:26.853 | padded with zeros | dropped |
+
+So the text and EDF exports now span the whole recording except two things: the vendor never exports the last frame, and the text export leaves the break out while the EDF pads it. The one remaining range difference between your two EDFs is the frame-30 start of the first one, which is the viewer page position at export time.
+
+**Filtered versus unfiltered**
+
+- The two full text files are byte-identical in all 603,000 data rows. The only difference is the header: the filtered one was exported without "Anonymize Information", so it carries the name `Testesen, test` and id `123456789`. Since this is a test identity that is fine, but worth knowing.
+- Both texts equal the raw decoded frames within the 0.05 µV rounding, sample by sample across the break, without any alignment.
+- The two EDFs are identical beyond the 10 s start-up of the later-starting one, and both are the raw data passed through the export's own 0.16 Hz high-pass. Amplitude ratios against the text are 1.000 from 0.7 Hz upward. The 10 to 15 Hz viewer setting is visible nowhere.
+- Reproducing each EDF from the text-equivalent raw data with the identified filter agrees to 0.53 steps over the entire file once the ECG input is clipped at the vendor's ±23.9 mV range, which it exceeds 43 times.
+
+**What changed in the repo**
+
+The tests now read the zipped full texts, so the text equivalence is proven over the whole recording rather than 30 s. The READMEs, the research note and TST005 record the text-export range policy: gap omitted, last frame dropped, 30 s default window from the viewer page, anonymisation affecting only the header.
 
