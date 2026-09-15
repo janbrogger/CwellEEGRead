@@ -1,0 +1,23 @@
+{
+  "Messages": [   
+    {
+      "Title": "Unhandled Exception",
+      "Timestamp": "2026-09-15 10:57:03 (UTC +02:00)",
+      "Details": {
+        "Message": "Kan ikke angi Owner-egenskap til Window som ikke er vist tidligere.",
+        "Type": "System.InvalidOperationException",
+        "Source": "PresentationFramework",
+        "Class": "System.Windows.Window",
+        "Method": "set_Owner",
+        "FileVersion": "3.2.1097",
+        "AssemblyVersion": "3.2.1097.0",
+        "StackTrace": [
+          "   ved System.Windows.Window.set_Owner(Window value)",
+          "   ved Cadwell.Core.CadLink.Win.UI.Dialogs.Archiving.ExportConflict..ctor(Window ownerWindow)",
+          "   ved Cadwell.Core.CadLink.Win.UI.Controls.Archiving.ExportConflictHelper.<>c__DisplayClass1_0.<ResolveConflicts>b__0()",
+          "   ved System.Windows.Threading.DispatcherExtensions.<>c__DisplayClass8_0.<InvokeIfNeeded>b__0()"
+        ]
+      }
+    }
+  ]
+}
