@@ -2,10 +2,10 @@
 # Session `adede7d2-9fc1-585c-a838-bea822978308`
 
 - Started (UTC): 2026-09-15T07:29:43.798Z  
-- Last event (UTC): 2026-09-15T08:18:21.937Z (span 48 min)  
+- Last event (UTC): 2026-09-15T08:38:44.113Z (span 1 h 9 min)  
 - User: jan@brogger.no; source: claude-code-remote; branch: `claude/zen-lovelace-vq1to3`  
 - Models: claude-fable-5-1; Claude Code 2.1.272  
-- Prompts: 3; transcript: transcript.jsonl (3.7 MB)
+- Prompts: 4; transcript: transcript.jsonl (4.3 MB)
 
 This file is derived from the transcript for readers without an LLM. Prompts are verbatim; responses are the assistant's text messages (tool calls and their output are only summarised - see the JSONL for those).
 
@@ -106,4 +106,43 @@ After `git pull`, a plain `git add` of those two paths will work now. Without th
 **Text export quirks** that the equivalence test must handle: decimal comma, unit mV with 4 decimals, 1-second time stamps with 248 to 251 rows each, `Cz` identically zero (referential to Cz), and a header line listing 35 labels for 32 columns, so labels for the seven non-EEG inputs must come from the EDF instead.
 
 REQ001 was rewritten for the real file family and the test suite still passes.
+
+
+## Prompt 4 - 2026-09-15 08:25:56 UTC
+
+```text
+Do a git pull. The actual EDF files are now in the repo.
+```
+
+_Tools used in this turn: Bash ×24_
+
+### Response 4
+
+**[08:26 UTC]**
+
+Pulling now and checking what arrived.
+
+**[08:38 UTC]**
+
+The Cadwell waveform format is decoded, verified against your exports, and pushed.
+
+**Result**
+
+`cwelleegread/ezdata.py` reads a CadLink export and reproduces every one of the 7755 samples in your text export to within the text's own 0.05 µV rounding, for all 31 non-reference channels, with no alignment tricks. `tests/test_ezdata_public.py` locks that in and passes along with the rest of the suite.
+
+**The frame format** (full table in `docs/research/cadwell-file-format.md`)
+
+- Each one-second frame blob has a 66-byte header with start and end ticks, then one block per channel in channel-number order, then a 25-byte footer.
+- A channel block is the same 81-byte record as in `TrackInfo`, then a delta type byte, a byte length, the first sample as float32, a scale float, and the deltas. Type 1 is int16 deltas, type 2 is int8 deltas. That is Cadwell's "nonlinear delta compression": the narrowest width that fits, chosen per channel and frame.
+- Samples are in amplifier units. The text export pins the scale to 0.72998046 µV per unit, about 2.218 times the 0.32909 float in the channel record. No closed form found, so it needs checking on another amplifier or gain.
+- Export column order is amplifier-input order, which the channel record carries. Labels are still not in any readable file.
+
+**Two findings that matter for the requirements**
+
+- The amplifier delivers 248, 250 or 251 samples per frame, so its clock runs about 0.08 % faster than the frame clock. The text export keeps every sample. The vendor EDF export resamples to exactly 250 per second by linear interpolation, dropping one sample every 1224 and averaging the neighbours at each drop point. Exact equivalence against the vendor EDF therefore needs either alignment or a vendor-compatible resampling mode. I rewrote REQ008 and TST003 accordingly and added REQ020, which makes raw fidelity the default and vendor-compatible resampling an option.
+- The vendor EDF quantises at 17.17 µV per step because it declares a ±562.5 mV physical range. The text export at 0.1 µV is the better ground truth, so TST005 is now the exact test and TST003 the tolerant one.
+
+**Remaining unknowns**: channel labels, constancy of the microvolt scale, the meaning of two record fields, and the time base behind the vendor's 1224:1225 resampling ratio.
+
+Next step on the code side is the EDF writer and the CLI. On your side, a recording with real electrodes, a deliberate pause, and a few technician events would let me check the scale, gap handling and event mapping.
 

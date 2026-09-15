@@ -8,8 +8,11 @@ links:
 - REQ010: Dvv2VHiuW9Q32NyjEhkKDYQRHZv_veCXJ6pKvWFfMCo=
 normative: true
 ref: ''
-reviewed: cAG0vyVXmeraqqmFhFctCaVMfFeVH814LKh85Xp4PeA=
+reviewed: K_Mbnis2-M49sXz-TcQOGZBu0tNsVGDLqhChynGd3O4=
 text: |
-  Convert each test recording and open the result with two independent EDF
-  readers (pyedflib and MNE-Python). Pass if both read the file without
-  header warnings and report the expected number of channels and duration.
+  Convert each test recording and open the result with an independent EDF
+  reader (pyedflib; MNE-Python when available). Pass if the file is read
+  without header errors, reports the expected number of channels, records
+  and duration, and the samples read back equal the decoded samples within
+  the declared resolution. Implemented for the public exports in
+  tests/test_convert_public.py (raw and vendor modes).

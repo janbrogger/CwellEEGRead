@@ -18,9 +18,12 @@
 
 # 1.0 EDF structural validity _(TST001)_ {#TST001}
 
-Convert each test recording and open the result with two independent EDF
-readers (pyedflib and MNE-Python). Pass if both read the file without
-header warnings and report the expected number of channels and duration.
+Convert each test recording and open the result with an independent EDF
+reader (pyedflib; MNE-Python when available). Pass if the file is read
+without header errors, reports the expected number of channels, records
+and duration, and the samples read back equal the decoded samples within
+the declared resolution. Implemented for the public exports in
+tests/test_convert_public.py (raw and vendor modes).
 
 *Parent links: REQ002, REQ010*
 
@@ -39,19 +42,23 @@ mapping table documents as intentionally different.
 For each test recording and each channel compare the physical sample values
 of our EDF export with the native EDF export. In vendor-compatible mode
 (REQ020) the sample counts must match and the maximum absolute difference
-must not exceed one digital quantisation step of the native export. In raw
-fidelity mode, align segment by segment (the native export drops one
-sample by interpolation at a regular interval), require the same bound on
-every aligned sample, and report the drop positions and the number of
-interpolated samples. Report the maximum and mean difference per channel.
+must not exceed one digital quantisation step of the native export
+(implemented for cadwell-export1 in tests/test_convert_public.py: 11000 of
+11000 samples pass). In raw fidelity mode, align segment by segment (the
+native export removes one sample with two-point smoothing at a regular
+interval), require the same bound on every aligned sample, and report the
+removal positions. Report the maximum and mean difference per channel.
 
 *Parent links: REQ003, REQ008, REQ020*
 
 # 4.0 Annotation equivalence with native EDF export _(TST004)_ {#TST004}
 
 For each test recording compare the EDF+ annotation lists (onset, duration,
-text) of our export and the native export. Pass if the sets are equal after
-normalising whitespace; list every unmatched annotation on failure.
+text) of our export and the native export. Pass if, in vendor-compatible
+mode, the sets are equal after normalising whitespace and rounding onsets
+to the millisecond, and, in raw mode, the native set is a subset of ours;
+list every unmatched annotation on failure. Implemented for
+cadwell-export1 in tests/test_convert_public.py.
 
 *Parent links: REQ005, REQ008*
 

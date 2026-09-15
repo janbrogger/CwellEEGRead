@@ -25,8 +25,11 @@ constrains use of `uses/Morgoth`, not this repository's code.
    decoded by `cwelleegread/ezdata.py` and matches the vendor's text export
    exactly. See the "Findings from test export 1" section of the format
    note.
-2. Next: an EDF writer (REQ002-REQ005, REQ020) and the CLI (REQ006), then a
-   recording with real electrodes, gaps and events to check the microvolt
-   scale, `GapInfo` and the label question.
+2. Done: EDF+ writer and CLI (`python -m cwelleegread convert`); vendor
+   mode reproduces the Cadwell EDF export of export 1 within one step.
+   Export 2 (real EEG, 500 Hz, events) converts; its labels and scale are
+   plausible but unverified for lack of a vendor export of that recording.
+   Next: a recording with a gap, and a vendor EDF or text export of a
+   500 Hz recording to confirm the scale at that rate.
 3. Decide gap handling for EDF+ (EDF+D vs padded EDF+C) once a recording
    with a gap is available (REQ019).

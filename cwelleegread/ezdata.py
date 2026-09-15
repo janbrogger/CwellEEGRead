@@ -34,9 +34,12 @@ documented in docs/research/cadwell-file-format.md):
 * The channel blocks are ordered by channel number; the amplifier input
   number (record field 4) gives the order used by the vendor's EDF/text
   exports, and channel *labels* are not stored in these files.
-* Frames contain 250 samples nominally, but 248 (first frame) and 251
-  occur; the text export keeps every sample, the EDF export resamples to
-  exactly 250/s (see ``docs/research/cadwell-file-format.md``).
+* Frames contain the nominal number of samples (250 or 500 per second)
+  but 248 (first frame) and 251 occur; the text export keeps every sample,
+  the EDF export keeps whole seconds and drops the excess evenly (see
+  ``docs/research/cadwell-file-format.md`` and ``edf.py``).
+* Other tracks (Track 1 in export 2, 0 channels in TrackInfo) hold
+  auxiliary low-rate data with a shorter frame header; only Track 0 is EEG.
 
 Only the Python standard library plus numpy is used.
 """
@@ -96,6 +99,7 @@ class Event:
     start_ticks: int
     end_ticks: int
     deleted: bool
+    priority: int | None = None
 
 
 def parse_channel_record(buf: bytes, pos: int) -> ChannelRecord:
@@ -113,11 +117,18 @@ def decode_frame(blob: bytes) -> tuple[int, int, dict[int, np.ndarray], list[Cha
     magic = struct.unpack_from("<I", blob, 0)[0]
     if magic != FRAME_MAGIC:
         raise ValueError(f"unexpected frame magic 0x{magic:08x}")
-    nch = struct.unpack_from("<I", blob, 0x2E)[0]
-    start_ticks, end_ticks = struct.unpack_from("<QQ", blob, 0x32)
     positions = [m.start() for m in re.finditer(re.escape(CHANNEL_TAG), blob)]
-    if len(positions) != nch:
-        raise ValueError(f"frame says {nch} channels but has {len(positions)} channel blocks")
+    if not positions:
+        raise ValueError("frame has no channel blocks")
+    # Track-0 (EEG) frames have a 66-byte header ending with u32 channel count,
+    # u64 start ticks, u64 end ticks; auxiliary tracks use a shorter header.
+    if positions[0] == 0x42:
+        nch = struct.unpack_from("<I", blob, 0x2E)[0]
+        start_ticks, end_ticks = struct.unpack_from("<QQ", blob, 0x32)
+        if len(positions) != nch:
+            raise ValueError(f"frame says {nch} channels but has {len(positions)} channel blocks")
+    else:
+        start_ticks = end_ticks = None
     samples, records = {}, []
     for p in positions:
         rec = parse_channel_record(blob, p)
@@ -164,11 +175,19 @@ class CadwellRecording:
                                 for off, ts, tr, st, jd, key in con.execute(
                                     "select Offset, TimeStamp, Track, Status, JoinDatabase, hex(FrameKey) "
                                     "from FrameInfo where Track=0 order by Offset")]
+            self.pc_time_sync = [dict(pc=parse_timestamp(p), sync=parse_timestamp(q))
+                                 for p, q in con.execute("select PcTime, SyncTime from PcTimeSync order by PcTime")]
+            self.tracks = [r[0] for r in con.execute("select distinct Track from FrameInfo order by Track")]
             self.gaps = [dict(track=t, start_offset=so, end_offset=eo, start=parse_timestamp(s), end=parse_timestamp(e))
                          for t, so, eo, s, e in con.execute(
                              "select Track, StartOffset, EndOffset, StartTime, EndTime from GapInfo")]
         self.sample_rate = self.channels[0].sample_rate if self.channels else None
         self.origin = self.frame_index[0]["timestamp"] if self.frame_index else None
+        # The vendor's EDF start time = frame-0 time stamp + (PcTime - SyncTime) of the
+        # first PcTimeSync row (verified on export 1: +341.4 µs).
+        self.clock_correction = ((self.pc_time_sync[0]["pc"] - self.pc_time_sync[0]["sync"])
+                                 if self.pc_time_sync else dt.timedelta(0))
+        self.start_time = (self.origin + self.clock_correction) if self.origin else None
         # export column order = amplifier input order
         self.amp_inputs = sorted(c.amp_input for c in self.channels)
 
@@ -179,9 +198,9 @@ class CadwellRecording:
         if not os.path.exists(path):
             return []
         with _ro(path) as con:
-            return [Event(t, x, parse_timestamp(s), parse_timestamp(e), so, eo, bool(d))
-                    for t, x, s, e, so, eo, d in con.execute(
-                        "select EventType, Text, StartTime, EndTime, StartOffset, EndOffset, Deleted "
+            return [Event(t, x, parse_timestamp(s), parse_timestamp(e), so, eo, bool(d), pr)
+                    for t, x, s, e, so, eo, d, pr in con.execute(
+                        "select EventType, Text, StartTime, EndTime, StartOffset, EndOffset, Deleted, Priority "
                         "from Events order by StartTime")]
 
     # ------------------------------------------------------------------ frames

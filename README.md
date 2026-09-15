@@ -7,11 +7,21 @@ that the conversion is equivalent to the vendor's own export - so that
 clinically recorded EEGs can be analysed with research tools such as
 SCORE-AI, the Morgoth foundation model, EEGLAB, FieldTrip and MNE.
 
-**Status: reader working, writer not started.** `cwelleegread/ezdata.py`
-decodes the Cadwell frame format (verified sample-for-sample against the
-vendor's text export on `testdata/public/cadwell-export1`); EDF writing and
-the command line are next. `tools/cadwell_inspect.py` prints an inventory
-of any CadLink export.
+**Status: converter working on the two public test recordings.**
+`python -m cwelleegread convert <export> out.edf` reads a CadLink study
+export and writes EDF+C. The decoder is verified sample-for-sample against
+the vendor's text export, and the vendor-compatible mode reproduces the
+vendor's own EDF export to within one quantisation step, including its
+annotations and start time (`tests/test_convert_public.py`). Not yet
+handled: recording gaps (none in the test data), channel labels for other
+headboxes, anonymisation beyond the header fields.
+
+```bash
+./setup.sh && source .venv/bin/activate
+python -m cwelleegread inspect testdata/public/cadwell-export2
+python -m cwelleegread convert testdata/public/cadwell-export2 out.edf --timezone Europe/Oslo --json out.json
+python -m cwelleegread convert testdata/public/cadwell-export1 out.edf --mode vendor --timezone Europe/Oslo
+```
 
 ## Repository layout
 
@@ -20,7 +30,7 @@ of any CadLink export.
 | `docs/traceability/` | Requirements managed with [Doorstop](https://doorstop.readthedocs.io): `needs/` (NEED), `requirements/` (REQ), `tests/` (TST). Readable copies in `docs/traceability/published/*.md`. |
 | `docs/research/` | Research notes: the Cadwell file format, the BioSig toolbox and licensing, downstream uses. |
 | `llm-logs/` | Archive of every Claude Code session (prompts, responses, full transcripts) and `sessions.csv`. Filled automatically by hooks in `.claude/`. |
-| `cwelleegread/` | the Python package: `ezdata.py` reads a CadLink export (index, frames, events) into numpy arrays in µV. |
+| `cwelleegread/` | the Python package: `ezdata.py` reads a CadLink export (index, frames, events); `layout.py` amplifier-input labels; `edf.py` conversion policies; `edfwrite.py` EDF+ writer; `__main__.py` CLI. |
 | `tools/` | `cadwell_inspect.py`: stdlib inventory of a CadLink export. |
 | `tests/` | pytest suite, incl. `test_ezdata_public.py` (decoder vs vendor text/EDF export). Private-data tests skip until the recordings are present. |
 | `testdata/` | Manifest and instructions for the out-of-band test recordings (the recordings themselves are gitignored). |

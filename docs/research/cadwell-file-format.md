@@ -327,3 +327,55 @@ origin, matching the `.ezevents` tick offsets.
    ratio does not follow directly from the frame ticks); irrelevant if we
    keep raw samples.
 4. The 8-byte "id" values (sequential GUID halves) and the frame footer.
+
+---
+
+# Findings from test export 2 and from writing EDF (added 2026-09-15)
+
+**Second recording** (`testdata/public/cadwell-export2`, real EEG, 500 Hz,
+16 min): decodes with the same frame layout. Frames hold exactly 500
+samples each. `TrackInfo` has a second row for track 1 with 0 channels;
+the index lists 961 frames for track 1 too, stored in the same `.ezdata`
+file, 8463 bytes each, with a shorter header (u32 magic, u32 track = 1,
+u8 0, 8-byte id, f64 1.0, u8 1, u32 length, u32 32, then 32 blocks of 264
+bytes whose first bytes look like a 28-byte per-channel record with an
+int32 and small constants). Not EEG; the reader uses track 0 only.
+The channel-number order in this recording is different (channels 1-7 =
+amplifier inputs 26-32) but the amplifier-input numbering maps to the
+same electrodes, verified physiologically (see the export's README), so
+`cwelleegread/layout.py` keys labels by amplifier input.
+
+**Vendor EDF export rule** (verified on export 1, all 11000 samples within
+one EDF step, `tests/test_convert_public.py`):
+
+1. Frames used = all but the last one (the last frame starts after the
+   whole-second end of the recording): 44 frames, N_in = 11008 raw samples,
+   N_out = 44 × 250 = 11000.
+2. Surplus S = N_in − N_out = 8 samples are removed at period
+   T = ceil(N_in / (S + 1)) = 1224 in output coordinates: output samples
+   T−2 and T−1 (1222, 1223) are the means of raw (1222, 1223) and
+   (1223, 1224), raw 1224 is dropped, and so on every T output samples.
+   It is a fixed-pattern decimation with two-point smoothing, not a
+   constant-ratio interpolation (that was tested and does not match).
+3. Start time = frame-0 time stamp + (PcTime − SyncTime) of the first
+   `PcTimeSync` row (+341.4 µs here), written as local time (UTC+1) with
+   whole seconds in the header and the sub-second part as the first TAL
+   of every record (`+0.2766482`, 7 decimals). Annotation onsets are
+   absolute offsets from the header second, so the `PaperSpeedEvent` at
+   tick 0 appears at `+0.2766482`.
+4. Annotations = events with `Priority` 7 whose time lies inside the
+   export (montage, paper speed, battery, video on/off); amplifier
+   configuration, `Reviewed Data`, `Start/Stop Recording` (outside the
+   range here) are not exported. Texts are complete (up to 62 chars seen).
+5. Labels `EEG <name>-Cz`, physical range ±562500 µV, digital ±32768,
+   transducer `X`, technician `Admin,_CadLink`, equipment = a GUID,
+   patient `X X X test_test`.
+
+**Our writer** (`cwelleegread/edfwrite.py`, EDF+C): raw mode keeps every
+sample, drops only the trailing partial second, uses a data-driven
+symmetric physical range per channel (2 significant digits, ≥ 1 %
+margin) so the resolution is ~1/32767 of the peak value, writes UTC by
+default (`--timezone` converts), 6-decimal sub-second start in the TALs,
+all non-bookkeeping events with their full text (Norwegian characters
+are written as UTF-8 in the TAL, which EDF+ allows). Vendor mode applies
+rules 1-2 and 5 above. Read-back is verified with pyedflib.

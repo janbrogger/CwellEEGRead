@@ -8,16 +8,20 @@ links:
 - NEED003: RvD-6a6d_WOKUUx5CuBdfvRWBP3ZpbmhlSuyqq55XL4=
 normative: true
 ref: ''
-reviewed: IYdK7OdcTQPFYhAwBOdcMF3qJhuL65y_QMGcYBR814A=
+reviewed: 2jWjHfN_0gl11jKsPjhbsd56i0Ef2E3Hlac2TlqwSf8=
 text: |
   The Cadwell amplifier delivers a variable number of samples per one-second
-  frame (248, 250 or 251 observed at a nominal 250 Hz), i.e. its sample clock
-  runs about 0.08 % fast relative to the frame time stamps. By default the
-  program shall preserve every raw sample unchanged ("raw fidelity"), write
-  the nominal sampling rate to the EDF header, and report the effective rate
-  (samples divided by frame-clock duration) and the accumulated drift in the
+  frame (248, 250 or 251 observed at a nominal 250 Hz; exactly 500 at 500 Hz),
+  i.e. its sample clock can run about 0.08 % fast relative to the frame time
+  stamps. By default the program shall preserve every raw sample unchanged
+  ("raw fidelity"), write the nominal sampling rate to the EDF header, drop
+  only a trailing partial second, and report the effective rate (samples
+  divided by frame-clock duration) and the accumulated drift in the
   conversion report. A command-line option shall alternatively reproduce the
-  vendor's behaviour ("vendor-compatible"): resample to exactly the nominal
-  rate by linear interpolation so that the output matches the native EDF
-  export sample by sample. The chosen policy shall be recorded in the EDF
-  header's recording-additional field.
+  vendor's behaviour ("vendor-compatible"): use all frames but the last,
+  remove the surplus samples at evenly spaced positions with two-point
+  smoothing exactly as the native export does (documented in
+  docs/research/cadwell-file-format.md), and use the vendor's physical range,
+  so that the output matches the native EDF export sample by sample. The
+  chosen policy shall be recorded in the EDF header's recording-additional
+  field and in the conversion report.

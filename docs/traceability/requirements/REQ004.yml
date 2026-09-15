@@ -8,11 +8,16 @@ links:
 - NEED005: rgpwcKKWZLJvE89ZMLt4BbBunAJ1iSn14Rv7ysRioEo=
 normative: true
 ref: ''
-reviewed: r-twRrAjtIwuVqEZzw6b3E_UE8EkrH7SnPNkWT81scY=
+reviewed: ICvzK7Kzg6lcKfUWdxR1hoUhJLza0lGK9V3rJd9jjdo=
 text: |
   The program shall populate the EDF header with the recording start date and
-  time (to the second), the patient identification fields, the recording
-  identification fields, and per-channel transducer and prefiltering fields,
-  using the values stored in the Cadwell recording. Channel labels shall
-  follow the EDF+ label convention (e.g. `EEG Fp1-Ref`) when the source
-  information allows it, and a documented mapping table shall be maintained.
+  time (frame-0 time stamp corrected by the amplifier/PC clock offset, to the
+  microsecond via the EDF+ sub-second convention; UTC unless a time zone is
+  given), the patient identification fields, the recording identification
+  fields (record identifier, equipment) and per-channel transducer and
+  prefiltering fields. Channel labels shall follow the EDF+ label convention
+  (e.g. `EEG Fp1-Cz`). Because the Cadwell files store no channel labels, the
+  program shall derive them from a documented amplifier-input layout table
+  (cwelleegread/layout.py, verified on the test recordings), shall allow the
+  user to override the table, and shall flag inferred labels in the
+  conversion report.

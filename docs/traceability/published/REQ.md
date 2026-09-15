@@ -69,11 +69,16 @@ recorded in the EDF header's prefiltering field.
 # 4.0 Recording and patient metadata _(REQ004)_ {#REQ004}
 
 The program shall populate the EDF header with the recording start date and
-time (to the second), the patient identification fields, the recording
-identification fields, and per-channel transducer and prefiltering fields,
-using the values stored in the Cadwell recording. Channel labels shall
-follow the EDF+ label convention (e.g. `EEG Fp1-Ref`) when the source
-information allows it, and a documented mapping table shall be maintained.
+time (frame-0 time stamp corrected by the amplifier/PC clock offset, to the
+microsecond via the EDF+ sub-second convention; UTC unless a time zone is
+given), the patient identification fields, the recording identification
+fields (record identifier, equipment) and per-channel transducer and
+prefiltering fields. Channel labels shall follow the EDF+ label convention
+(e.g. `EEG Fp1-Cz`). Because the Cadwell files store no channel labels, the
+program shall derive them from a documented amplifier-input layout table
+(cwelleegread/layout.py, verified on the test recordings), shall allow the
+user to override the table, and shall flag inferred labels in the
+conversion report.
 
 *Parent links: NEED003, NEED005*
 
@@ -277,16 +282,20 @@ segment so that gap handling differences are explicit rather than hidden.
 # 20 Sample clock and resampling policy _(REQ020)_ {#REQ020}
 
 The Cadwell amplifier delivers a variable number of samples per one-second
-frame (248, 250 or 251 observed at a nominal 250 Hz), i.e. its sample clock
-runs about 0.08 % fast relative to the frame time stamps. By default the
-program shall preserve every raw sample unchanged ("raw fidelity"), write
-the nominal sampling rate to the EDF header, and report the effective rate
-(samples divided by frame-clock duration) and the accumulated drift in the
+frame (248, 250 or 251 observed at a nominal 250 Hz; exactly 500 at 500 Hz),
+i.e. its sample clock can run about 0.08 % fast relative to the frame time
+stamps. By default the program shall preserve every raw sample unchanged
+("raw fidelity"), write the nominal sampling rate to the EDF header, drop
+only a trailing partial second, and report the effective rate (samples
+divided by frame-clock duration) and the accumulated drift in the
 conversion report. A command-line option shall alternatively reproduce the
-vendor's behaviour ("vendor-compatible"): resample to exactly the nominal
-rate by linear interpolation so that the output matches the native EDF
-export sample by sample. The chosen policy shall be recorded in the EDF
-header's recording-additional field.
+vendor's behaviour ("vendor-compatible"): use all frames but the last,
+remove the surplus samples at evenly spaced positions with two-point
+smoothing exactly as the native export does (documented in
+docs/research/cadwell-file-format.md), and use the vendor's physical range,
+so that the output matches the native EDF export sample by sample. The
+chosen policy shall be recorded in the EDF header's recording-additional
+field and in the conversion report.
 
 *Parent links: NEED002, NEED003*
 

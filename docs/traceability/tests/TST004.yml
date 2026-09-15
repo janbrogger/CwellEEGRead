@@ -8,8 +8,11 @@ links:
 - REQ008: UVzmqjFssLTAogiX_eYrnZn-IQ0l4uchb8j3gxurwdw=
 normative: true
 ref: ''
-reviewed: 7CVvXNdKox0g7oqJbWlN7BbIGBO7i07kDpBJmP3w2MU=
+reviewed: Lna6vLj6WabPcJEwDIz2dOhpuuF5Xw32ASDAxHQOEaw=
 text: |
   For each test recording compare the EDF+ annotation lists (onset, duration,
-  text) of our export and the native export. Pass if the sets are equal after
-  normalising whitespace; list every unmatched annotation on failure.
+  text) of our export and the native export. Pass if, in vendor-compatible
+  mode, the sets are equal after normalising whitespace and rounding onsets
+  to the millisecond, and, in raw mode, the native set is a subset of ours;
+  list every unmatched annotation on failure. Implemented for
+  cadwell-export1 in tests/test_convert_public.py.
