@@ -2,10 +2,10 @@
 # Session `adede7d2-9fc1-585c-a838-bea822978308`
 
 - Started (UTC): 2026-09-15T07:29:43.798Z  
-- Last event (UTC): 2026-09-15T10:21:00.433Z (span 2 h 51 min)  
+- Last event (UTC): 2026-09-15T10:45:03.417Z (span 3 h 15 min)  
 - User: jan@brogger.no; source: claude-code-remote; branch: `claude/zen-lovelace-vq1to3`  
 - Models: claude-fable-5-1; Claude Code 2.1.272  
-- Prompts: 6; transcript: transcript.jsonl (5.6 MB)
+- Prompts: 7; transcript: transcript.jsonl (5.6 MB)
 
 This file is derived from the transcript for readers without an LLM. Prompts are verbatim; responses are the assistant's text messages (tool calls and their output are only summarised - see the JSONL for those).
 
@@ -221,4 +221,31 @@ The comparison is done, and the answer to your filtering question is clear. All 
 Vendor mode now applies that filter, supports starting at the record origin with leading zeros as the export-3-withfilter EDF does, and follows the vendor's annotation policy: deleted events, amplifier bookkeeping types and the 244 individual photic flashes are dropped, the "Photic Start" markers kept. With this, vendor mode reproduces the export-2 EDF and the export-3-withfilter EDF sample for sample within one quantisation step over all 480,000 and 608,500 samples, gap included, with identical annotation lists. Raw mode is untouched and remains the unfiltered reference, verified against the new export-2 text as well.
 
 The research note, both READMEs, REQ008, REQ020, TST003 and TST004 record all of this.
+
+
+## Prompt 7 - 2026-09-15 10:44:37 UTC
+
+```text
+Now let me double check something. Export-3 and Export3-with-filter were the exact same file. The only difference is: for Export-3 I opened Arc from the Arc database view on that EEG, right-clicked to ,"Export to EDF+" and "Export to text", and for for Export-3-with filter I opened Arc viewer from the Arc database view on the same EEG, set filters to 10-15, then right-clicked to "Export to EDF+" and "Export to text". Where there in fact any differences between export3 and export-3-with-filter?
+```
+
+### Response 7
+
+**[10:45 UTC]**
+
+No. Apart from the time ranges you chose in the export dialogs, the two exports are the same data, and the 10 to 15 Hz viewer filter left no trace in either of them.
+
+**What is genuinely different**
+
+- The native SQLite files are byte-identical, as expected.
+- The text exports cover different ranges: 10:29:39 to 10:30:10 for export 3, 10:29:10 to 10:29:39 for the filtered one. They share exactly one second, frame 30, and on that second every value is identical to the last digit. Both equal the raw decoded frames within the 0.05 µV rounding, in every band from 0.02 Hz to 250 Hz.
+- The EDF exports also start at different points: frame 30 for export 3, the record origin with a padded first second for the filtered one. On their 1187 s of overlap they are identical within one quantisation step, except for the first 4934 rows of the export-3 file.
+
+**Why those 4934 rows differ, and why that is not the viewer filter**
+
+Both EDFs carry the export's own 0.16 Hz high-pass, and each export primes that filter at its own first sample. The export-3 EDF starts 30 s later, so its filter settles during its first 10 s while the other file's filter had already settled. Vendor mode reproduces both files sample for sample using the same filter and only a different start, which pins the difference to the start-up and nothing else.
+
+A 10 Hz high-pass with a 15 Hz low-pass would have removed nearly everything below 8 Hz and above 20 Hz. The filtered EDF keeps 1 to 3 Hz and 20 to 30 Hz content at the same amplitude as the raw data, and the filtered text is bit-for-bit raw. So the viewer's filter setting is purely a display setting for Arc Review, and the two right-click exports do not read it.
+
+One practical consequence: since the exports ignore the viewer state, the only export-time variables that matter for equivalence testing are the time range and, for EDF, the built-in high-pass and the vendor's event policy, all of which are now modelled in vendor mode.
 
