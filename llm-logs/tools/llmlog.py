@@ -308,6 +308,20 @@ def write_session_files(sid):
     for i, t in enumerate(info["turns"], 1):
         rows.append([i, (t["ts"] or "")[:10], (t["ts"] or "")[11:19], t["prompt"]])
     write_csv(os.path.join(sdir, "prompts.csv"), rows)
+    # prompt-log.csv: back-fill prompts the UserPromptSubmit hook did not see
+    # (sessions that ran before the hooks existed, or hook failures)
+    plog = read_csv(PROMPT_LOG_CSV, PROMPT_LOG_HEADER)
+    seen = {(r[3], r[4]) for r in plog[1:] if len(r) >= 5}
+    added = False
+    for t in info["turns"]:
+        if (sid, t["prompt"]) not in seen:
+            plog.append([(t["ts"] or "")[:10], (t["ts"] or "")[11:19],
+                         meta_row.get("user") or username(), sid, t["prompt"]])
+            seen.add((sid, t["prompt"]))
+            added = True
+    if added:
+        plog[1:] = sorted(plog[1:], key=lambda r: (r[0], r[1]))
+        write_csv(PROMPT_LOG_CSV, plog)
     # PROMPTS-AND-RESPONSES.md
     out = [GENERATED_NOTE, f"# Session `{sid}`", ""]
     out.append(f"- Started (UTC): {info['first_ts'] or '?'}  ")
