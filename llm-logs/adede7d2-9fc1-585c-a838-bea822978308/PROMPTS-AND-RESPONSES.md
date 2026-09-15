@@ -2,10 +2,10 @@
 # Session `adede7d2-9fc1-585c-a838-bea822978308`
 
 - Started (UTC): 2026-09-15T07:29:43.798Z  
-- Last event (UTC): 2026-09-15T13:40:02.149Z (span 6 h 10 min)  
+- Last event (UTC): 2026-09-15T13:43:04.880Z (span 6 h 13 min)  
 - User: jan@brogger.no; source: claude-code-remote; branch: `claude/zen-lovelace-vq1to3`  
 - Models: claude-fable-5-1; Claude Code 2.1.272  
-- Prompts: 12; transcript: transcript.jsonl (6.1 MB)
+- Prompts: 13; transcript: transcript.jsonl (6.1 MB)
 
 This file is derived from the transcript for readers without an LLM. Prompts are verbatim; responses are the assistant's text messages (tool calls and their output are only summarised - see the JSONL for those).
 
@@ -437,7 +437,7 @@ Done. The pending changes were only the session log files under `llm-logs/` stag
 Apparently it is an issue that the Cadwell export is Cz-referenced (so, effectively bipolar). Most EEG systems have a separate "REF" channel, and I believe Cadwell does to, but it doesn't appear in the export. Investigate for the presence of a "REF" channel, and estimate if we can export the data as "REF" referenced instead of Cz referenced.
 ```
 
-_Tools used in this turn: Bash ×2_
+_Tools used in this turn: Bash ×3_
 
 ### Response 12
 
@@ -469,4 +469,43 @@ No tool calls needed beyond these two; the evidence is enough for an assessment.
 1. Ask Holberg what SCORE-AI actually consumes. If its first step is a montage transformation, such as average reference or bipolar, the Cz-referenced files are equivalent input and the problem is only the label parsing. If it consumes referential channels directly, it is reference-dependent for any vendor and Cz is then a well-defined reference, better than an unspecified REF.
 2. I can add a `--reference` option to the converter in about 30 lines: average of the 19 standard 10-20 electrodes, linked ears from the recorded A1 and A2, or any named electrode, with labels such as `EEG Fp1-AVG` and the transformation recorded in the report. Say the word and I will implement and test it.
 3. For future research recordings, check whether the Arc protocol allows the hardware REF as recording reference. If it does, the stored data would be X minus REF and Cz would appear as a real channel, recovering the one signal that is lost today.
+
+**[13:40 UTC]**
+
+Done. The pending changes were only the session log files under `llm-logs/` staged by the Stop hook after the reference-channel assessment. They are committed as a log-only commit and pushed to `claude/zen-lovelace-vq1to3`; the working tree is clean.
+
+Nothing else is outstanding. The next code change, the `--reference` option for average, linked-ears or named-electrode re-referencing, waits for your go-ahead.
+
+
+## Prompt 13 - 2026-09-15 13:42:24 UTC
+
+```text
+SCORE-AI consumes REF referenced data. From a regulatory perspective, this is a headache. If we make a synthetic reference, let's say common average, it is no longer the same data.
+```
+
+### Response 13
+
+**[13:43 UTC]**
+
+You are right, and the distinction matters. Some thoughts on how to frame it, with the caveat that this is signal reasoning, not regulatory advice.
+
+**What the data actually is**
+
+A Cz-referenced recording is not a derived or synthetic signal. It is a referential recording whose reference electrode happens to be Cz, physically the same situation as a lab that places its REF electrode at Cz. Nothing was computed from it after acquisition; the amplifier stored each input against that electrode. The two consequences are that Cz itself is a flat channel and that "REF" is now a named 10-20 position instead of an unnamed one. So the honest description of a Cadwell export is "referential, reference = Cz", which is exactly what the vendor's EDF labels say.
+
+A common-average or linked-ears version is different in kind. It is a linear recombination of the measurement. No information is added or lost, but the reference is no longer an electrode, so it falls outside an input specification that says REF-referenced, and it would be a preprocessing step that somebody has to validate. Your instinct is correct: do not manufacture a REF.
+
+**Why the reference is probably not the only validation question**
+
+The Cadwell EDF export already differs from a Natus or Nicolet REF recording in ways that are at least as relevant to a model consuming referential channels: the 0.16 Hz export high-pass on Essentia recordings, the resampling with two-point smoothing at 250 Hz on Apollo, the 17 µV quantisation of the Apollo export, and zero-padded breaks. If Holberg's plan rests on the vendor export, those are inside the same validation exercise as the reference. Our raw mode removes the first three, but the reference stays.
+
+**Options, in the order I would rank them**
+
+1. **Change the acquisition, not the data.** If the Arc protocol allows the hardware REF input as recording reference, prospective recordings store every input against REF and Cz appears as a real channel. That makes future Cadwell data equivalent to what SCORE-AI was validated on, without any transform. This needs a check on your system.
+2. **Present retrospective data as what it is.** Deliver Cz-referenced files, labelled Cz, and let Holberg decide whether a flat Cz channel and a reference at a montage position are within their validated input. That is their determination to make, and they may already have Cz-referenced sites in their validation set.
+3. **Re-referencing as an explicit, flagged transform only.** If Holberg chooses to validate a re-referenced input, the converter can produce it, but the transform must be visible: labels such as `EEG Fp1-AVG`, the recipe in the EDF recording field and in the JSON report, and the raw file kept alongside. I would add this as a requirement: the converter never disguises the reference.
+
+**What I suggest we do in the repo now**
+
+Nothing to the signal path. I would add a short requirement stating that the exported reference is always the recording reference unless a transform is explicitly requested and declared, and a note in the SCORE-AI use folder describing this as an open validation item with the three options above. If you want option 3 implemented so Holberg can test with it, it is a small change, but I would only do it with that requirement in place.
 
