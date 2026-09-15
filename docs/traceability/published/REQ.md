@@ -22,13 +22,19 @@
 
 # 1.0 Input: Cadwell EEG recordings from around 2020 onward _(REQ001)_ {#REQ001}
 
-The program shall read EEG recordings produced by Cadwell EEG software from
-around the year 2020 onward (Cadwell Arc / Easy III family). These
-recordings are stored as SQLite database files (the `.ezdata` family) whose
-outer structure is readable with a standard SQLite library and whose inner
+The program shall read EEG recordings produced by Cadwell Arc EEG software
+(recordings from around 2020 onward). A recording is a "CadLink" study
+export: a folder holding, under `CadLink/Data/`, a set of SQLite 3
+databases per record - `<record>-<timestamp>.ezdataindex` (frame index and
+track definition), `<record>-<timestamp>-<n>.ezdata` (EEG waveform frames),
+`<record>-<timestamp>.ezevents` (events), `<record>.mediadb` and
+`<record>-<n>.mediadb` (audio/video frames) - plus encrypted catalogue
+databases under `CadLink/Databases/` that the program shall not need. The
+outer structure is readable with a standard SQLite library; the inner
 waveform encoding is proprietary. The set of supported Cadwell software
-versions shall be documented and each supported version shall be represented
-by at least one test recording.
+versions and storage schema versions (SchemaUpdateLog) shall be documented
+and each supported version shall be represented by at least one test
+recording.
 
 *Parent links: NEED001*
 

@@ -17,13 +17,9 @@ Thumbs.db
 .idea/
 .vscode/
 
-# Test EEG data is supplied out of band and must never be committed
-# (patient data). Keep only checksums and derived metadata in the repo.
+# Clinical test EEG data (real patients) lives only here and is never committed.
+# Anonymised/synthetic test data may be committed under testdata/public/.
 testdata/private/
-*.ezdata
-*.ezdata3
-*.edf
-*.EDF
 
 # Doorstop HTML publish output (regenerate: doorstop publish all docs/traceability/published/html)
 docs/traceability/published/html/

@@ -163,3 +163,111 @@ From the Arc API docs [V] — these entities exist in the record; **where they l
 - Cadwell Arc 3.1 API announcement (snippets): https://www.cadwell.com/eeg/arc-eeg-3-1-software-update/ ; Arc 2.2 release notes: https://www.oit.va.gov/Services/TRM/files/Arc_2_2_Release_Notes.pdf ; Arc Essentia storage rates: https://cadwell.marketing/arc-essentia-eeg/ (snippets)
 - Easy III Operator's Manual (blocked): https://cdn.shopify.com/s/files/1/1046/1086/files/Cadwell-Easy-III-Operators-Manual.pdf
 - Brainstorm forum requests (snippets): https://neuroimage.usc.edu/forums/t/ez3-cadwell-file-import/28487 ; https://neuroimage.usc.edu/forums/t/eeg-files-unsupported/41226
+
+---
+
+# Findings from test export 1 (added 2026-09-15, verified on the files in `testdata/public/cadwell-export1`)
+
+Everything below was read directly from the files with Python's `sqlite3`
+and `struct`; `tools/cadwell_inspect.py` reproduces the inventory.
+
+## What a CadLink study export looks like
+
+```
+<name>.export                      1-byte marker file
+CadLink/StandAlone.txt             install marker
+CadLink/Databases/Core.db, EEG.db, Logging.db     encrypted catalogue DBs (not SQLite-readable)
+CadLink/ExternalData/<patient> <date>/<same>.arc, .flex   37-byte text files holding the record GUID
+CadLink/Data/<record>-<yyyy-mm-dd-hh-mm-ss>.ezdataindex   frame index + track definition (SQLite)
+CadLink/Data/<record>-<yyyy-mm-dd-hh-mm-ss>-1.ezdata      EEG waveform frames (SQLite) <- the data
+CadLink/Data/<record>-<yyyy-mm-dd-hh-mm-ss>.ezevents      events (SQLite)
+CadLink/Data/<record>.mediadb, <record>-1.mediadb          video/audio frame index + frames (SQLite)
+CadLink/Data/Data Integrity Report (...).pdf
+```
+
+So the ".ezdata is a SQLite database" statement is right but incomplete:
+the study is split into an **index** database, one or more numbered
+**data** databases that the index points to by file name
+(`FrameInfo.JoinDatabase`), an **events** database and **media**
+databases, all SQLite 3, all sharing the same sync/change-tracking
+boilerplate (`synctable`, `syncrowdata`, `*SyncRowData`, `SchemaUpdateLog`).
+The catalogue databases are encrypted and are not needed.
+
+## `.ezdataindex` (schema 2.5, upgrades dated 2015-2018)
+
+- `MediaHeader`: `MediaDescriptor` = u32 tag `0x015125ca`, u32 0, then
+  three length-prefixed ASCII GUIDs (patient id, record id, author/user id -
+  the JSON `RecordInfo` in the mediadb names them `PatientId`, `RecordId`,
+  `AuthorId`), then 8 bytes. `TrackDefinitionMap` = 32 bytes starting with
+  tag `0xbb347891` (the same tag that introduces arrays elsewhere).
+- `TrackInfo` (one row, `Offset` 0, `Track` 0, 2628-byte blob): 44-byte
+  header (`35be0920 …`, contains a GUID and `0x0a2c` = 2604 = payload
+  length, then tag `0xbb347891` and count `0x20` = 32), followed by **32
+  channel records of 81 bytes**: 8-byte tag `ab792193de4225a2` + 16 × u32 +
+  1 byte. Fields: [1] and [3] = channel number 1..32, [4] = amplifier input
+  number (a permutation of 1..32: 4, 2, 9, 11, 16, 10, 22, 17, 3, 1, 7, 5,
+  14, 6, 20, 13, 25, 23, 18, 12, 15, 8, 29, 21, 24, 19, 30, 26, 31, 27, 32,
+  28), [9] = `0x53673fbf` (constant, meaning unknown), [10] = **250 =
+  sampling rate**, [12] = float32 **0.32909** (constant per channel;
+  probably the µV-per-LSB resolution or a gain - to be confirmed against
+  decoded samples), [2] = 2028 on channel 28 only, others 0. No channel
+  labels anywhere in this blob.
+- `FrameInfo`: one row per **1-second frame**: `Offset` 0..44 (frame
+  number), `TimeStamp` (UTC, 100-ns resolution; frame 0 at
+  13:37:50.2763068, later frames drift by a few ms), `Track` 0, `Status` 1,
+  `FileIndex` 1, `JoinDatabase` = `<record>-<timestamp>-1.ezdata`, and a
+  `FrameKey` GUID that should be the `DataKey` of the blob in the `.ezdata`
+  file (the same pairing was verified for the video mediadb).
+- `GapInfo`: empty here (`Track, StartOffset, EndOffset, StartTime,
+  EndTime, GapVerified`) - this is where recording gaps go (REQ019).
+- `PcTimeSync`: PC clock vs. amplifier clock at start and end (sub-ms
+  difference here).
+- `MiscInfo`: `AMPLAYOUT` (1042 bytes: header with a GUID, then tag
+  `0xbb347891`, count 0x24 = 36, then 36 records of 20 bytes tagged
+  `0xc489248b`, index 0x50c3 then 1..35 - an input/connector map, no
+  labels); `EEGRECORDINFO` twice (588 bytes each, 8 bits/byte entropy,
+  i.e. **encrypted**; probably the patient/record fields).
+
+## `.ezevents` (schema 2.5)
+
+`Events(EventID, EventType, UserID, Text, StartTime, EndTime, StartOffset,
+EndOffset, LastModifiedBy, Attributes, LastUpdateTime, Priority, Display,
+EventManipulation, Deleted, SourceApplicationId, WhenEnteredTime)`.
+`StartOffset`/`EndOffset` are **.NET ticks (100 ns) relative to the record
+origin** = the time stamp of frame 0 (`PaperSpeedEvent` sits at offset 0 =
+13:37:50.2763068; `Start Recording` is at -78850 ticks = 7.9 ms before it;
+`Stop Recording` at 460556809 ticks = 46.06 s, matching the 46 s of the
+integrity report and 45 frames + 1). Event types seen: `RecordingOnOff`,
+`PaperSpeedEvent`, `ReviewedDataEvent`, `MontageEvent`, `BatteryEvent`,
+`VideoRecordingOnOff`, `SwitchCamera`, `LiveAmpConfigurationData`,
+`AmpConfigurationData` ("32ch 250hz"). `Attributes` blobs are a Cadwell
+key/typed-value serialisation (tag `0x937879bb`, count, then
+`name`, `.NET type name`, value); the `MontageEvent` blob contains the
+montage name and an amp/label-set name (`LB161EKG`) but the trace
+definitions are numeric. **Channel labels (E1, Fp1, ...) were not found in
+any readable file**; they may live in the encrypted `EEG.db` or be implied
+by the amplifier layout name. For now the native EDF/text exports supply
+them.
+
+## `.mediadb` (schema 1.2)
+
+`<record>.mediadb` indexes video frames (`FrameInfo(FrameKey, TimeStamp,
+Track, Status, JoinDatabase)`, tracks 1 and 3 = the two cameras;
+`MiscInfo` JSON: `AVChannelStorageDefinitionMiscInfo`,
+`MediaDeviceSettingsMiscInfo`, `RecordInformationMiscInfo`) and
+`<record>-1.mediadb` holds the frames (`FrameInfo(DataKey, Data)`, 52
+blobs, 70 B to 393 kB, each starting with a 48-byte header `d0ca6245 …`).
+The `.ezdata` data file presumably has the same `FrameInfo(DataKey, Data)`
+layout with one blob per 1-second EEG frame.
+
+## Open questions that the missing `.ezdata` file will answer
+
+1. Blob layout of an EEG frame: header, sample type (int16/int32/float),
+   channel interleaving, and whether `WaveformNonlinearDeltaCompression`
+   is used (constant blob size ≈ 250 × 32 × 2 or × 4 bytes + header would
+   mean no compression).
+2. Physical scaling: does float32 `0.32909` from `TrackInfo` convert raw
+   units to µV, and does the result match the text export (mV, 4
+   decimals) and the EDF export?
+3. Whether the first frame's time stamp or the `Start Recording` event
+   defines the EDF start time (7.9 ms apart here).
