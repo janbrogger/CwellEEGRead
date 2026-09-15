@@ -2,10 +2,10 @@
 # Session `adede7d2-9fc1-585c-a838-bea822978308`
 
 - Started (UTC): 2026-09-15T07:29:43.798Z  
-- Last event (UTC): 2026-09-15T07:54:30.929Z (span 24 min)  
+- Last event (UTC): 2026-09-15T08:18:21.937Z (span 48 min)  
 - User: jan@brogger.no; source: claude-code-remote; branch: `claude/zen-lovelace-vq1to3`  
 - Models: claude-fable-5-1; Claude Code 2.1.272  
-- Prompts: 2; transcript: transcript.jsonl (1.7 MB)
+- Prompts: 3; transcript: transcript.jsonl (3.7 MB)
 
 This file is derived from the transcript for readers without an LLM. Prompts are verbatim; responses are the assistant's text messages (tool calls and their output are only summarised - see the JSONL for those).
 
@@ -68,4 +68,42 @@ All seven parts are done and pushed to `claude/zen-lovelace-vq1to3` in janbrogge
 - Several primary sites (git.ista.ac.at, mathworks.com, bdsp.io) were blocked by the proxy, so the agents used mirrors and search snippets and marked those claims.
 
 **Next step** is on your side: supply one or more Cadwell studies with their native EDF and CSV exports as described in `testdata/README.md`, noting the export settings you chose.
+
+
+## Prompt 3 - 2026-09-15 08:10:38 UTC
+
+```text
+OK, I now have supplied one cadwell test data file. It is committed under testdata/public/cadwell-export1, and is just noise data (no real patient data) but it has: a native EDF exported in subfolder /edf, a type of native export in subfolder native-export with a subfolder that the Cadwell system generated automatically called CadLink, and then a folder called "test" which contains the same EEG data exported as tab-delimited text. Do a git pull and investigate those files.
+```
+
+_Tools used in this turn: Bash ×19, Read ×10_
+
+### Response 3
+
+**[08:10 UTC]**
+
+I'll pull the branch and inventory the new test data first.
+
+**[08:18 UTC]**
+
+Pushed. The `.gitignore` now excludes only `testdata/private/`; the earlier global `*.edf` and `*.ezdata` rules were mine and they silently kept two of your files out of your commit.
+
+**Two files are missing from the export and I need them**
+
+- `testdata/public/cadwell-export1/edf/test.edf` (the native EDF+; only its `Metadata.json` side-car arrived)
+- `testdata/public/cadwell-export1/native-export/CadLink/Data/56659ea9-…-2025-10-31-13-37-42-1.ezdata` (the EEG waveform frames; every row of the frame index points at it)
+
+After `git pull`, a plain `git add` of those two paths will work now. Without the `.ezdata` file there is no waveform blob to decode, so that is the next step.
+
+**What the export taught us** (details in `docs/research/cadwell-file-format.md` and `testdata/public/cadwell-export1/README.md`, reproducible with `tools/cadwell_inspect.py`)
+
+- A study is not one `.ezdata` but a family of SQLite files under `CadLink/Data/`: an `.ezdataindex` (frame index and track definition), numbered `.ezdata` data files it references by name, an `.ezevents` file, and `.mediadb` files holding video. `Core.db`, `EEG.db` and `Logging.db` are encrypted and not needed.
+- The index has one row per 1-second frame with a UTC time stamp, a frame number and the GUID key of the blob in the data file. `GapInfo` is where gaps go, empty here.
+- The `TrackInfo` blob decodes into 32 channel records: channel number, amplifier input number, 250 Hz, and a float 0.32909 per channel that is probably the µV-per-LSB resolution. Channel labels are not in any readable file. They may sit in the encrypted `EEG.db`, so the native exports supply them for now.
+- Event offsets are .NET 100-ns ticks from the first frame's time stamp. Stop Recording sits at 46.06 s, matching the integrity report.
+- The video frames were exported despite "Video" being unchecked, 4.9 MB of them.
+
+**Text export quirks** that the equivalence test must handle: decimal comma, unit mV with 4 decimals, 1-second time stamps with 248 to 251 rows each, `Cz` identically zero (referential to Cz), and a header line listing 35 labels for 32 columns, so labels for the seven non-EEG inputs must come from the EDF instead.
+
+REQ001 was rewritten for the real file family and the test suite still passes.
 

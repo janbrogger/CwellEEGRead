@@ -19,6 +19,7 @@
  * 17 Reproducible development environment (REQ017)
  * 18 Clear failure on unsupported input (REQ018)
  * 19 Recording gaps and discontinuities (REQ019)
+ * 20 Sample clock and resampling policy (REQ020)
 
 # 1.0 Input: Cadwell EEG recordings from around 2020 onward _(REQ001)_ {#REQ001}
 
@@ -124,11 +125,17 @@ An automated test shall prove that the program's EDF export is equivalent
 to the native Cadwell EDF export of the same recording: (1) the same set of
 channels, matched by label after the documented mapping; (2) identical
 sampling rate per channel; (3) identical recording start time; (4) the
-same number of samples per channel, allowing a documented tolerance for
-edge handling at record boundaries; (5) sample-wise physical values equal
-within a tolerance not larger than one digital quantisation step of the
-native export; (6) the same set of annotations (onset, duration, text).
-Any tolerance actually used shall be justified in the test's documentation.
+same set of annotations (onset, duration, text); (5) sample values equal
+within one digital quantisation step of the native export after alignment.
+Alignment is necessary because the native EDF export resamples the raw
+stream to exactly the nominal rate by linear interpolation (observed: one
+sample dropped every 1224 samples, the neighbouring samples interpolated),
+whereas the raw data and the native text export keep every sample. The
+test shall therefore either compare against the program's own
+vendor-compatible resampling mode (REQ020) sample by sample, or compare the
+raw-fidelity output segment by segment with the alignment and the
+interpolated samples reported explicitly. Any tolerance actually used shall
+be justified in the test's documentation.
 
 *Parent links: NEED003*
 
@@ -266,4 +273,22 @@ segment so that gap handling differences are explicit rather than hidden.
 *Parent links: NEED003*
 
 *Child links: TST015*
+
+# 20 Sample clock and resampling policy _(REQ020)_ {#REQ020}
+
+The Cadwell amplifier delivers a variable number of samples per one-second
+frame (248, 250 or 251 observed at a nominal 250 Hz), i.e. its sample clock
+runs about 0.08 % fast relative to the frame time stamps. By default the
+program shall preserve every raw sample unchanged ("raw fidelity"), write
+the nominal sampling rate to the EDF header, and report the effective rate
+(samples divided by frame-clock duration) and the accumulated drift in the
+conversion report. A command-line option shall alternatively reproduce the
+vendor's behaviour ("vendor-compatible"): resample to exactly the nominal
+rate by linear interpolation so that the output matches the native EDF
+export sample by sample. The chosen policy shall be recorded in the EDF
+header's recording-additional field.
+
+*Parent links: NEED002, NEED003*
+
+*Child links: TST003*
 

@@ -25,7 +25,7 @@ the Morgoth EEG foundation model, EEGLAB, FieldTrip, MNE-Python and others -
 consume EDF/EDF+ files. Converting the proprietary Cadwell format to EDF is
 therefore the upstream enabler for every intended research use.
 
-*Child links: REQ002, REQ005*
+*Child links: REQ002, REQ005, REQ020*
 
 # 3.0 Trustworthy conversion _(NEED003)_ {#NEED003}
 
@@ -33,7 +33,7 @@ Research results must not be biased by conversion errors. The converted data
 must be demonstrably equivalent to what the vendor's own application exports,
 and this equivalence must be proven by automated tests rather than asserted.
 
-*Child links: REQ003, REQ004, REQ005, REQ007, REQ008, REQ009, REQ010, REQ018, REQ019*
+*Child links: REQ003, REQ004, REQ005, REQ007, REQ008, REQ009, REQ010, REQ018, REQ019, REQ020*
 
 # 4.0 Reproducible, traceable, LLM-assisted development _(NEED004)_ {#NEED004}
 

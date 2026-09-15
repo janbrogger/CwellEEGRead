@@ -21,14 +21,12 @@ constrains use of `uses/Morgoth`, not this repository's code.
 
 ## What the notes imply for the next step
 
-1. Obtain the test recordings (`testdata/README.md`): one Cadwell study
-   (the whole exported study folder, not just one `.ezdata`), its native EDF
-   export and its native CSV/text export, with the export settings written
-   down (reference, filters, sample rate, time range).
-2. First analysis script: open each `.ezdata` read-only with `sqlite3`,
-   list tables and `SchemaUpdateLog`, dump `MediaHeader`, histogram
-   `length(Data)` per `DataKey` in `FrameInfo` (constant size means
-   uncompressed fixed frames; varying size means delta compression), then
-   trial-decode one frame against the native CSV values.
-3. Decide gap handling for EDF+ (EDF+D vs padded EDF+C) once we see how the
-   native export handles discontinuities (REQ019).
+1. Done: the first public export (`testdata/public/cadwell-export1`) is
+   decoded by `cwelleegread/ezdata.py` and matches the vendor's text export
+   exactly. See the "Findings from test export 1" section of the format
+   note.
+2. Next: an EDF writer (REQ002-REQ005, REQ020) and the CLI (REQ006), then a
+   recording with real electrodes, gaps and events to check the microvolt
+   scale, `GapInfo` and the label question.
+3. Decide gap handling for EDF+ (EDF+D vs padded EDF+C) once a recording
+   with a gap is available (REQ019).

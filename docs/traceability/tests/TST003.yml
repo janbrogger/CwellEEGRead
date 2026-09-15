@@ -5,13 +5,17 @@ header: |
 level: 3.0
 links:
 - REQ003: kVnH7GDib_ckBl6RmquYOxAQgVXXkpRtbp_OWhxCh7E=
-- REQ008: dn3ljy0sKlKvUMpyW2-K8IGTYbKVPvb6ZWSbtQQF9Pk=
+- REQ008: UVzmqjFssLTAogiX_eYrnZn-IQ0l4uchb8j3gxurwdw=
+- REQ020: vviP3C0NNvwhhwEY_rTvHM-NakzZVRok8RpZDKgtbeI=
 normative: true
 ref: ''
-reviewed: AKpvNkT9QlNubQfMD5sxX4H8eDvx6gBRqYhyvpUFRx0=
+reviewed: u5vYgSaeU9Xlas7JjJo4E7PBQ3X_GY9joWDNZ7vVQlQ=
 text: |
-  For each test recording and each channel compare all physical sample values
-  of our EDF export with the native EDF export. Pass if the number of samples
-  matches (within the documented edge tolerance) and the maximum absolute
-  difference does not exceed one digital quantisation step of the native
-  export. Report the maximum and mean difference per channel.
+  For each test recording and each channel compare the physical sample values
+  of our EDF export with the native EDF export. In vendor-compatible mode
+  (REQ020) the sample counts must match and the maximum absolute difference
+  must not exceed one digital quantisation step of the native export. In raw
+  fidelity mode, align segment by segment (the native export drops one
+  sample by interpolation at a regular interval), require the same bound on
+  every aligned sample, and report the drop positions and the number of
+  interpolated samples. Report the maximum and mean difference per channel.

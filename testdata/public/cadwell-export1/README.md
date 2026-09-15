@@ -9,7 +9,7 @@ is committed on purpose: it contains no real patient data.
 |---|---|---|
 | `export-screen1..9.png` | screenshots of the export dialogs | text export: unit mV, header "Channel Name", anonymise on, 14:37:50-14:38:20; EDF+ export: all 32 channels, anonymise off, 14:37:50-14:38:34; study export: EEG data only, video unchecked, integrity report included |
 | `edf/Metadata.json` | side-car written by the EDF+ export | `EDFType: EDFPlusContinuous`, events included, patient info included, `AssociatedFiles: ["test.edf"]`, times as microseconds since the Unix epoch (UTC) |
-| `edf/test.edf` | **missing** - blocked by an earlier `*.edf` rule in `.gitignore` (fixed); please `git add` it | the native EDF+ export |
+| `edf/test.edf` | the native EDF+C export, 32 signals, 44 s, 17.17 µV/step | resampled to exactly 250/s (see research note) |
 | `test/test-eeg20251031.txt` | native tab-delimited text export | see below |
 | `native-export/test-eeg311025.export` | 1-byte manifest ("A") that Arc uses to recognise an export folder | |
 | `native-export/CadLink/StandAlone.txt` | three base64/hex tokens and `True` | CadLink stand-alone install marker; not needed |
@@ -17,7 +17,7 @@ is committed on purpose: it contains no real patient data.
 | `native-export/CadLink/Databases/Core.db`, `EEG.db`, `Logging.db` | CadLink catalogue databases | **encrypted** (8.0 bits/byte entropy, not SQLite-readable); not needed for waveform data |
 | `native-export/CadLink/Data/<guid>-2025-10-31-13-37-42.ezdataindex` | SQLite: frame index, track definition, amp layout | see `docs/research/cadwell-file-format.md` |
 | `native-export/CadLink/Data/<guid>-2025-10-31-13-37-42.ezevents` | SQLite: 14 events | |
-| `native-export/CadLink/Data/<guid>-2025-10-31-13-37-42-1.ezdata` | **missing** - the EEG waveform frames; blocked by an earlier `*.ezdata` rule in `.gitignore` (fixed); please `git add` it | referenced by every FrameInfo row of the index (`JoinDatabase`) |
+| `native-export/CadLink/Data/<guid>-2025-10-31-13-37-42-1.ezdata` | SQLite: the 45 EEG waveform frames (delta-compressed) | decoded by `cwelleegread/ezdata.py`; `tests/test_ezdata_public.py` proves equality with the text export |
 | `native-export/CadLink/Data/<guid>.mediadb`, `<guid>-1.mediadb` | SQLite: video frame index and 52 video frames (4.9 MB) from the two Hikvision cameras | present although "Video" was unchecked in the export dialog |
 | `native-export/CadLink/Data/Data Integrity Report (...).pdf` | one-page report: 46 s elapsed, start 14:37, stop 14:38 | |
 
