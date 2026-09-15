@@ -2,10 +2,10 @@
 # Session `adede7d2-9fc1-585c-a838-bea822978308`
 
 - Started (UTC): 2026-09-15T07:29:43.798Z  
-- Last event (UTC): 2026-09-15T08:38:44.113Z (span 1 h 9 min)  
+- Last event (UTC): 2026-09-15T09:30:51.284Z (span 2 h 1 min)  
 - User: jan@brogger.no; source: claude-code-remote; branch: `claude/zen-lovelace-vq1to3`  
 - Models: claude-fable-5-1; Claude Code 2.1.272  
-- Prompts: 4; transcript: transcript.jsonl (4.3 MB)
+- Prompts: 5; transcript: transcript.jsonl (5.1 MB)
 
 This file is derived from the transcript for readers without an LLM. Prompts are verbatim; responses are the assistant's text messages (tool calls and their output are only summarised - see the JSONL for those).
 
@@ -145,4 +145,43 @@ The Cadwell waveform format is decoded, verified against your exports, and pushe
 **Remaining unknowns**: channel labels, constancy of the microvolt scale, the meaning of two record fields, and the time base behind the vendor's 1224:1225 resampling ratio.
 
 Next step on the code side is the EDF writer and the CLI. On your side, a recording with real electrodes, a deliberate pause, and a few technician events would let me check the scale, gap handling and event mapping.
+
+
+## Prompt 5 - 2026-09-15 09:10:36 UTC
+
+```text
+You now have another test dataset, which is real non-patient EEG. Proceed.
+```
+
+_Tools used in this turn: Bash ×35_
+
+### Response 5
+
+**[09:10 UTC]**
+
+Pulling and taking inventory of the new dataset.
+
+**[09:30 UTC]**
+
+Both new datasets are handled and pushed. The converter now exists as a package with a command line, and the test suite has grown to 22 passing tests.
+
+**What the second recording (Essentia, 500 Hz, 16 min, real EEG) showed**
+
+- Every frame holds exactly 500 samples, so the surplus-sample issue is specific to the 250 Hz Apollo recording.
+- The amplifier-input layout is the same physical headbox map. After "Øyne lukket", the highest alpha fraction sits on inputs 20 to 25, blinks on inputs 1 to 4, input 15 is the zero Cz reference, and input 26 shows 68 beats per minute, so it is the ECG.
+- Track 1 is a low-rate auxiliary track with a shorter frame header, not EEG. The parser now finds channel blocks by tag instead of fixed offsets.
+
+**What the third recording (Essentia, 500 Hz, 20 min, with a break) showed**
+
+- The break is exactly frame numbers 328 to 337 missing, 10 s, with one `GapInfo` row. The vendor EDF keeps the time axis continuous and writes digital zero for those seconds. Raw mode now does the same and adds a gap annotation.
+- The vendor text export equals the decoder for all 16000 by 32 samples within its rounding. Its bound on the scale constant overlaps the one from export 1, so 0.72998046 µV per unit holds for both headboxes and both rates.
+- The vendor EDF starts at frame 30 plus the PcTimeSync offset, confirming the start-time rule from export 1.
+- That vendor EDF is high-pass filtered at roughly 0.16 to 0.2 Hz, unlike the export-1 EDF. Sample equivalence against it is impossible, so the text export is the raw reference and TST003 now checks the spectral ratio first.
+- Essentia labels differ for the non-EEG inputs. The AMPLAYOUT blob carries an amplifier-type code, 5 for Apollo and 1 for Essentia, which now selects the label table.
+
+**The converter**
+
+`python -m cwelleegread convert <export> out.edf` writes EDF+C with our own writer, since pyedflib truncated annotations and dropped the sub-second start. Raw mode keeps every sample and pads gaps. Vendor mode reproduces the Cadwell EDF of export 1 for all 11000 samples within one quantisation step, with the same labels, ranges, start time and annotations. The vendor's rule turned out to be fixed-pattern decimation, dropping the last frame, spacing removals at ceil(N_in/(S+1)) and smoothing two samples at each removal.
+
+**Open items** are a user-chosen time range, EDF+D output, anonymisation beyond the header, and parsing electrode names from the montage event blob instead of the table. Two questions for you: whether export 3's EDF was made with a low-cut filter active, and which headbox is more common in your archive.
 

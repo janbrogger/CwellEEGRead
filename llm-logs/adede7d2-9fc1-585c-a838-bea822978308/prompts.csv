@@ -12,3 +12,4 @@ This is a long and complicated multi-part prompt, so you may prefer to use agent
 2,2026-09-15,07:37:46,"I think you are in the wrong repo. We only want to *read* the SysRevReproEEG repo, and the work itself should be in the CwellEEGRead repo. Verify."
 3,2026-09-15,08:10:38,"OK, I now have supplied one cadwell test data file. It is committed under testdata/public/cadwell-export1, and is just noise data (no real patient data) but it has: a native EDF exported in subfolder /edf, a type of native export in subfolder native-export with a subfolder that the Cadwell system generated automatically called CadLink, and then a folder called ""test"" which contains the same EEG data exported as tab-delimited text. Do a git pull and investigate those files."
 4,2026-09-15,08:25:56,Do a git pull. The actual EDF files are now in the repo.
+5,2026-09-15,09:10:36,"You now have another test dataset, which is real non-patient EEG. Proceed."
