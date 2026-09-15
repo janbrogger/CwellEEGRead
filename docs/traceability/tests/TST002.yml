@@ -1,0 +1,18 @@
+active: true
+derived: false
+header: |
+  Header equivalence with native EDF export
+level: 2.0
+links:
+- REQ003: kVnH7GDib_ckBl6RmquYOxAQgVXXkpRtbp_OWhxCh7E=
+- REQ004: vMquSnJ80jANDi4cEbdq6o_To2YiNCheLAs3YO9gz1c=
+- REQ008: dn3ljy0sKlKvUMpyW2-K8IGTYbKVPvb6ZWSbtQQF9Pk=
+normative: true
+ref: ''
+reviewed: buUcYkS2W-PrGn6MoB1DF7XGw__S8SA6cnAXNM5gF7g=
+text: |
+  For each test recording compare our EDF header with the native Cadwell EDF
+  export: channel labels (after the documented mapping), sampling rates,
+  physical dimensions, physical/digital ranges, start date/time, patient and
+  recording identification. Pass if all match exactly, except fields that the
+  mapping table documents as intentionally different.

@@ -1,0 +1,14 @@
+active: true
+derived: false
+header: |
+  A standard interchange format for downstream analysis
+level: 2.0
+links: []
+normative: true
+ref: ''
+reviewed: -3b22MT9D16eSDE9DvFsiQ809NMm3_W9zT3RSJOoJA4=
+text: |
+  Downstream analysis tools - the SCORE-AI automated EEG interpretation system,
+  the Morgoth EEG foundation model, EEGLAB, FieldTrip, MNE-Python and others -
+  consume EDF/EDF+ files. Converting the proprietary Cadwell format to EDF is
+  therefore the upstream enabler for every intended research use.

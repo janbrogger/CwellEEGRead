@@ -1,0 +1,13 @@
+active: true
+derived: false
+header: |
+  Trustworthy conversion
+level: 3.0
+links: []
+normative: true
+ref: ''
+reviewed: RvD-6a6d_WOKUUx5CuBdfvRWBP3ZpbmhlSuyqq55XL4=
+text: |
+  Research results must not be biased by conversion errors. The converted data
+  must be demonstrably equivalent to what the vendor's own application exports,
+  and this equivalence must be proven by automated tests rather than asserted.

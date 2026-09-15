@@ -1,0 +1,19 @@
+active: true
+derived: false
+header: |
+  Test data set supplied out of band
+level: 7.0
+links:
+- NEED003: RvD-6a6d_WOKUUx5CuBdfvRWBP3ZpbmhlSuyqq55XL4=
+- NEED005: rgpwcKKWZLJvE89ZMLt4BbBunAJ1iSn14Rv7ysRioEo=
+normative: true
+ref: ''
+reviewed: cbAGdF9HkALJWFRp7b0jDbXnuxzctvfPAlPHt8U7OGE=
+text: |
+  Development shall use a small set of test EEGs supplied outside the
+  repository, each consisting of (a) the recording in native Cadwell format,
+  (b) the same recording exported to EDF by the native Cadwell application
+  and (c) the same recording exported to CSV/text by the native Cadwell
+  application. The test data shall live under `testdata/private/` (gitignored);
+  the repository shall contain only a manifest with file names, sizes,
+  SHA-256 checksums and the Cadwell software version that produced them.

@@ -1,0 +1,4 @@
+# Development tooling (installed into the gitignored .venv by ./setup.sh)
+doorstop==3.2
+pytest>=8
+pyyaml>=6

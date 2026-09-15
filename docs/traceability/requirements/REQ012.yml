@@ -1,0 +1,16 @@
+active: true
+derived: false
+header: |
+  LLM session provenance
+level: 12.0
+links:
+- NEED004: D6b_Or4VF1oKro2qBKf5hjPudugn6Oftb-fI9O950ic=
+normative: true
+ref: ''
+reviewed: xyfh3HrzH0Gf4YbqO4xXpmTV0lWagPLXciSxBpavNnc=
+text: |
+  Every Claude Code session that touches the repository shall be archived
+  automatically into `llm-logs/<session_id>/` (full transcript, prompts as
+  CSV, prompts and responses as Markdown) and indexed in
+  `llm-logs/sessions.csv`, without manual steps, so that the complete history
+  of prompts and responses is available in the repository.

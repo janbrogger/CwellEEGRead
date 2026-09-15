@@ -1,0 +1,17 @@
+active: true
+derived: false
+header: |
+  Command-line behaviour
+level: 6.0
+links:
+- REQ006: 6S-SXdWXuL0OShDbdbJe9Mu1B6yTg-wq8HI0nfDHDGI=
+- REQ018: wQVgMUUtlC-30X8CeckAhFCCrvHbiaMS85ZmgWIbnIQ=
+normative: true
+ref: ''
+reviewed: g16tsO6UBlNUFEYoQ8H-uJMLVQ3QXswuGCSlJ3TYNDY=
+text: |
+  Run the CLI on a valid recording, on a non-existent path, on a corrupt
+  file and on an unsupported version. Pass if the valid run returns exit
+  code 0 and a valid JSON report when requested, and every invalid run
+  returns a non-zero exit code, prints a diagnostic and leaves no output
+  file behind.

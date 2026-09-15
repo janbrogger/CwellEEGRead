@@ -1,0 +1,13 @@
+active: true
+derived: false
+header: |
+  Open-source licensing that permits reuse of prior work
+level: 7.0
+links: []
+normative: true
+ref: ''
+reviewed: g9Cs3aDl-6qaCjAt1LXc2Hye8BFDWx7d_j_oJPiq0gg=
+text: |
+  Reading the inner Cadwell data format may require porting code from the
+  BioSig toolbox (GPL-licensed). The project's licence must allow that reuse
+  while remaining usable by the research community.

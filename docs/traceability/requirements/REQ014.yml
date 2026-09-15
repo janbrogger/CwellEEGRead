@@ -1,0 +1,16 @@
+active: true
+derived: false
+header: |
+  Anonymisation option
+level: 14.0
+links:
+- NEED005: rgpwcKKWZLJvE89ZMLt4BbBunAJ1iSn14Rv7ysRioEo=
+normative: true
+ref: ''
+reviewed: 5Tefbax_IpyGRA0ctrf7M-VXdPjRGFeiH1Khn6Cj4fE=
+text: |
+  The program shall offer a command-line option that replaces the patient
+  identification fields in the EDF header (name, patient code, birth date,
+  sex) with the values given by the user or with anonymous placeholders, and
+  that removes patient-identifying text from exported annotations, without
+  altering the signal data.

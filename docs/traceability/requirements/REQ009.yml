@@ -1,0 +1,17 @@
+active: true
+derived: false
+header: |
+  Proven equivalence with the native CSV/text export
+level: 9.0
+links:
+- NEED003: RvD-6a6d_WOKUUx5CuBdfvRWBP3ZpbmhlSuyqq55XL4=
+normative: true
+ref: ''
+reviewed: XhcrLRa2XJixcg-7q-geNLsxLbyrtEX83njZDil9jQs=
+text: |
+  An automated test shall prove that the physical sample values in the
+  program's EDF export are equal, within the precision of the text export,
+  to the values in the native Cadwell CSV/text export of the same recording,
+  channel by channel, over the full common time range. The test shall also
+  verify that the channel names in the text export map one-to-one onto the
+  EDF channel labels.

@@ -1,0 +1,14 @@
+active: true
+derived: false
+header: |
+  Reproducible development environment
+level: 17.0
+links:
+- NEED004: D6b_Or4VF1oKro2qBKf5hjPudugn6Oftb-fI9O950ic=
+normative: true
+ref: ''
+reviewed: jG2yXltPMpWApXr7QezH8yftzxHJl_jHvYeUyRcwg9M=
+text: |
+  All Python tooling shall be installed into a gitignored virtual environment
+  from pinned requirement files by a single `setup.sh` script, so that a
+  fresh checkout can be brought to a working state with one command.

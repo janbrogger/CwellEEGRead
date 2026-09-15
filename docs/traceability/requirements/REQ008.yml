@@ -1,0 +1,20 @@
+active: true
+derived: false
+header: |
+  Proven equivalence with the native EDF export
+level: 8.0
+links:
+- NEED003: RvD-6a6d_WOKUUx5CuBdfvRWBP3ZpbmhlSuyqq55XL4=
+normative: true
+ref: ''
+reviewed: TJGCL6fvtMQ5YKXjaN4hyJPJHwQYszZtniwRw23K1Y8=
+text: |
+  An automated test shall prove that the program's EDF export is equivalent
+  to the native Cadwell EDF export of the same recording: (1) the same set of
+  channels, matched by label after the documented mapping; (2) identical
+  sampling rate per channel; (3) identical recording start time; (4) the
+  same number of samples per channel, allowing a documented tolerance for
+  edge handling at record boundaries; (5) sample-wise physical values equal
+  within a tolerance not larger than one digital quantisation step of the
+  native export; (6) the same set of annotations (onset, duration, text).
+  Any tolerance actually used shall be justified in the test's documentation.

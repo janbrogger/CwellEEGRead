@@ -1,0 +1,14 @@
+active: true
+derived: false
+header: |
+  Reproducible, traceable, LLM-assisted development
+level: 4.0
+links: []
+normative: true
+ref: ''
+reviewed: D6b_Or4VF1oKro2qBKf5hjPudugn6Oftb-fI9O950ic=
+text: |
+  The software is developed with large-language-model assistance. Every prompt
+  and session transcript must be archived in the repository, and requirements,
+  design decisions and tests must be traceable to each other, so that a reader
+  without access to an LLM can audit how and why the software came to be.

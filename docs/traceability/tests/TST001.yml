@@ -1,0 +1,15 @@
+active: true
+derived: false
+header: |
+  EDF structural validity
+level: 1.0
+links:
+- REQ002: -jQSDCLRm9FL-H7GgPx0R9PEpjGiBR94gF8DNwWXyOA=
+- REQ010: Dvv2VHiuW9Q32NyjEhkKDYQRHZv_veCXJ6pKvWFfMCo=
+normative: true
+ref: ''
+reviewed: cAG0vyVXmeraqqmFhFctCaVMfFeVH814LKh85Xp4PeA=
+text: |
+  Convert each test recording and open the result with two independent EDF
+  readers (pyedflib and MNE-Python). Pass if both read the file without
+  header warnings and report the expected number of channels and duration.

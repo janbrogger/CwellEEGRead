@@ -1,0 +1,29 @@
+# Python virtual environment for Doorstop and the converter (recreate with ./setup.sh)
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+build/
+dist/
+
+# Doorstop / editor scratch
+docs/traceability/**/*.bak
+.doorstop-cache/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Test EEG data is supplied out of band and must never be committed
+# (patient data). Keep only checksums and derived metadata in the repo.
+testdata/private/
+*.ezdata
+*.ezdata3
+*.edf
+*.EDF
+
+# Doorstop HTML publish output (regenerate: doorstop publish all docs/traceability/published/html)
+docs/traceability/published/html/

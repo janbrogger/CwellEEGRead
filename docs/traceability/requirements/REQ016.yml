@@ -1,0 +1,18 @@
+active: true
+derived: false
+header: |
+  Downstream use scaffolds
+level: 16.0
+links:
+- NEED006: m0kjqwxo_577eQbRuqQo5nqZfb5bgs_ek76_j-0WXYo=
+normative: true
+ref: ''
+reviewed: ktRmJv4CmvQ9cUQa_BMlhetqbzaVeG61f3BLk_NKDMQ=
+text: |
+  The repository shall contain a `uses/` folder with one sub-folder per
+  downstream use: `uses/Morgoth` (scripts to check out, install and run the
+  Morgoth foundation model on converted EDF files), `uses/SCOREAI` (scripts
+  to call an externally supplied SCORE-AI command-line program on converted
+  EDF files and collect its JSON output) and `uses/EEGLAB` (an EEGLAB reader
+  plugin that can be packaged as a zip file). Each sub-folder shall have a
+  README stating its status and prerequisites.

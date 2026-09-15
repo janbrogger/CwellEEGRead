@@ -1,0 +1,19 @@
+active: true
+derived: false
+header: |
+  Command-line interface
+level: 6.0
+links:
+- NEED001: ogWiGqMUKrWu8GuJ-1yWWgBtG0KutZETWRjoz3qwfrA=
+- NEED006: m0kjqwxo_577eQbRuqQo5nqZfb5bgs_ek76_j-0WXYo=
+normative: true
+ref: ''
+reviewed: kBil1sggVD84mVOd2_P_xtyRu3t96oilCC5S2_y3Xqg=
+text: |
+  The program shall provide a command-line interface of the form
+  `cwelleegread convert <cadwell-input> <output.edf>` that converts a single
+  recording, plus a batch mode that converts every recording under a folder.
+  It shall return exit code 0 on success and non-zero on any failure, and
+  shall optionally emit a machine-readable JSON conversion report (input
+  identity, channels, duration, events, warnings) for use by downstream
+  scripts.

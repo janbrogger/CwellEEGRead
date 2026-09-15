@@ -1,0 +1,19 @@
+active: true
+derived: false
+header: |
+  Recording gaps and discontinuities
+level: 19.0
+links:
+- NEED003: RvD-6a6d_WOKUUx5CuBdfvRWBP3ZpbmhlSuyqq55XL4=
+normative: true
+ref: ''
+reviewed: 7tzgiiSq_t5tvX882VODIg4I20Mf9h9lymmfVvismlM=
+text: |
+  Cadwell recordings can contain gaps (paused or interrupted acquisition) and
+  the Cadwell data model records them explicitly. The program shall detect
+  gaps and represent them in the EDF output either as a discontinuous EDF+
+  file (EDF+D) or, when the user requests a continuous file, by padding with
+  a documented fill value and an annotation marking each gap. The chosen
+  representation shall be reported in the conversion report, and the
+  equivalence tests shall compare against the native export segment by
+  segment so that gap handling differences are explicit rather than hidden.

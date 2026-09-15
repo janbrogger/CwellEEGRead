@@ -1,0 +1,16 @@
+active: true
+derived: false
+header: |
+  Sample equivalence with native CSV/text export
+level: 5.0
+links:
+- REQ009: 9PHAlJnYghX3tFXNDsa9_D8OcT08CM4jeqbW2Ptzzq8=
+normative: true
+ref: ''
+reviewed: 2Yu7qs1V3AH8Bd8FV4a2NlQP55Rgn7CU65Ev7UHpve0=
+text: |
+  For each test recording parse the native CSV/text export, map its column
+  names to EDF channel labels, and compare the physical values with our EDF
+  export over the common time range. Pass if the maximum absolute difference
+  is within the numeric precision of the text export and every column maps to
+  exactly one channel.

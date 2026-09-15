@@ -1,0 +1,17 @@
+active: true
+derived: false
+header: |
+  Signal fidelity
+level: 3.0
+links:
+- NEED003: RvD-6a6d_WOKUUx5CuBdfvRWBP3ZpbmhlSuyqq55XL4=
+normative: true
+ref: ''
+reviewed: FdZoCNnByEbo5SeJ7-kVkOCFJro-L8_q_pO2NMDNgAA=
+text: |
+  For every EEG channel in the source recording the program shall preserve:
+  the channel label, the sampling rate, the physical dimension (microvolts),
+  the physical and digital minimum/maximum, and every sample value. No
+  filtering, resampling, re-referencing or truncation shall be applied unless
+  explicitly requested on the command line, and any such processing shall be
+  recorded in the EDF header's prefiltering field.

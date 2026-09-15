@@ -1,0 +1,14 @@
+active: true
+derived: false
+header: |
+  Supported-version coverage
+level: 14.0
+links:
+- REQ001: tkNi9EWPolAYGNuy0o9a-I3ehcOUwSKsHdY9NSLbX9g=
+normative: true
+ref: ''
+reviewed: qHkwy51E6wl6AGAMAs_2pUWtDzJfXlTbfpgTX8Q2dXU=
+text: |
+  Check that the documented list of supported Cadwell software versions is
+  non-empty and that every listed version is represented by at least one
+  recording in the test data manifest.

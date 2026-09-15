@@ -1,0 +1,13 @@
+active: true
+derived: false
+header: |
+  Protection of patient data
+level: 5.0
+links: []
+normative: true
+ref: ''
+reviewed: rgpwcKKWZLJvE89ZMLt4BbBunAJ1iSn14Rv7ysRioEo=
+text: |
+  The test recordings are clinical EEGs of real patients. They must never be
+  committed to the repository, and the converter must offer a way to strip or
+  pseudonymise identifying information when producing research copies.

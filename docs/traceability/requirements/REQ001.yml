@@ -1,0 +1,18 @@
+active: true
+derived: false
+header: |
+  Input: Cadwell EEG recordings from around 2020 onward
+level: 1.0
+links:
+- NEED001: ogWiGqMUKrWu8GuJ-1yWWgBtG0KutZETWRjoz3qwfrA=
+normative: true
+ref: ''
+reviewed: g2nzLHOSWlzCKFSi9n76bcf72YcIjlEnKgILAEQziww=
+text: |
+  The program shall read EEG recordings produced by Cadwell EEG software from
+  around the year 2020 onward (Cadwell Arc / Easy III family). These
+  recordings are stored as SQLite database files (the `.ezdata` family) whose
+  outer structure is readable with a standard SQLite library and whose inner
+  waveform encoding is proprietary. The set of supported Cadwell software
+  versions shall be documented and each supported version shall be represented
+  by at least one test recording.

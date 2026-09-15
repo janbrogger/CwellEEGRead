@@ -1,0 +1,16 @@
+active: true
+derived: false
+header: |
+  Clear failure on unsupported input
+level: 18.0
+links:
+- NEED003: RvD-6a6d_WOKUUx5CuBdfvRWBP3ZpbmhlSuyqq55XL4=
+normative: true
+ref: ''
+reviewed: PIQvhd1ofM7IeqUwOqjfrOiomzghB4wqmIhqzTq86dk=
+text: |
+  When given a recording it cannot fully convert (an unsupported Cadwell
+  version, a corrupt or truncated database, an unknown waveform encoding),
+  the program shall stop with a diagnostic message naming the problem and a
+  non-zero exit code, and shall not leave a partial EDF file that could be
+  mistaken for a complete conversion.

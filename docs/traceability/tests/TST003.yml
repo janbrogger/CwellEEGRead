@@ -1,0 +1,17 @@
+active: true
+derived: false
+header: |
+  Sample equivalence with native EDF export
+level: 3.0
+links:
+- REQ003: kVnH7GDib_ckBl6RmquYOxAQgVXXkpRtbp_OWhxCh7E=
+- REQ008: dn3ljy0sKlKvUMpyW2-K8IGTYbKVPvb6ZWSbtQQF9Pk=
+normative: true
+ref: ''
+reviewed: AKpvNkT9QlNubQfMD5sxX4H8eDvx6gBRqYhyvpUFRx0=
+text: |
+  For each test recording and each channel compare all physical sample values
+  of our EDF export with the native EDF export. Pass if the number of samples
+  matches (within the documented edge tolerance) and the maximum absolute
+  difference does not exceed one digital quantisation step of the native
+  export. Report the maximum and mean difference per channel.

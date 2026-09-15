@@ -1,0 +1,15 @@
+active: true
+derived: false
+header: |
+  Automated test execution
+level: 11.0
+links:
+- NEED004: D6b_Or4VF1oKro2qBKf5hjPudugn6Oftb-fI9O950ic=
+normative: true
+ref: ''
+reviewed: LEwtq5HO-C530pswfZC7kp8_1-K9XdiV64k-QCPQfmQ=
+text: |
+  All equivalence and validity tests shall run under `pytest`. Tests that
+  need the out-of-band test data shall skip with an explicit message when the
+  data is absent, so that the remaining tests can run in continuous
+  integration and on machines without access to patient data.

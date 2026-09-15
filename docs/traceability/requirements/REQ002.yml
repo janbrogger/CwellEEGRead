@@ -1,0 +1,16 @@
+active: true
+derived: false
+header: |
+  Output: EDF/EDF+ files
+level: 2.0
+links:
+- NEED002: -3b22MT9D16eSDE9DvFsiQ809NMm3_W9zT3RSJOoJA4=
+normative: true
+ref: ''
+reviewed: ekIiO7BA9uOM6CAtlS9dNxClnINKyGVOOIfbZQhtQ-4=
+text: |
+  The program shall write European Data Format files conforming to the EDF
+  specification (Kemp et al. 1992) and, when annotations are present, to the
+  EDF+ specification (Kemp & Olivan 2003). Output files shall be readable by
+  at least two independent EDF readers (e.g. EDFbrowser and pyedflib or
+  MNE-Python) without warnings about header validity.

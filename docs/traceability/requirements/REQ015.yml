@@ -1,0 +1,16 @@
+active: true
+derived: false
+header: |
+  Licence compatibility
+level: 15.0
+links:
+- NEED007: g9Cs3aDl-6qaCjAt1LXc2Hye8BFDWx7d_j_oJPiq0gg=
+normative: true
+ref: ''
+reviewed: K4zw7Xvz07ffE2musp5qZze1r_eLMrFQ4lNB8afNQ0U=
+text: |
+  The repository's licence shall be compatible with every third-party source
+  ported into it. If code from the BioSig toolbox (GPL-3.0-or-later) is
+  ported, the repository shall be relicensed under a GPL-compatible licence
+  and the decision shall be recorded in `docs/research/` and in the LICENSE
+  file, including attribution of the original authors.

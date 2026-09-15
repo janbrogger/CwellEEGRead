@@ -1,0 +1,14 @@
+active: true
+derived: false
+header: |
+  Traceability validation
+level: 9.0
+links:
+- REQ013: hQwu6llnDjPZw6vfzScyFmNSGQqYCIDGSZKfStHm63U=
+normative: true
+ref: ''
+reviewed: WlsSNHXv_QACTb_fDiuOyqwXcCDFLaD6zgV9W8cpMXQ=
+text: |
+  Run `doorstop` on `docs/traceability/`. Pass if it reports no errors, every
+  normative REQ item links to at least one NEED item, and every normative REQ
+  item is linked from at least one TST item.

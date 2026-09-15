@@ -1,0 +1,18 @@
+active: true
+derived: false
+header: |
+  Recording and patient metadata
+level: 4.0
+links:
+- NEED003: RvD-6a6d_WOKUUx5CuBdfvRWBP3ZpbmhlSuyqq55XL4=
+- NEED005: rgpwcKKWZLJvE89ZMLt4BbBunAJ1iSn14Rv7ysRioEo=
+normative: true
+ref: ''
+reviewed: r-twRrAjtIwuVqEZzw6b3E_UE8EkrH7SnPNkWT81scY=
+text: |
+  The program shall populate the EDF header with the recording start date and
+  time (to the second), the patient identification fields, the recording
+  identification fields, and per-channel transducer and prefiltering fields,
+  using the values stored in the Cadwell recording. Channel labels shall
+  follow the EDF+ label convention (e.g. `EEG Fp1-Ref`) when the source
+  information allows it, and a documented mapping table shall be maintained.

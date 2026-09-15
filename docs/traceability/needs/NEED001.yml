@@ -1,0 +1,15 @@
+active: true
+derived: false
+header: |
+  Research access to clinical Cadwell EEG
+level: 1.0
+links: []
+normative: true
+ref: ''
+reviewed: ogWiGqMUKrWu8GuJ-1yWWgBtG0KutZETWRjoz3qwfrA=
+text: |
+  Clinicians and researchers need to analyse EEG recordings made on Cadwell
+  systems (Cadwell Arc / Easy III and later, i.e. recordings from around 2020
+  onward) for research purposes, without depending on the proprietary Cadwell
+  application. Many research EEGs are recorded for clinical purposes first, so
+  the clinical archive is the source of research data.

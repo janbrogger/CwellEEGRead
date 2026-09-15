@@ -1,0 +1,14 @@
+active: true
+derived: false
+header: |
+  Downstream uses are supported, not just enabled
+level: 6.0
+links: []
+normative: true
+ref: ''
+reviewed: m0kjqwxo_577eQbRuqQo5nqZfb5bgs_ek76_j-0WXYo=
+text: |
+  Beyond producing EDF files, the project should make it easy to actually run
+  the intended downstream analyses: scripts to check out and run the Morgoth
+  foundation model, a wrapper to call a SCORE-AI command-line program on the
+  converted files, and an EEGLAB (and possibly FieldTrip) reader plugin.

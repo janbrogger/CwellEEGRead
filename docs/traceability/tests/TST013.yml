@@ -1,0 +1,14 @@
+active: true
+derived: false
+header: |
+  Downstream use scaffolds present
+level: 13.0
+links:
+- REQ016: JnWic6hBzZbul8jB9nL5jCTTvCZwiMbQuruYqDotnW8=
+normative: true
+ref: ''
+reviewed: u2FPZjdTtTCb5l0HQXQ33O-H1dZqnxwbcbLq9RpIyiw=
+text: |
+  Check that `uses/Morgoth`, `uses/SCOREAI` and `uses/EEGLAB` exist, each with
+  a README that states status and prerequisites, and that each provided
+  script runs its `--help` or dry-run mode without error.

@@ -1,0 +1,16 @@
+active: true
+derived: false
+header: |
+  Test data manifest and graceful skip
+level: 8.0
+links:
+- REQ007: wPLD7USTOssjsHjoLc9wQO7ETcUcPN3PchmEYtGQUzk=
+- REQ011: 95wcaPJf1AbIMh_A7DoxAFm89GFZY0j8-NaEVNqoOWA=
+normative: true
+ref: ''
+reviewed: cy1vQqqlpG4Ab107XDBXYWgbpnMiArjLZXx-s4bvpx0=
+text: |
+  Verify that every file under `testdata/private/` listed in the manifest
+  matches its recorded SHA-256 checksum, and that when the folder is absent
+  all data-dependent tests are reported as skipped with an explanatory
+  message rather than failing.

@@ -1,0 +1,15 @@
+active: true
+derived: false
+header: |
+  Annotation equivalence with native EDF export
+level: 4.0
+links:
+- REQ005: 3ljBCHH7I_oEvqVvgR2yxjTsbGA_VW1uniX3zxSsj6A=
+- REQ008: dn3ljy0sKlKvUMpyW2-K8IGTYbKVPvb6ZWSbtQQF9Pk=
+normative: true
+ref: ''
+reviewed: 7CVvXNdKox0g7oqJbWlN7BbIGBO7i07kDpBJmP3w2MU=
+text: |
+  For each test recording compare the EDF+ annotation lists (onset, duration,
+  text) of our export and the native export. Pass if the sets are equal after
+  normalising whitespace; list every unmatched annotation on failure.

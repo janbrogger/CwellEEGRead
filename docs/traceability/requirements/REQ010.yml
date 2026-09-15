@@ -1,0 +1,15 @@
+active: true
+derived: false
+header: |
+  Round-trip self-consistency
+level: 10.0
+links:
+- NEED003: RvD-6a6d_WOKUUx5CuBdfvRWBP3ZpbmhlSuyqq55XL4=
+normative: true
+ref: ''
+reviewed: QbvneEtwmFURx3kbhk0xn_kCqeCeJmSrpU432d3Du_E=
+text: |
+  The EDF file written by the program shall, when read back by an independent
+  EDF reader, yield the same channel labels, sampling rates, start time and
+  sample values (within EDF's 16-bit quantisation) as the data the program
+  held in memory before writing.

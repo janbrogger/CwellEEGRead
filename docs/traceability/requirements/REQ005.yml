@@ -1,0 +1,17 @@
+active: true
+derived: false
+header: |
+  Events and annotations
+level: 5.0
+links:
+- NEED002: -3b22MT9D16eSDE9DvFsiQ809NMm3_W9zT3RSJOoJA4=
+- NEED003: RvD-6a6d_WOKUUx5CuBdfvRWBP3ZpbmhlSuyqq55XL4=
+normative: true
+ref: ''
+reviewed: SjPLbaFFV1UAOUQuHkMuzkU_NfvzkUoADoERhu9KCAE=
+text: |
+  Events stored in the Cadwell recording (technician comments, seizure or
+  event markers, photic stimulation and hyperventilation markers, montage
+  or impedance events) shall be exported as EDF+ annotations with onset
+  times accurate to one sample, and with their text preserved. Event types
+  that cannot be mapped shall be listed in the conversion report.
