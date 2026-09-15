@@ -2,10 +2,10 @@
 # Session `adede7d2-9fc1-585c-a838-bea822978308`
 
 - Started (UTC): 2026-09-15T07:29:43.798Z  
-- Last event (UTC): 2026-09-15T11:23:40.844Z (span 3 h 53 min)  
+- Last event (UTC): 2026-09-15T13:23:38.103Z (span 5 h 53 min)  
 - User: jan@brogger.no; source: claude-code-remote; branch: `claude/zen-lovelace-vq1to3`  
 - Models: claude-fable-5-1; Claude Code 2.1.272  
-- Prompts: 10; transcript: transcript.jsonl (5.9 MB)
+- Prompts: 11; transcript: transcript.jsonl (5.9 MB)
 
 This file is derived from the transcript for readers without an LLM. Prompts are verbatim; responses are the assistant's text messages (tool calls and their output are only summarised - see the JSONL for those).
 
@@ -364,4 +364,63 @@ So the text and EDF exports now span the whole recording except two things: the 
 **What changed in the repo**
 
 The tests now read the zipped full texts, so the text equivalence is proven over the whole recording rather than 30 s. The READMEs, the research note and TST005 record the text-export range policy: gap omitted, last frame dropped, 30 s default window from the viewer page, anonymisation affecting only the header.
+
+
+## Prompt 11 - 2026-09-15 13:22:48 UTC
+
+```text
+Write me up a draft email to Jesper Tveit of Norwegian Holberg EEG AS , who is responsible for working on a solution for the SCORE AI EEG interpretation system to work with Cadwell EEG files, in which they intended to use Cadwell's native EDF export and then SCORE AI on those files. Mention the zero padding, the last frame drop, whatever you found about the initial filtering thing, the existence of this repo with its Python code, as well as the existence of the documented prompts system, the doorstop requirements and testing, and the MATLAB forum link, and my intention to publish this repo. Do it in English.
+```
+
+### Response 11
+
+**[13:23 UTC]**
+
+Here is a draft. I kept it factual and in your voice; the numbers come straight from the tests in the repo.
+
+---
+
+**Subject:** Cadwell EDF export: what it actually does to the data, and an open-source converter
+
+Dear Jesper,
+
+You mentioned that Holberg's plan for running SCORE-AI on Cadwell recordings is to use Cadwell Arc's native EDF+ export. I have spent some time reverse-engineering the Cadwell file format and comparing the vendor's exports against the raw data, and a few of the findings are directly relevant to that plan. I wanted to share them before you build on the export.
+
+The test material is three recordings from our Cadwell Arc systems: one amplifier-noise recording on an Apollo headbox (250 Hz, October 2025) and two volunteer recordings on an Essentia headbox (500 Hz, June 2026, Arc 3.2), one of them with a deliberate 10 s stop and restart. For each I have the native study export, the vendor's EDF+ export and the vendor's text export. No patient data is involved.
+
+What the native EDF export does:
+
+1. It applies its own high-pass filter. On the Essentia recordings the EDF is the raw data passed through a causal second-order Butterworth high-pass at 0.16 Hz, primed on the time-reversed start of the recording so there is no start-up transient. This is independent of the filter settings in the viewer: an export made with the viewer set to 10 to 15 Hz band-pass is identical to one made without. The Apollo export from October 2025 was not filtered at all, so I do not know yet whether this depends on the headbox or on the Arc version. The text export, by contrast, is always the raw unfiltered data to within its rounding.
+
+2. Recording breaks are zero-padded. The EDF is written as EDF+C with the missing seconds filled with digital zero, aligned to whole seconds, and there is no annotation marking the gap, only the "Stop Recording" and "Start Recording" events. An analysis pipeline will therefore see flat-line segments. The text export, on the other hand, simply omits the gap and the time stamps jump.
+
+3. The last second of the recording is never exported, and the export starts wherever the export dialog's start time is set, which defaults to the page currently shown in the viewer. Two exports of the same recording started 30 s apart for that reason alone.
+
+4. On the 250 Hz Apollo system the amplifier delivers 248, 250 or 251 samples per one-second frame, about 0.08 % faster than the PC clock. The EDF export decimates this to exactly 250 samples per second by dropping one sample roughly every 1224 samples, averaging the two neighbours at each drop. At 500 Hz on the Essentia system every frame had exactly 500 samples.
+
+5. Quantisation differs a lot between headboxes. The Apollo EDF declares a physical range of ±562.5 mV, which gives 17 µV per digital step. The Essentia EDF uses ±23.9 mV, that is 0.73 µV per step, and the ECG input clips at that range.
+
+6. Channels are referential to Cz, labelled "EEG Fp1-Cz" and so on, including a flat "EEG Cz-Cz" channel and seven auxiliary inputs labelled "EEG 1A-1R" to "EEG 7A-7R". The header start time is local time with the sub-second offset in the first annotation record, and only a subset of the event types becomes annotations.
+
+None of this makes the export unusable, but it means that a SCORE-AI pipeline built on the vendor EDF is working on data that has been high-passed at 0.16 Hz, zero-padded across breaks and, at 250 Hz, resampled, and that this behaviour may differ by headbox or software version.
+
+I have put all of this into a repository, CwellEEGRead, which I intend to publish on GitHub (github.com/janbrogger/CwellEEGRead). It contains:
+
+- A Python reader for the native Cadwell format. The study export is a set of SQLite databases (an index, numbered data files, an events file), and the waveform frames are per-channel delta-compressed blocks. I had described the SQLite outer structure some years ago on MATLAB Answers (https://se.mathworks.com/matlabcentral/answers/480265-reading-clinical-eeg-ezdata-file-in-matlab); the inner encoding is now decoded as well.
+- A converter to EDF+ with two modes: a raw-fidelity mode that writes every sample unfiltered, and a vendor-compatible mode that reproduces Cadwell's own EDF export sample for sample within one quantisation step, including its filter, gap padding, start-time rule and annotation policy. The decoder is verified against the vendor's text export for all 603,000 samples of the 20-minute recording.
+- Requirements and test specifications managed with Doorstop as a traceable chain from needs to requirements to tests, with an automated test suite.
+- A complete archive of the development process: every prompt to the AI coding assistant and the full session transcripts are stored in the repository, so anyone can audit how the code and the conclusions came about.
+- The three test recordings with all their exports.
+
+The code is public domain (Unlicense). If it would help, you could use the raw mode to feed SCORE-AI unfiltered data, or the vendor mode to generate exactly what the Cadwell export would produce without needing an Arc workstation. I would also be interested to know which input SCORE-AI was validated on, since a 0.16 Hz high-pass versus DC-coupled raw data may matter for the slow-activity features.
+
+Happy to walk you through the repository or send the test recordings directly.
+
+Best regards,
+
+Jan Brogger
+
+---
+
+Two things you may want to adjust before sending: the repository URL, in case you publish under a different name, and whether to keep the last paragraph's question about the validation input, which is a genuine open point rather than a finding.
 
