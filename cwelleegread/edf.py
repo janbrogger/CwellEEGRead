@@ -24,10 +24,9 @@ import numpy as np
 
 from . import __version__
 from .ezdata import CadwellRecording, UNIT_UV, TICKS_PER_SECOND
-from .layout import default_labels
+from .layout import default_labels, headbox_for, parse_amp_layout
 from .edfwrite import write_edf_plus
 
-VENDOR_PHYS_RANGE = 562500.0
 # event types the vendor does not export (amplifier bookkeeping) - skipped in both modes
 SKIPPED_EVENT_TYPES = {"AmpConfigurationData", "LiveAmpConfigurationData", "ReviewedDataEvent",
                        "ContinuousImpedanceEvent"}
@@ -65,6 +64,36 @@ def vendor_resample(data: np.ndarray, per_frame: list[int], rate: int) -> tuple[
     return out, removed, frames_used
 
 
+def read_padded(rec: CadwellRecording, unit_uv: float):
+    """Decode all track-0 frames and pad missing frame numbers (recording gaps)
+    with zeros so that the sample axis stays aligned with wall-clock time, as
+    the vendor's EDF export does (REQ019). Returns (data, amp_inputs, per_frame,
+    gaps) where gaps = [(first padded sample index, seconds)]."""
+    rate = rec.sample_rate
+    cols = {a: [] for a in rec.amp_inputs}
+    per_frame, gaps = [], []
+    prev = None
+    cursor = 0
+    for fr in rec.frames():
+        if prev is not None and fr.number > prev + 1:
+            missing = fr.number - prev - 1
+            for a in rec.amp_inputs:
+                cols[a].append(np.zeros(missing * rate))
+            gaps.append((cursor, float(missing)))
+            per_frame.extend([rate] * missing)
+            cursor += missing * rate
+        n = None
+        for a in rec.amp_inputs:
+            x = fr.samples[a]
+            cols[a].append(x)
+            n = len(x) if n is None else n
+        per_frame.append(n)
+        cursor += n
+        prev = fr.number
+    data = np.column_stack([np.concatenate(cols[a]) for a in rec.amp_inputs]) * unit_uv
+    return data, rec.amp_inputs, per_frame, gaps
+
+
 def nice_range(x: np.ndarray, margin: float = 0.01, minimum: float = 100.0) -> tuple[float, float]:
     """Symmetric physical range covering the data with a margin, rounded up to 2 significant digits."""
     m = float(np.nanmax(np.abs(x))) if x.size else minimum
@@ -80,7 +109,7 @@ def convert(rec: CadwellRecording, out_path: str, *, mode: str = "raw", labels: 
     if mode not in ("raw", "vendor"):
         raise ValueError("mode must be 'raw' or 'vendor'")
     rate = rec.sample_rate
-    data, amp_inputs, per_frame = rec.read_signals(unit_uv=unit_uv)
+    data, amp_inputs, per_frame, gaps_padded = read_padded(rec, unit_uv)
     n_raw = len(data)
     removed, frames_used = [], len(per_frame)
     if mode == "vendor":
@@ -92,7 +121,10 @@ def convert(rec: CadwellRecording, out_path: str, *, mode: str = "raw", labels: 
         raise ValueError("recording shorter than one second")
     seconds = n_out // rate
 
-    labels = {**default_labels(amp_inputs), **(labels or {})}
+    amp = parse_amp_layout(rec.amp_layout_blob)
+    headbox, headbox_known = headbox_for(amp["amp_type"])
+    labels = {**default_labels(amp_inputs, amp["amp_type"]), **(labels or {})}
+    vendor_max = headbox["vendor_physical_max"] or round(32767 * unit_uv, 2)
     if timezone:
         start_local = rec.start_time.astimezone(zoneinfo.ZoneInfo(timezone))
     else:
@@ -101,7 +133,7 @@ def convert(rec: CadwellRecording, out_path: str, *, mode: str = "raw", labels: 
 
     headers = []
     for j, a in enumerate(amp_inputs):
-        pmin, pmax = (-VENDOR_PHYS_RANGE, VENDOR_PHYS_RANGE) if mode == "vendor" else nice_range(data[:, j])
+        pmin, pmax = (-vendor_max, vendor_max) if mode == "vendor" else nice_range(data[:, j])
         headers.append({"label": labels[a][:16], "dimension": "uV", "sample_frequency": rate,
                         "physical_min": pmin, "physical_max": pmax, "digital_min": -32768, "digital_max": 32767,
                         "transducer": "X", "prefilter": ""})
@@ -122,6 +154,10 @@ def convert(rec: CadwellRecording, out_path: str, *, mode: str = "raw", labels: 
             ann.append((onset, dur if dur > 0 else -1, e.type))
         else:
             ann.append((onset, dur if dur > 0 else -1, e.text))
+    if mode == "raw":
+        for start_sample, gap_seconds in gaps_padded:
+            if start_sample < n_out:
+                ann.append((start_sample / rate, gap_seconds, f"Recording gap {gap_seconds:g} s (padded with zeros)"))
 
     p = patient or {}
     write_edf_plus(
@@ -144,22 +180,25 @@ def convert(rec: CadwellRecording, out_path: str, *, mode: str = "raw", labels: 
         "schema_versions": rec.schema_versions,
         "start_utc": rec.start_time.isoformat(), "start_written": start_naive.isoformat(), "timezone": timezone or "UTC",
         "clock_correction_us": rec.clock_correction.total_seconds() * 1e6,
+        "headbox": {"amp_type": amp["amp_type"], "layout_guid": amp["layout_guid"], "name": headbox["name"], "known": headbox_known},
         "sample_rate_nominal": rate, "unit_uv": unit_uv,
-        "frames": len(per_frame), "samples_per_frame": {str(k): v for k, v in sorted(per_frame_hist.items())},
+        "frames": len(rec.frame_index), "frames_padded": len(per_frame) - len(rec.frame_index), "samples_per_frame": {str(k): v for k, v in sorted(per_frame_hist.items())},
         "raw_samples": n_raw, "written_samples": n_out, "seconds": seconds,
         "frames_used": frames_used,
         "samples_dropped_at_end": n_raw - sum(per_frame[:frames_used]) if mode == "vendor" else n_raw - n_out,
         "samples_removed_by_vendor_rule": removed,
         "effective_rate_hz": (sum(per_frame[:-1]) / span) if span else None,
         "gaps": [{k: (v.isoformat() if isinstance(v, dt.datetime) else v) for k, v in g.items()} for g in rec.gaps],
+        "gaps_padded": [{"start_second": st / rate, "seconds": sec} for st, sec in gaps_padded],
         "channels": [{"amp_input": a, "label": h["label"], "physical_min": h["physical_min"], "physical_max": h["physical_max"],
                       "resolution_uv": (h["physical_max"] - h["physical_min"]) / 65535} for a, h in zip(amp_inputs, headers)],
         "annotations_written": len(ann), "events_skipped": [{"type": t, "text": x, "reason": r} for t, x, r in skipped],
-        "warnings": ["channel labels are inferred from the amplifier-input layout table (not stored in the Cadwell files)",
+        "warnings": [f"channel labels are inferred from the {headbox['name']} amplifier-input layout table (not stored in the Cadwell files)"
+                     + ("" if headbox_known else f" - amplifier type {amp['amp_type']} is UNKNOWN, labels may be wrong"),
                      "microvolt scale is the empirical constant verified on cadwell-export1 (250 Hz)"],
     }
-    if rec.gaps:
-        report["warnings"].append("recording has gaps; they are NOT yet represented in the EDF (REQ019 open)")
+    if gaps_padded:
+        report["warnings"].append(f"{len(gaps_padded)} recording gap(s) padded with zeros (total {sum(g[1] for g in gaps_padded):g} s)")
     if report_path:
         with open(report_path, "w", encoding="utf-8") as f:
             json.dump(report, f, indent=2, default=str)

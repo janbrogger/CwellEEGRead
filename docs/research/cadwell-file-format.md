@@ -379,3 +379,60 @@ default (`--timezone` converts), 6-decimal sub-second start in the TALs,
 all non-bookkeeping events with their full text (Norwegian characters
 are written as UTF-8 in the TAL, which EDF+ allows). Vendor mode applies
 rules 1-2 and 5 above. Read-back is verified with pyedflib.
+
+---
+
+# Findings from test export 3 (added 2026-09-15): gaps, headboxes, a filtered vendor EDF
+
+**Frame numbering.** Frame `Offset` n covers ticks [n, n+1) s from the record
+origin (the `PaperSpeedEvent` at tick 0). Exports 2 and 3 start at frame 1
+(the partial first second is not stored); export 1 started at frame 0 with
+248 samples. Our data start is the first stored frame; annotation onsets
+are computed from absolute event time stamps relative to that frame's time
+stamp, which reproduces the vendor's onsets.
+
+**Gaps.** A stop/restart of the recording leaves frame numbers out
+(328-337 here, 10 s) and one `GapInfo` row (`Track 0, StartOffset 328,
+EndOffset 338, StartTime/EndTime` = the tick times ± a few ms; `Stop
+Recording` at tick 329.97 s and `Start Recording` at 337.19 s show that the
+partial frames 328/329 and 337 were discarded). The vendor EDF export
+(EDF+C) keeps the time axis continuous and writes **digital zero** for the
+missing seconds, exactly at frame boundaries. Our raw mode does the same
+and adds a `Recording gap N s (padded with zeros)` annotation (REQ019).
+
+**Headbox identification.** The MiscInfo `AMPLAYOUT` blob starts with tag
+`0b847557`, u32 0, a 16-byte layout GUID, tag `736a1a8b`, u32 1, **u32
+amplifier type** (5 on the Apollo export 1, 1 on the Essentia exports 2
+and 3, repeated at byte 48), tag `026ee873`, then tag `917834bb` and a
+record count (36 / 40) of 20-byte records tagged `8b2489c4`. The type
+selects the label table in `cwelleegread/layout.py`. Essentia labels
+(from the vendor EDF): `E1/Pg1`, `E2/Pg2`, Fp1 ... O2, `1A-1R` ... `7A-7R`;
+its vendor EDF range is ±23919 µV = ±32767 amplifier units, whereas the
+Apollo export used ±562500 µV. The `MontageEvent` attribute blobs of the
+Essentia recordings contain trace names such as `Fp2-E2`, `E1-F7`, so the
+electrode names could in future be parsed from the referential montage
+instead of a table.
+
+**Scale constant.** The 500 Hz text export bounds the unit to
+[0.729980437, 0.729980500] µV, overlapping the 250 Hz bound
+[0.729980459, 0.729980461]: one constant, 0.72998046 µV/unit, for both
+headboxes and rates. The Essentia vendor EDF's physical maximum 23919.03
+/ 32767 = 0.729973 is that constant with the header field truncated.
+
+**Vendor EDF start = user-chosen range.** The export dialog defaults to a
+start one frame after the "Reviewed Data" start; the EDF and text exports
+of export 3 both begin at frame 30, at frame-30 time stamp + PcTimeSync
+offset (+11.114 ms), written as local time with the sub-second in the
+first TAL (`+0.8525803`). Our converter exports all frames; a range option
+can be added when needed.
+
+**The vendor EDF can be filtered.** Compared with the raw frames the
+export-3 EDF has an amplitude ratio of 0.16 below 0.1 Hz, 0.73 at
+0.1-0.3 Hz, 0.99 at 0.3-0.7 Hz and 1.00 above: a high-pass of roughly
+0.16-0.2 Hz (the Arc viewer's usual low-cut), presumably the display
+filter that was active at export time. The export-1 EDF was unfiltered.
+Consequences: (1) REQ003's "no filtering" is satisfied by our raw mode, and
+the *text* export is the reliable raw reference (TST005); (2) an
+equivalence test against a vendor EDF must first establish whether that
+EDF is filtered (TST003 now checks the spectral ratio and only compares
+samples when it is 1.0 across the band).

@@ -29,7 +29,9 @@ constrains use of `uses/Morgoth`, not this repository's code.
    mode reproduces the Cadwell EDF export of export 1 within one step.
    Export 2 (real EEG, 500 Hz, events) converts; its labels and scale are
    plausible but unverified for lack of a vendor export of that recording.
-   Next: a recording with a gap, and a vendor EDF or text export of a
-   500 Hz recording to confirm the scale at that rate.
+   Export 3 (500 Hz, with a 10 s break, vendor text + EDF) confirmed the
+   scale constant at 500 Hz, showed how gaps are stored and padded, gave the
+   Essentia label set, and revealed that a vendor EDF export can carry the
+   viewer's high-pass filter.
 3. Decide gap handling for EDF+ (EDF+D vs padded EDF+C) once a recording
    with a gap is available (REQ019).

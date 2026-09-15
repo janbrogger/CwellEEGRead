@@ -9,14 +9,19 @@ links:
 - REQ020: o1E8-92pPcdOt9Z59unfgLdC-qm-CpyYhs4MUYTaoZ4=
 normative: true
 ref: ''
-reviewed: DKo4snHWXH4Fk9JGT4TUEmjLbol9FvbKAhlEHGlyWRU=
+reviewed: PhzO2tVHTxQz8dvpCkpDir_qxx1o1pCc50zP9lUjW9I=
 text: |
   For each test recording and each channel compare the physical sample values
-  of our EDF export with the native EDF export. In vendor-compatible mode
-  (REQ020) the sample counts must match and the maximum absolute difference
-  must not exceed one digital quantisation step of the native export
-  (implemented for cadwell-export1 in tests/test_convert_public.py: 11000 of
-  11000 samples pass). In raw fidelity mode, align segment by segment (the
-  native export removes one sample with two-point smoothing at a regular
-  interval), require the same bound on every aligned sample, and report the
-  removal positions. Report the maximum and mean difference per channel.
+  of our EDF export with the native EDF export. First establish whether the
+  native EDF is unfiltered: the amplitude ratio native/raw must be 1.0 in
+  every band from 0.02 Hz to the Nyquist frequency (the export-3 vendor EDF
+  is high-pass filtered at about 0.16 Hz and therefore only qualifies for a
+  spectral comparison above 0.7 Hz). For an unfiltered native EDF, in
+  vendor-compatible mode (REQ020) the sample counts must match and the
+  maximum absolute difference must not exceed one digital quantisation step
+  of the native export (cadwell-export1: 11000 of 11000 samples pass,
+  tests/test_convert_public.py). In raw fidelity mode, align segment by
+  segment (the native export removes one sample with two-point smoothing at
+  a regular interval and pads gaps with zeros), require the same bound on
+  every aligned sample, and report the removal positions. Report the maximum
+  and mean difference per channel.

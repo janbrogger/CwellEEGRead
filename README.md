@@ -12,9 +12,11 @@ SCORE-AI, the Morgoth foundation model, EEGLAB, FieldTrip and MNE.
 export and writes EDF+C. The decoder is verified sample-for-sample against
 the vendor's text export, and the vendor-compatible mode reproduces the
 vendor's own EDF export to within one quantisation step, including its
-annotations and start time (`tests/test_convert_public.py`). Not yet
-handled: recording gaps (none in the test data), channel labels for other
-headboxes, anonymisation beyond the header fields.
+annotations and start time (`tests/test_convert_public.py`). Recording
+gaps are padded with zeros as the vendor does (export 3). Channel labels
+come from per-headbox tables (Apollo, Essentia) selected by the amplifier
+type in the file; other headboxes need `--labels`. Not yet handled: a
+user-chosen time range, EDF+D output, anonymisation beyond the header.
 
 ```bash
 ./setup.sh && source .venv/bin/activate

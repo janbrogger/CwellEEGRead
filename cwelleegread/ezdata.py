@@ -175,6 +175,8 @@ class CadwellRecording:
                                 for off, ts, tr, st, jd, key in con.execute(
                                     "select Offset, TimeStamp, Track, Status, JoinDatabase, hex(FrameKey) "
                                     "from FrameInfo where Track=0 order by Offset")]
+            row = con.execute("select Value from MiscInfo where Key='AMPLAYOUT' order by TimeStamp limit 1").fetchone()
+            self.amp_layout_blob = row[0] if row else None
             self.pc_time_sync = [dict(pc=parse_timestamp(p), sync=parse_timestamp(q))
                                  for p, q in con.execute("select PcTime, SyncTime from PcTimeSync order by PcTime")]
             self.tracks = [r[0] for r in con.execute("select distinct Track from FrameInfo order by Track")]

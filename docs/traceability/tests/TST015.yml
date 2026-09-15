@@ -5,14 +5,15 @@ header: |
 level: 15.0
 links:
 - REQ008: UVzmqjFssLTAogiX_eYrnZn-IQ0l4uchb8j3gxurwdw=
-- REQ019: zNlyR6EuWYs_vHCVj_6P_qKi8JXmJrtMJ88jr-yzzd0=
+- REQ019: m2bJMEzAdkh_voWQdaUbS8Q4zXJbCsU5iErBn3PnLOc=
 normative: true
 ref: ''
-reviewed: h7l2QcJelpBSPvX--bL-IqFNj1zvT24DgIdxXJpF3gU=
+reviewed: 4jyqfsGIq99SfAM1G-UpnffyXTiofchuzeGxJsRyNKY=
 text: |
-  Using a test recording that contains at least one acquisition gap (or a
-  recording with an artificially introduced gap if none is available),
-  convert with both the discontinuous and the padded option. Pass if the
-  segment boundaries match the native export's time segments, padded samples
-  carry the documented fill value and a gap annotation, and the per-segment
-  sample equivalence test (TST003) passes for every segment.
+  Using a test recording that contains at least one acquisition gap
+  (cadwell-export3: 10 s), convert in raw mode. Pass if the number of EDF
+  records equals the frame-number span, the padded seconds read back as
+  digital zero at exactly the missing frame numbers, the samples on both
+  sides of the gap are unchanged, the gap annotation and the vendor's
+  Stop/Start Recording events appear at the correct offsets, and the
+  conversion report lists the gap. Implemented in tests/test_export3_gap.py.

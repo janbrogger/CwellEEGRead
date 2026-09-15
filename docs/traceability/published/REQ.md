@@ -266,14 +266,17 @@ mistaken for a complete conversion.
 
 # 19 Recording gaps and discontinuities _(REQ019)_ {#REQ019}
 
-Cadwell recordings can contain gaps (paused or interrupted acquisition) and
-the Cadwell data model records them explicitly. The program shall detect
-gaps and represent them in the EDF output either as a discontinuous EDF+
-file (EDF+D) or, when the user requests a continuous file, by padding with
-a documented fill value and an annotation marking each gap. The chosen
-representation shall be reported in the conversion report, and the
-equivalence tests shall compare against the native export segment by
-segment so that gap handling differences are explicit rather than hidden.
+Cadwell recordings can contain gaps (recording stopped and restarted); the
+index then lacks the frame numbers of the gap and holds a GapInfo row. The
+program shall detect gaps from the frame numbering and represent them in
+the EDF output, by default as the vendor's own export does: a continuous
+EDF+C file in which the missing seconds are written as digital zero at the
+frame boundaries so that the time axis and every annotation stay aligned
+with wall-clock time, plus an annotation "Recording gap N s (padded with
+zeros)" at the gap start. A discontinuous EDF+D representation may be
+offered as an option later. The gaps shall be listed in the conversion
+report, and the equivalence tests shall compare segment by segment so that
+gap handling differences are explicit rather than hidden.
 
 *Parent links: NEED003*
 

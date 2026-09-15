@@ -40,14 +40,19 @@ mapping table documents as intentionally different.
 # 3.0 Sample equivalence with native EDF export _(TST003)_ {#TST003}
 
 For each test recording and each channel compare the physical sample values
-of our EDF export with the native EDF export. In vendor-compatible mode
-(REQ020) the sample counts must match and the maximum absolute difference
-must not exceed one digital quantisation step of the native export
-(implemented for cadwell-export1 in tests/test_convert_public.py: 11000 of
-11000 samples pass). In raw fidelity mode, align segment by segment (the
-native export removes one sample with two-point smoothing at a regular
-interval), require the same bound on every aligned sample, and report the
-removal positions. Report the maximum and mean difference per channel.
+of our EDF export with the native EDF export. First establish whether the
+native EDF is unfiltered: the amplitude ratio native/raw must be 1.0 in
+every band from 0.02 Hz to the Nyquist frequency (the export-3 vendor EDF
+is high-pass filtered at about 0.16 Hz and therefore only qualifies for a
+spectral comparison above 0.7 Hz). For an unfiltered native EDF, in
+vendor-compatible mode (REQ020) the sample counts must match and the
+maximum absolute difference must not exceed one digital quantisation step
+of the native export (cadwell-export1: 11000 of 11000 samples pass,
+tests/test_convert_public.py). In raw fidelity mode, align segment by
+segment (the native export removes one sample with two-point smoothing at
+a regular interval and pads gaps with zeros), require the same bound on
+every aligned sample, and report the removal positions. Report the maximum
+and mean difference per channel.
 
 *Parent links: REQ003, REQ008, REQ020*
 
@@ -155,12 +160,13 @@ recording in the test data manifest.
 
 # 15 Gap handling _(TST015)_ {#TST015}
 
-Using a test recording that contains at least one acquisition gap (or a
-recording with an artificially introduced gap if none is available),
-convert with both the discontinuous and the padded option. Pass if the
-segment boundaries match the native export's time segments, padded samples
-carry the documented fill value and a gap annotation, and the per-segment
-sample equivalence test (TST003) passes for every segment.
+Using a test recording that contains at least one acquisition gap
+(cadwell-export3: 10 s), convert in raw mode. Pass if the number of EDF
+records equals the frame-number span, the padded seconds read back as
+digital zero at exactly the missing frame numbers, the samples on both
+sides of the gap are unchanged, the gap annotation and the vendor's
+Stop/Start Recording events appear at the correct offsets, and the
+conversion report lists the gap. Implemented in tests/test_export3_gap.py.
 
 *Parent links: REQ008, REQ019*
 
