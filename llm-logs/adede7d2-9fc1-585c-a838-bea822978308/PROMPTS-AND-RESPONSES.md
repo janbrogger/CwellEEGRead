@@ -2,10 +2,10 @@
 # Session `adede7d2-9fc1-585c-a838-bea822978308`
 
 - Started (UTC): 2026-09-15T07:29:43.798Z  
-- Last event (UTC): 2026-09-15T09:30:51.284Z (span 2 h 1 min)  
+- Last event (UTC): 2026-09-15T10:21:00.433Z (span 2 h 51 min)  
 - User: jan@brogger.no; source: claude-code-remote; branch: `claude/zen-lovelace-vq1to3`  
 - Models: claude-fable-5-1; Claude Code 2.1.272  
-- Prompts: 5; transcript: transcript.jsonl (5.1 MB)
+- Prompts: 6; transcript: transcript.jsonl (5.6 MB)
 
 This file is derived from the transcript for readers without an LLM. Prompts are verbatim; responses are the assistant's text messages (tool calls and their output are only summarised - see the JSONL for those).
 
@@ -184,4 +184,41 @@ Both new datasets are handled and pushed. The converter now exists as a package 
 `python -m cwelleegread convert <export> out.edf` writes EDF+C with our own writer, since pyedflib truncated annotations and dropped the sub-second start. Raw mode keeps every sample and pads gaps. Vendor mode reproduces the Cadwell EDF of export 1 for all 11000 samples within one quantisation step, with the same labels, ranges, start time and annotations. The vendor's rule turned out to be fixed-pattern decimation, dropping the last frame, spacing removals at ceil(N_in/(S+1)) and smoothing two samples at each removal.
 
 **Open items** are a user-chosen time range, EDF+D output, anonymisation beyond the header, and parsing electrode names from the montage event blob instead of the table. Two questions for you: whether export 3's EDF was made with a low-cut filter active, and which headbox is more common in your archive.
+
+
+## Prompt 6 - 2026-09-15 10:07:06 UTC
+
+```text
+To answer your question about filtering, I now added another version of test export 3, with severe filtering (high pass 10 Hz, low pass 15 Hz) which I think should affect the EDF and the text export, but I am not sure. Do a git pull, then compare the two versions of "test 3"
+```
+
+_Tools used in this turn: Bash ×26_
+
+### Response 6
+
+**[10:07 UTC]**
+
+Pulling and locating the filtered version.
+
+**[10:20 UTC]**
+
+The comparison is done, and the answer to your filtering question is clear. All 29 tests pass and the work is pushed.
+
+**Answer: the viewer filter reaches neither export**
+
+- The native SQLite files of the two export-3 versions are byte-identical, so filtering could only happen at export time.
+- The text export made with the 10 to 15 Hz viewer filter equals the raw decoded frames within its 0.05 µV rounding in every frequency band, exactly like the unfiltered text export. Its time range differs, 10:29:10 to 10:29:39 instead of 10:29:39 to 10:30:10, but on the second they share, frame 30, the two text files are identical to the last digit.
+- The two EDF exports are identical on their overlap except for the first 10 s of the later-starting file. Neither shows any 10 to 15 Hz band-pass. What they both carry is the EDF export's own high-pass, and the 10 s difference is that filter's start-up, which begins at each export's first sample.
+
+**The EDF export's built-in filter, now identified exactly**
+
+- A causal second-order Butterworth high-pass at 0.16 Hz. The transfer-function fit gave 0.158 Hz with a residual of 0.0014, and in the time domain the filter matches the export-2 EDF to 0.52 quantisation steps over 430,000 samples.
+- The vendor primes the filter by running it over the time-reversed start of the segment, first sample included, then filters forward. Zero-state and other initialisations were off by hundreds to thousands of steps. After a gap the filter is primed again on the resumed data, and the padded seconds stay digital zero.
+- The export-1 Apollo EDF had no such filter. Whether that depends on the headbox or the Arc version (export 1 dates from October 2025, the others from June 2026 with Arc 3.2.1097) is unknown, so the option `--highpass on|off` overrides the automatic choice.
+
+**What changed in the converter**
+
+Vendor mode now applies that filter, supports starting at the record origin with leading zeros as the export-3-withfilter EDF does, and follows the vendor's annotation policy: deleted events, amplifier bookkeeping types and the 244 individual photic flashes are dropped, the "Photic Start" markers kept. With this, vendor mode reproduces the export-2 EDF and the export-3-withfilter EDF sample for sample within one quantisation step over all 480,000 and 608,500 samples, gap included, with identical annotation lists. Raw mode is untouched and remains the unfiltered reference, verified against the new export-2 text as well.
+
+The research note, both READMEs, REQ008, REQ020, TST003 and TST004 record all of this.
 
