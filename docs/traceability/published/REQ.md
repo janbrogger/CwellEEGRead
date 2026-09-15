@@ -131,16 +131,16 @@ to the native Cadwell EDF export of the same recording: (1) the same set of
 channels, matched by label after the documented mapping; (2) identical
 sampling rate per channel; (3) identical recording start time; (4) the
 same set of annotations (onset, duration, text); (5) sample values equal
-within one digital quantisation step of the native export after alignment.
-Alignment is necessary because the native EDF export resamples the raw
-stream to exactly the nominal rate by linear interpolation (observed: one
-sample dropped every 1224 samples, the neighbouring samples interpolated),
-whereas the raw data and the native text export keep every sample. The
-test shall therefore either compare against the program's own
-vendor-compatible resampling mode (REQ020) sample by sample, or compare the
-raw-fidelity output segment by segment with the alignment and the
-interpolated samples reported explicitly. Any tolerance actually used shall
-be justified in the test's documentation.
+within one digital quantisation step of the native export. The native EDF
+export is not the raw data: it resamples surplus samples (Apollo, 250 Hz),
+pads gaps with zeros, applies a 2nd-order 0.16 Hz Butterworth high-pass
+primed on the time-reversed segment start (Essentia recordings), starts at
+the export dialog's start time and drops the last frame, and applies a
+documented event policy. The test shall therefore compare the program's
+vendor-compatible mode (REQ020) sample by sample over the whole file, and
+the raw-fidelity output only against the vendor's text export (REQ009),
+which is the raw data. Any tolerance actually used shall be justified in
+the test's documentation.
 
 *Parent links: NEED003*
 
@@ -288,17 +288,18 @@ The Cadwell amplifier delivers a variable number of samples per one-second
 frame (248, 250 or 251 observed at a nominal 250 Hz; exactly 500 at 500 Hz),
 i.e. its sample clock can run about 0.08 % fast relative to the frame time
 stamps. By default the program shall preserve every raw sample unchanged
-("raw fidelity"), write the nominal sampling rate to the EDF header, drop
-only a trailing partial second, and report the effective rate (samples
-divided by frame-clock duration) and the accumulated drift in the
-conversion report. A command-line option shall alternatively reproduce the
-vendor's behaviour ("vendor-compatible"): use all frames but the last,
-remove the surplus samples at evenly spaced positions with two-point
-smoothing exactly as the native export does (documented in
-docs/research/cadwell-file-format.md), and use the vendor's physical range,
-so that the output matches the native EDF export sample by sample. The
-chosen policy shall be recorded in the EDF header's recording-additional
-field and in the conversion report.
+("raw fidelity": no filtering, no resampling, the nominal sampling rate in
+the EDF header, only a trailing partial second dropped) and report the
+effective rate and drift in the conversion report. A command-line option
+shall alternatively reproduce the vendor's EDF export ("vendor-compatible"):
+all frames but the last, surplus samples removed at evenly spaced positions
+with two-point smoothing, gaps and (optionally) the leading missing frames
+padded with digital zero, the vendor's 2nd-order 0.16 Hz Butterworth
+high-pass primed on the time-reversed segment start where the vendor
+applies it (Essentia headbox; overridable), the vendor's physical range
+and event policy - so that the output matches the native EDF export sample
+by sample. The chosen policy shall be recorded in the EDF header's
+recording-additional field and in the conversion report.
 
 *Parent links: NEED002, NEED003*
 

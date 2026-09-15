@@ -29,7 +29,8 @@ from .edfwrite import write_edf_plus
 
 # event types the vendor does not export (amplifier bookkeeping) - skipped in both modes
 SKIPPED_EVENT_TYPES = {"AmpConfigurationData", "LiveAmpConfigurationData", "ReviewedDataEvent",
-                       "ContinuousImpedanceEvent"}
+                       "ContinuousImpedanceEvent", "BaselineImpedanceEvent"}
+SKIPPED_EVENT_TEXTS = {"Photic Stim"}      # the individual flash markers (hundreds); "Photic Start 2Hz" etc. are kept
 
 
 def vendor_resample(data: np.ndarray, per_frame: list[int], rate: int) -> tuple[np.ndarray, list[int], int]:
@@ -103,32 +104,77 @@ def nice_range(x: np.ndarray, margin: float = 0.01, minimum: float = 100.0) -> t
     return -m, m
 
 
+VENDOR_HIGHPASS_HZ = 0.16      # causal 2nd-order Butterworth, identified on cadwell-export2 (max 0.52 steps)
+
+
+def vendor_highpass(data: np.ndarray, per_frame: list[int], gaps: list, rate: int, restart_at_gaps: bool = True) -> np.ndarray:
+    """The vendor's EDF export high-pass (identified on cadwell-export2/3, see the
+    research note): 2nd-order Butterworth, 0.16 Hz, applied causally to every
+    contiguous data segment, primed by first running the filter over the
+    time-reversed start of the segment (mirror including the first sample) so
+    that there is no start-up transient. Padded gap seconds stay zero and the
+    filter is primed again after each gap."""
+    from scipy.signal import butter, lfilter
+    b, a = butter(2, VENDOR_HIGHPASS_HZ, btype="high", fs=rate)
+    out = data.astype(np.float64).copy()
+    bounds = [0]
+    for start, seconds in gaps:
+        bounds += [start, start + int(seconds * rate)]
+    bounds.append(len(data))
+    segments = [(bounds[i], bounds[i + 1]) for i in range(0, len(bounds) - 1, 2) if bounds[i + 1] > bounds[i]]
+    n_pre = 20 * rate                      # >> filter time constant (~1 s): converged
+    for s0, e0 in segments:
+        seg = data[s0:e0]
+        n = min(n_pre, len(seg) - 1)
+        pre = seg[n::-1]                    # mirror, first sample included
+        out[s0:e0] = lfilter(b, a, np.concatenate([pre, seg]), axis=0)[len(pre):]
+    for start, seconds in gaps:
+        out[start:start + int(seconds * rate)] = 0.0
+    return out
+
+
 def convert(rec: CadwellRecording, out_path: str, *, mode: str = "raw", labels: dict | None = None,
             timezone: str | None = None, anonymize: bool = False, patient: dict | None = None,
-            unit_uv: float = UNIT_UV, report_path: str | None = None, all_events: bool = False) -> dict:
+            unit_uv: float = UNIT_UV, report_path: str | None = None, all_events: bool = False,
+            highpass: str = "auto", start_at: str = "first-frame", restart_filter_at_gaps: bool = True) -> dict:
+    """highpass: 'auto' (vendor mode: on for Essentia, off for Apollo), 'on', 'off'.
+    start_at: 'first-frame' (data start = first stored frame) or 'record-origin' (tick 0,
+    leading missing frames padded with zeros, as the vendor does when the export range
+    starts at the recording start)."""
     if mode not in ("raw", "vendor"):
         raise ValueError("mode must be 'raw' or 'vendor'")
     rate = rec.sample_rate
     data, amp_inputs, per_frame, gaps_padded = read_padded(rec, unit_uv)
+    lead = 0
+    if start_at == "record-origin" and rec.frame_index and rec.frame_index[0]["number"] > 0:
+        lead = rec.frame_index[0]["number"]
+        data = np.vstack([np.zeros((lead * rate, data.shape[1])), data])
+        per_frame = [rate] * lead + per_frame
+        gaps_padded = [(0, float(lead))] + [(st + lead * rate, sec) for st, sec in gaps_padded]
+    elif start_at != "first-frame":
+        raise ValueError("start_at must be 'first-frame' or 'record-origin'")
     n_raw = len(data)
     removed, frames_used = [], len(per_frame)
+    amp = parse_amp_layout(rec.amp_layout_blob)
+    headbox, headbox_known = headbox_for(amp["amp_type"])
+    apply_hp = (highpass == "on") or (highpass == "auto" and mode == "vendor" and headbox["name"] == "Essentia")
     if mode == "vendor":
+        if apply_hp:
+            data = vendor_highpass(data, per_frame, gaps_padded, rate, restart_filter_at_gaps)
         data, removed, frames_used = vendor_resample(data, per_frame, rate)
     else:
+        if apply_hp:
+            data = vendor_highpass(data, per_frame, gaps_padded, rate, restart_filter_at_gaps)
         data = data[:(n_raw // rate) * rate]
     n_out = len(data)
     if n_out == 0:
         raise ValueError("recording shorter than one second")
     seconds = n_out // rate
 
-    amp = parse_amp_layout(rec.amp_layout_blob)
-    headbox, headbox_known = headbox_for(amp["amp_type"])
     labels = {**default_labels(amp_inputs, amp["amp_type"]), **(labels or {})}
     vendor_max = headbox["vendor_physical_max"] or round(32767 * unit_uv, 2)
-    if timezone:
-        start_local = rec.start_time.astimezone(zoneinfo.ZoneInfo(timezone))
-    else:
-        start_local = rec.start_time
+    start_utc = rec.start_time - dt.timedelta(seconds=lead)
+    start_local = start_utc.astimezone(zoneinfo.ZoneInfo(timezone)) if timezone else start_utc
     start_naive = start_local.replace(tzinfo=None)
 
     headers = []
@@ -144,10 +190,10 @@ def convert(rec: CadwellRecording, out_path: str, *, mode: str = "raw", labels: 
     for e in events:
         # The vendor places annotations by the event's absolute time stamp relative to
         # the frame-0 origin (the tick offsets can differ from that by a few ms).
-        onset = (e.start - rec.origin).total_seconds()
+        onset = (e.start - rec.origin).total_seconds() + lead
         dur = (e.end - e.start).total_seconds()
-        if e.deleted or (not all_events and e.type in SKIPPED_EVENT_TYPES):
-            skipped.append((e.type, e.text, "type skipped" if not e.deleted else "deleted"))
+        if e.deleted or (not all_events and (e.type in SKIPPED_EVENT_TYPES or e.text in SKIPPED_EVENT_TEXTS)):
+            skipped.append((e.type, e.text, "deleted" if e.deleted else "type skipped"))
         elif onset < 0 or onset > seconds:
             skipped.append((e.type, e.text, "outside exported range"))
         elif anonymize and e.type in ("Comment", "UserEvent"):
@@ -176,9 +222,10 @@ def convert(rec: CadwellRecording, out_path: str, *, mode: str = "raw", labels: 
     span = (rec.frame_index[-1]["timestamp"] - rec.origin).total_seconds() if len(rec.frame_index) > 1 else None
     report = {
         "cwelleegread_version": __version__, "input": rec.index_path, "output": os.path.abspath(out_path),
-        "mode": mode, "record_guid": rec.record_guid, "patient_guid": None if anonymize else rec.patient_guid,
+        "mode": mode, "highpass_hz": VENDOR_HIGHPASS_HZ if apply_hp else None, "start_at": start_at,
+        "leading_padded_seconds": lead, "record_guid": rec.record_guid, "patient_guid": None if anonymize else rec.patient_guid,
         "schema_versions": rec.schema_versions,
-        "start_utc": rec.start_time.isoformat(), "start_written": start_naive.isoformat(), "timezone": timezone or "UTC",
+        "start_utc": start_utc.isoformat(), "start_written": start_naive.isoformat(), "timezone": timezone or "UTC",
         "clock_correction_us": rec.clock_correction.total_seconds() * 1e6,
         "headbox": {"amp_type": amp["amp_type"], "layout_guid": amp["layout_guid"], "name": headbox["name"], "known": headbox_known},
         "sample_rate_nominal": rate, "unit_uv": unit_uv,

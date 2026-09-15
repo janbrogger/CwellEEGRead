@@ -103,8 +103,8 @@ def test_export2_converts(tmp_path):
     hdr, sig, data, ann, n_rec, _ = read_edf(out)
     assert rec.sample_rate == 500 and n_rec == 961 and data.shape == (480500, 32)
     assert report["samples_per_frame"] == {"500": 961}
-    assert len(ann) == report["annotations_written"] >= 290
-    assert any("Hyperventilation" in t for _, _, t in ann) and any("Photic" in t for _, _, t in ann)
+    assert len(ann) == report["annotations_written"] == 52      # vendor policy: no individual photic flashes
+    assert any("Hyperventilation" in t for _, _, t in ann) and any(t.startswith("Photic Start") for _, _, t in ann)
     assert hdr["startdate"].isoformat().startswith("2026-06-12T12:58:54")
     assert np.all(data[:, 14] == pytest.approx(0, abs=0.2))   # Cz reference
 

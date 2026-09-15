@@ -37,6 +37,7 @@ def cmd_convert(args):
     try:
         report = convert(rec, tmp, mode=args.mode, labels=labels, timezone=args.timezone,
                          anonymize=args.anonymize, report_path=None, all_events=args.all_events,
+                         highpass=args.highpass, start_at=args.start_at,
                          patient={"name": args.patient_name} if args.patient_name else None)
         os.replace(tmp, args.output)
     except Exception:
@@ -71,6 +72,10 @@ def main(argv=None):
     c.add_argument("--anonymize", action="store_true", help="no patient GUID; comment/user event texts replaced by type")
     c.add_argument("--patient-name", help="patient name field (default X)")
     c.add_argument("--all-events", action="store_true", help="also export amplifier bookkeeping events")
+    c.add_argument("--highpass", choices=["auto", "on", "off"], default="auto",
+                   help="vendor EDF-export high-pass (2nd-order Butterworth 0.16 Hz): auto = in vendor mode for Essentia")
+    c.add_argument("--start-at", choices=["first-frame", "record-origin"], default="first-frame",
+                   help="data start: first stored frame (default) or the record origin with leading zeros")
     c.add_argument("--json", help="write a JSON conversion report here")
     c.add_argument("--force", action="store_true", help="overwrite an existing output file")
     args = ap.parse_args(argv)

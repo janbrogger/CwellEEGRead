@@ -5,14 +5,15 @@ header: |
 level: 4.0
 links:
 - REQ005: 3ljBCHH7I_oEvqVvgR2yxjTsbGA_VW1uniX3zxSsj6A=
-- REQ008: UVzmqjFssLTAogiX_eYrnZn-IQ0l4uchb8j3gxurwdw=
+- REQ008: abLUVQoV29OwxIKfVEk1xTZ0eWim7_0c7QqtOFiECo8=
 normative: true
 ref: ''
-reviewed: Lna6vLj6WabPcJEwDIz2dOhpuuF5Xw32ASDAxHQOEaw=
+reviewed: 2LBJOXaikMpR9rPfDCStKkFrHjpvrq8VJuPUFySph4A=
 text: |
   For each test recording compare the EDF+ annotation lists (onset, duration,
   text) of our export and the native export. Pass if, in vendor-compatible
-  mode, the sets are equal after normalising whitespace and rounding onsets
-  to the millisecond, and, in raw mode, the native set is a subset of ours;
-  list every unmatched annotation on failure. Implemented for
-  cadwell-export1 in tests/test_convert_public.py.
+  mode, the lists are equal after rounding onsets to the millisecond (the
+  vendor's event policy - deleted events, amplifier bookkeeping types and
+  the individual photic flashes omitted - is reproduced), and, in raw mode,
+  the native list is a subset of ours; list every unmatched annotation on
+  failure. Implemented for cadwell-export1, 2 and 3-withfilter.

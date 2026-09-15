@@ -14,3 +14,4 @@ This is a long and complicated multi-part prompt, so you may prefer to use agent
 2026-09-15,08:16:49,jan@brogger.no,adede7d2-9fc1-585c-a838-bea822978308,"Fix the .gitignore so it only excludes under the /private folder, too."
 2026-09-15,08:25:56,jan@brogger.no,adede7d2-9fc1-585c-a838-bea822978308,Do a git pull. The actual EDF files are now in the repo.
 2026-09-15,09:10:36,jan@brogger.no,adede7d2-9fc1-585c-a838-bea822978308,"You now have another test dataset, which is real non-patient EEG. Proceed."
+2026-09-15,10:07:07,jan@brogger.no,adede7d2-9fc1-585c-a838-bea822978308,"To answer your question about filtering, I now added another version of test export 3, with severe filtering (high pass 10 Hz, low pass 15 Hz) which I think should affect the EDF and the text export, but I am not sure. Do a git pull, then compare the two versions of ""test 3"""

@@ -436,3 +436,57 @@ the *text* export is the reliable raw reference (TST005); (2) an
 equivalence test against a vendor EDF must first establish whether that
 EDF is filtered (TST003 now checks the spectral ratio and only compares
 samples when it is 1.0 across the band).
+
+---
+
+# What the vendor's exports filter (added 2026-09-15, exports 2, 3 and 3-withfilter)
+
+Export 3 was exported twice: with the viewer unfiltered and with a 10 Hz
+high-pass / 15 Hz low-pass viewer filter. Findings:
+
+1. **Text export = raw data.** Both text exports (and the export-2 text)
+   equal the decoded frames within their 0.05 µV rounding in every band.
+   Viewer filters, montage and sensitivity do not reach the text export.
+2. **EDF export ignores the viewer filter** but applies its own high-pass.
+   The two export-3 EDFs are identical (≤ 1 step) except for the first
+   ~10 s of the later-starting one: the filter's start-up.
+3. **The EDF high-pass is exactly a 2nd-order Butterworth, 0.16 Hz,
+   causal** (transfer-function fit on export 2: order-2 magnitude fit rms
+   error 0.0014 at fc = 0.158 Hz; time-domain `scipy.signal.butter(2, 0.16,
+   'high', fs=500)` + `lfilter` matches the vendor EDF to 0.52 steps over
+   430 000 samples in steady state).
+4. **Start-up rule**: the vendor primes the filter by running it over the
+   time-reversed beginning of the segment (mirror *including* the first
+   sample; ≥ 15 s is converged) and then filters forward - equivalent to a
+   filter that has no start-up transient of its own. With that rule the
+   whole export-2 EDF (480 000 samples) and the whole export-3-withfilter
+   EDF (608 500 samples) are reproduced within 1.04 steps (the 0.04 is the
+   vendor's slightly asymmetric physical range −23919.0 / 23919.03 versus
+   our symmetric ±23919.27). Zero-state, steady-state-at-first-sample and
+   constant-extension start-ups all fail (hundreds to thousands of steps).
+5. **Gaps**: the padded gap seconds are exactly digital zero in the vendor
+   EDF; after a gap the filter is primed again on the resumed segment
+   (mirror rule), not continued through the zeros.
+6. **Export range**: the export dialog's start decides the first record:
+   record origin (tick 0, frame 0 padded with zeros: export 3-withfilter),
+   the first stored frame (export 2), or a user time (export 3, frame 30).
+   The EDF start time is that frame's time stamp + the PcTimeSync offset;
+   the last frame is never exported.
+7. **Annotation policy** (all three Essentia EDFs and the Apollo one):
+   events with `Deleted = 1` are dropped; types `AmpConfigurationData`,
+   `LiveAmpConfigurationData`, `ReviewedDataEvent`, `ContinuousImpedanceEvent`,
+   `BaselineImpedanceEvent` are dropped; of the `PhoticStimEvent`s only the
+   "Photic Start N Hz" markers are kept, the individual `Photic Stim`
+   flashes (244 here) are not; everything else (montage, paper speed,
+   user events, comments, hyperventilation incl. the 10-s increments,
+   impedance, recording on/off, battery, video) is kept with its full
+   text. Onsets are the events' absolute time stamps relative to the
+   export start.
+8. **Apollo (export 1)**: its vendor EDF was not high-passed. Whether the
+   high-pass depends on the headbox or on the Arc software version (export
+   1 was made in Oct 2025, the others in 2026 with Arc 3.2.1097) is not
+   known; `--highpass on|off` overrides the automatic choice.
+
+`cwelleegread/edf.py` implements all of this in `--mode vendor`
+(`vendor_highpass`, `vendor_resample`, `--start-at record-origin`,
+`SKIPPED_EVENT_TYPES/TEXTS`).

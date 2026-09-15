@@ -39,20 +39,18 @@ mapping table documents as intentionally different.
 
 # 3.0 Sample equivalence with native EDF export _(TST003)_ {#TST003}
 
-For each test recording and each channel compare the physical sample values
-of our EDF export with the native EDF export. First establish whether the
-native EDF is unfiltered: the amplitude ratio native/raw must be 1.0 in
-every band from 0.02 Hz to the Nyquist frequency (the export-3 vendor EDF
-is high-pass filtered at about 0.16 Hz and therefore only qualifies for a
-spectral comparison above 0.7 Hz). For an unfiltered native EDF, in
-vendor-compatible mode (REQ020) the sample counts must match and the
+For each test recording with an unfiltered vendor text export, prove raw
+fidelity against the text export (TST005). For each recording with a
+vendor EDF export, convert in vendor-compatible mode with the same start
+(first frame, record origin or user time) and compare every sample of
+every channel with the native EDF: the sample counts must match and the
 maximum absolute difference must not exceed one digital quantisation step
-of the native export (cadwell-export1: 11000 of 11000 samples pass,
-tests/test_convert_public.py). In raw fidelity mode, align segment by
-segment (the native export removes one sample with two-point smoothing at
-a regular interval and pads gaps with zeros), require the same bound on
-every aligned sample, and report the removal positions. Report the maximum
-and mean difference per channel.
+of the native export (a small allowance for the vendor's asymmetric
+physical range is documented). Implemented: cadwell-export1 (Apollo,
+tests/test_convert_public.py, 11000/11000 samples) and cadwell-export2 and
+3-withfilter (Essentia, tests/test_vendor_exports_filtering.py, 480000 and
+608500 samples including a padded gap). Report the maximum and mean
+difference per channel.
 
 *Parent links: REQ003, REQ008, REQ020*
 
@@ -60,10 +58,11 @@ and mean difference per channel.
 
 For each test recording compare the EDF+ annotation lists (onset, duration,
 text) of our export and the native export. Pass if, in vendor-compatible
-mode, the sets are equal after normalising whitespace and rounding onsets
-to the millisecond, and, in raw mode, the native set is a subset of ours;
-list every unmatched annotation on failure. Implemented for
-cadwell-export1 in tests/test_convert_public.py.
+mode, the lists are equal after rounding onsets to the millisecond (the
+vendor's event policy - deleted events, amplifier bookkeeping types and
+the individual photic flashes omitted - is reproduced), and, in raw mode,
+the native list is a subset of ours; list every unmatched annotation on
+failure. Implemented for cadwell-export1, 2 and 3-withfilter.
 
 *Parent links: REQ005, REQ008*
 

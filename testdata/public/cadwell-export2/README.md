@@ -31,3 +31,12 @@ What it showed (details in `docs/research/cadwell-file-format.md`):
   (referential-to-Cz EEG 4-12 µV rms in 1-30 Hz, DC offsets up to 100 µV).
 - Track 1 frames have a shorter header and 32 blocks of 264 bytes; content
   unknown (low-rate per-channel data, probably lead quality/impedance).
+
+## Vendor exports added later
+
+- `cadwell2.txt`: text export 12:58:54-12:59:24 local (frames 1-31); equals
+  the decoder output within 0.05 µV.
+- `export-edf/cadwell2.edf`: EDF+C export, 960 records (frames 1-960), start
+  12:58:54.7723649 local (frame 1 + PcTimeSync offset), 52 annotations. It
+  carries the vendor's 0.16 Hz high-pass; `--mode vendor` reproduces it
+  within one quantisation step over all 480000 samples.

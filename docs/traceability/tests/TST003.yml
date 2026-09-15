@@ -5,23 +5,21 @@ header: |
 level: 3.0
 links:
 - REQ003: kVnH7GDib_ckBl6RmquYOxAQgVXXkpRtbp_OWhxCh7E=
-- REQ008: UVzmqjFssLTAogiX_eYrnZn-IQ0l4uchb8j3gxurwdw=
-- REQ020: o1E8-92pPcdOt9Z59unfgLdC-qm-CpyYhs4MUYTaoZ4=
+- REQ008: abLUVQoV29OwxIKfVEk1xTZ0eWim7_0c7QqtOFiECo8=
+- REQ020: KmbP-75ydomyQuEsYzMyKNYIDrDMqNrmBWZJ258opUs=
 normative: true
 ref: ''
-reviewed: PhzO2tVHTxQz8dvpCkpDir_qxx1o1pCc50zP9lUjW9I=
+reviewed: 0sFznvtcdKokGMdksXC4wYV8reIRd0mjy-8UO88DpBk=
 text: |
-  For each test recording and each channel compare the physical sample values
-  of our EDF export with the native EDF export. First establish whether the
-  native EDF is unfiltered: the amplitude ratio native/raw must be 1.0 in
-  every band from 0.02 Hz to the Nyquist frequency (the export-3 vendor EDF
-  is high-pass filtered at about 0.16 Hz and therefore only qualifies for a
-  spectral comparison above 0.7 Hz). For an unfiltered native EDF, in
-  vendor-compatible mode (REQ020) the sample counts must match and the
+  For each test recording with an unfiltered vendor text export, prove raw
+  fidelity against the text export (TST005). For each recording with a
+  vendor EDF export, convert in vendor-compatible mode with the same start
+  (first frame, record origin or user time) and compare every sample of
+  every channel with the native EDF: the sample counts must match and the
   maximum absolute difference must not exceed one digital quantisation step
-  of the native export (cadwell-export1: 11000 of 11000 samples pass,
-  tests/test_convert_public.py). In raw fidelity mode, align segment by
-  segment (the native export removes one sample with two-point smoothing at
-  a regular interval and pads gaps with zeros), require the same bound on
-  every aligned sample, and report the removal positions. Report the maximum
-  and mean difference per channel.
+  of the native export (a small allowance for the vendor's asymmetric
+  physical range is documented). Implemented: cadwell-export1 (Apollo,
+  tests/test_convert_public.py, 11000/11000 samples) and cadwell-export2 and
+  3-withfilter (Essentia, tests/test_vendor_exports_filtering.py, 480000 and
+  608500 samples including a padded gap). Report the maximum and mean
+  difference per channel.
