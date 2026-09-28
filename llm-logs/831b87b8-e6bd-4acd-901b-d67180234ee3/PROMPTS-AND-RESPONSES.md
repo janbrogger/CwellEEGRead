@@ -2,10 +2,10 @@
 # Session `831b87b8-e6bd-4acd-901b-d67180234ee3`
 
 - Started (UTC): 2026-09-28T06:31:51.815Z  
-- Last event (UTC): 2026-09-28T07:06:33.521Z (span 34 min)  
+- Last event (UTC): 2026-09-28T07:21:01.615Z (span 49 min)  
 - User: jan@brogger.no; source: claude-code-remote; branch: `claude/zen-lovelace-vq1to3`  
 - Models: claude-fable-5-1; Claude Code 2.1.283  
-- Prompts: 2; transcript: transcript.jsonl (2.1 MB)
+- Prompts: 2; transcript: transcript.jsonl (2.6 MB)
 
 This file is derived from the transcript for readers without an LLM. Prompts are verbatim; responses are the assistant's text messages (tool calls and their output are only summarised - see the JSONL for those).
 
@@ -104,7 +104,7 @@ Also in the commit: the two agent reports as `docs/research/support/fieldtrip-fi
 Dispatch an agent to look for SQLITE reading in canonical matlab or eeglab
 ```
 
-_Tools used in this turn: Agent ×1, Bash ×1_
+_Tools used in this turn: Edit ×6, Bash ×3, Agent ×1_
 
 ### Response 2
 
@@ -115,4 +115,25 @@ The agent is running. It will check base MATLAB (bundled jars and libraries, int
 **[07:06 UTC]**
 
 Session log committed and pushed; only the hook-generated `llm-logs` files had changed. The SQLite research agent is still running, and I'll update the report when it reports back.
+
+**[07:19 UTC]**
+
+The agent found nothing reusable in base MATLAB, EEGLAB, FieldTrip, Brainstorm or MNE-MATLAB, and two corrections worth folding in (MathWorks shipped an undocumented `sqlite4java` jar until R2021a; mksqlite now has prebuilt MEX files for all four platforms). Updating the report.
+
+**[07:20 UTC]**
+
+Committed and pushed as 594e61d. The agent's answer is that there is nothing canonical to reuse, and the report now says so in a new section 2.2a plus two new rows in the options table.
+
+**What the agent found**
+
+- **Base MATLAB** has a private `libsqlite3` behind the internal `libmwsqldb` library (seen in `ldd` chains on MATLAB Answers), with no MATLAB API. MathWorks also shipped the undocumented `sqlite4java` jar on the static class path from about R2013a to R2021a and removed it in R2021b. Neither helps on current releases.
+- **Database Toolbox**: the native `sqlite` object still returns no BLOBs as of the latest evidence (Answers threads from 2019, 2022 and 2023, no release note through R2026a). Only the toolbox's JDBC route returns BLOBs as `uint8`, and it needs the paid toolbox.
+- **File Exchange "sqlite3"** (68298) is CC BY-NC-SA and returns NULL for BLOB columns, so it is out.
+- **EEGLAB** core and all bundled plugins at develop 8ac485f contain zero occurrences of `sqlite`, `mksqlite`, `jdbc` or the SQLite magic string. No manager plugin reading SQLite files was found by search. A Cadwell plugin would be the first SQLite-based importer in EEGLAB.
+- **BioSig**'s `sopen_sqlite.c` links the system libsqlite3 only when explicitly enabled (the autoconf check is commented out), fingerprints Cadwell by the table set, dumps rows and then errors "not supported yet". GPL and a stub. The MATLAB `sopen.m` has no SQLite branch.
+- **FieldTrip's MFF jar** bundles Apache Derby and MySQL Connector, not SQLite. **Brainstorm** and **MNE-MATLAB** have nothing.
+
+**One correction in the plugin's favour**: `mksqlite` (BSD-2) now carries prebuilt MEX files for win64, glnxa64, maci64 and maca64 in its GitHub repository, built against SQLite 3.46.0, with a commit from August 2026. The report now names it the best optional accelerator, while the dependency-free pure-MATLAB/Octave reader stays the primary path.
+
+Files: `docs/research/support/sqlite-canonical-findings.md` (new), `docs/research/eeglab-fieldtrip-cadwell-reader.md` and `docs/research/README.md` (updated). Traceability and scaffold tests pass.
 
