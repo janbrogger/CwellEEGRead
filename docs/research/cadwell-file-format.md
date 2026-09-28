@@ -541,6 +541,74 @@ Consequences:
 - Being local time without a zone marker, the integers are ambiguous
   around the DST change and must not be read as UTC epoch values.
 
+# Two clocks: event time stamps versus sample ticks (found 2026-09-28)
+
+Every event row carries two times: `StartTime`, a wall-clock stamp with
+100 ns resolution, and `StartOffset`, ticks (100 ns) from the record origin
+on the amplifier's sample clock (frame *k* covers ticks *k*..*k*+1 s
+exactly, 500 or 250 samples per frame). The frames carry the same pair
+(`TimeStamp` in the index, start/end ticks in the blob). The two clocks do
+not run at the same rate:
+
+| export (headbox) | frame stamp increment per frame | stamp clock vs tick clock |
+|---|---|---|
+| 1 (Apollo, 250 Hz, 45 s) | 1.0000244 s, jittery (std 1.7 ms, a 3 ms step every 4th frame: reception times) | +24 ppm |
+| 2 (Essentia, 500 Hz, 16 min) | 0.9999034 s, smooth (std 4 µs: computed, not measured) | −96.6 ppm |
+| 3 (Essentia, 500 Hz, 20 min) | 0.9999043 s, smooth (std 4 µs) | −95.7 ppm |
+
+On the Essentia recordings the stamp clock falls behind the tick clock by
+96 µs per second: 93 ms over export 2, 116 ms over export 3, about 0.35 s
+per hour. The event rows follow the frames exactly: (stamp − ticks) of an
+event equals the frame drift curve interpolated at that event plus a
+constant 0.42 ms, with 0.3–0.6 ms spread over 620 events. So the two
+times of an event carry the same information mapped through one
+clock relation; neither is an independent measurement, and the 100 ns
+digits do not mean 100 ns accuracy.
+
+Which axis are the samples on? The tick axis by construction (500 samples
+per tick-second), so an event must be placed by `StartOffset` to land on
+the right sample. The vendor's EDF export places annotations by wall-clock
+stamp (onset = stamp − EDF start stamp) on a stream of exactly 500 samples
+per record, i.e. it puts them on the tick axis with the stamp clock's
+value, and this converter reproduces that (REQ012). The error is the
+drift: 78 ms at the photic stimulation of export 2 (13.5 min in), 96 ms at
+that of export 3 (17 min in), 0.35 s after an hour.
+
+Physiological check (`Photic Stim` flash events, 13 flashes at 2 Hz per
+export, O1/O2 average referenced to Cz, baseline −50..0 ms): on the tick
+axis the occipital flash response rises at 100 ms and peaks at 110–130 ms
+in export 3 (128 ms, +15 µV) and at about 130 ms in export 2, the latency
+of a flash VEP; on the stamp axis the identical complex sits 96 ms (78 ms)
+later, peaking at 210–270 ms, which is not a flash VEP latency. The tick
+axis is the right one. (The intra-train flash spacing is the same on both
+axes, so the test is purely about the absolute offset.)
+
+What this means:
+
+- `Metadata.json` and the EDF+ annotations of the vendor export are
+  precise to the microsecond about the wall-clock instant of the event,
+  and wrong by the clock drift about which sample it belongs to. Event
+  precision was never the problem; the axis is.
+- The pause-versus-event offsets measured earlier (data end 0.5–2 s before
+  `Stop Recording`, resume 0.8–1 s after `Start Recording`) were computed
+  on the tick axis and stand; on the stamp axis they would carry the drift
+  in addition.
+- The converter and the EEGLAB plugin currently place events by stamp, as
+  the vendor does. Placing them by `StartOffset` ticks (available in every
+  `.ezevents` row) is the accurate choice and needs a requirement decision:
+  a mode or option (`--event-timing ticks|stamp`), with `stamp` kept for
+  vendor equivalence (REQ012/TST) and `ticks` for analysis use; the
+  equivalence tests against the vendor EDF then compare annotation onsets
+  only in `stamp` mode, and a new test checks that `ticks` mode puts the
+  photic response at 100–130 ms.
+- The absolute EDF start time is unaffected (first frame stamp plus the
+  PcTimeSync correction, both wall clock). PcTimeSync itself (two rows per
+  record, PC time minus sync time growing 10–30 ppm) is a third relation
+  and does not explain the 96 ppm; the frame stamps on Essentia look like
+  a computed ratio rather than measured reception times, so which physical
+  clock is "true" wall time is not settled by the files alone. For sample
+  alignment that does not matter: samples live on the tick axis.
+
 # MATLAB/Octave port (added 2026-09-28)
 
 `uses/EEGLAB/cadwellio/` re-implements the reader natively for EEGLAB users:

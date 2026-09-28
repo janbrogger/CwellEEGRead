@@ -2,10 +2,10 @@
 # Session `adede7d2-9fc1-585c-a838-bea822978308`
 
 - Started (UTC): 2026-09-15T07:29:43.798Z  
-- Last event (UTC): 2026-09-28T11:01:27.356Z (span 315 h 31 min)  
+- Last event (UTC): 2026-09-28T11:28:24.515Z (span 315 h 58 min)  
 - User: jan@brogger.no; source: claude-code-remote; branch: `claude/zen-lovelace-vq1to3`  
 - Models: claude-fable-5-1; Claude Code 2.1.283  
-- Prompts: 26; transcript: transcript.jsonl (12.6 MB)
+- Prompts: 27; transcript: transcript.jsonl (12.8 MB)
 
 This file is derived from the transcript for readers without an LLM. Prompts are verbatim; responses are the assistant's text messages (tool calls and their output are only summarised - see the JSONL for those).
 
@@ -1693,4 +1693,42 @@ The repository is the source, the version lives in the eegplugin file, and the z
 For cadwellio that means: build the zip, do the one MATLAB GUI test, tag a release with the zip attached so the issue can link a stable URL, then open the issue with name `cadwellio`, version 0.2.0, a short description, the repository link and the zip. I can draft the issue text when you want it.
 
 One limitation to note: sccn.ucsd.edu, eeglab.org and web.archive.org are all denied by this environment's network policy, so the counts rest on GitHub-side evidence plus your pasted table rather than on the list's own link column.
+
+
+## Prompt 27 - 2026-09-28 11:25:11 UTC
+
+```text
+In the file metadata.json from the native export, we have timestamps that are high integer numbers. Investigate if we can get more precise event timings from that.
+```
+
+_Tools used in this turn: Bash ×7_
+
+### Response 27
+
+**[11:25 UTC]**
+
+I'll locate the metadata.json files in the native exports, look at the large integers, and test them against the known clocks (frame ticks, event StartOffset ticks, time stamps).
+
+**[11:27 UTC]**
+
+The comparison is conclusive: the JSON stamps are the database stamps in a different unit, not a finer clock. I'll record the relation as a test and in the research note, then commit.
+
+**[11:28 UTC]**
+
+No, those integers give no extra precision. They are the same event stamps the .ezevents database already holds, in a coarser unit. The finding is pinned by a new test and written into the research note, both pushed.
+
+**What the numbers are.** Metadata.json sits beside the vendor's EDF export, not in the native export. Its `Timestamp` values are microseconds since 1970 in local wall-clock time, not UTC. Each one equals the database `StartTime` plus the PcTimeSync clock correction, rounded to the microsecond. Across all 143 JSON events of the three exports the difference from that prediction is at most 1 µs.
+
+| export | JSON minus database stamp | which is |
+|---|---|---|
+| 1 | 3 600 000 341 µs | 1 h (CET in October) + 341 µs correction |
+| 2 | 7 200 011 198 µs | 2 h (CEST) + 11 198 µs correction |
+| 3 | 7 200 011 114 µs | 2 h (CEST) + 11 114 µs correction |
+
+**Why nothing is gained.** The database keeps 100 ns resolution, and the EDF+ annotations the same export writes keep 7 decimals as well. The JSON keeps 6. I also checked whether the JSON might be on the amplifier tick clock, which would have been interesting: it is not. Tick-based predictions scatter by milliseconds, stamp-based ones differ by a constant. So event timing in this project stays on the .ezevents stamps, converted with the same stamp-plus-correction rule the EDF start already uses.
+
+**Two further observations.**
+
+- The JSON event list is the EDF export's own selection: deleted events and the bookkeeping types are absent, matching the skip rule the converter already applies.
+- Because the values are local time with no zone marker, they are ambiguous around the DST change and must not be read as UTC epoch values. `RecordCreateDate` uses the same convention and shows the records were created between 8 s and 112 min before recording started.
 
