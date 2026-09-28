@@ -2,10 +2,10 @@
 # Session `adede7d2-9fc1-585c-a838-bea822978308`
 
 - Started (UTC): 2026-09-15T07:29:43.798Z  
-- Last event (UTC): 2026-09-28T10:27:48.581Z (span 314 h 58 min)  
+- Last event (UTC): 2026-09-28T10:37:13.709Z (span 315 h 7 min)  
 - User: jan@brogger.no; source: claude-code-remote; branch: `claude/zen-lovelace-vq1to3`  
 - Models: claude-fable-5-1; Claude Code 2.1.283  
-- Prompts: 22; transcript: transcript.jsonl (11.7 MB)
+- Prompts: 23; transcript: transcript.jsonl (11.8 MB)
 
 This file is derived from the transcript for readers without an LLM. Prompts are verbatim; responses are the assistant's text messages (tool calls and their output are only summarised - see the JSONL for those).
 
@@ -1041,4 +1041,41 @@ Yes, the plugin is ready to submit apart from one step only a real MATLAB can do
 **Two smaller fixes surfaced by running EEGLAB.** `eeg_checkset` strips an "EEG " prefix from labels, so the EDF-style names were being mangled. Labels are now the electrode names (Fp1, E1/Pg1, 1A) with each channel's reference in `chanlocs.ref`, which also lets channel-location lookup work. The version is bumped to 0.2.0 and the help text no longer claims a SQLite library is required.
 
 **Submission status.** The zip builds as `dist/cadwellio0.2.0.zip` with no Java jar, the folder name matches the version string as EEGLAB requires, and the README in uses/EEGLAB now lists what is verified and the submission steps. The one thing I cannot do here is start the MATLAB GUI to see the menu item appear and confirm the history command replays. That needs one manual test in MATLAB with EEGLAB before uploading through the sccn upload form or a GitHub issue on sccn/eeglab. Timing differences between the vendor's Stop/Start events and the actual data hole are also worth a sentence in the README later: the vendor stamps Stop Recording about 1.9 s after the last stored frame and Start Recording about 0.8 s before the first resumed frame.
+
+
+## Prompt 23 - 2026-09-28 10:33:08 UTC
+
+```text
+Write up the event delays in the README.
+```
+
+_Tools used in this turn: Bash ×8_
+
+### Response 23
+
+**[10:33 UTC]**
+
+I'll pin down the exact numbers first (event time stamps versus the frame clock, PC-clock correction and the event tick offsets) so the README states measured facts.
+
+**[10:37 UTC]**
+
+Written up and pushed. The section "Where the vendor's Stop/Start Recording events sit relative to the data" is in uses/EEGLAB/README.md, with a shorter note in the plugin's own README and a cross-reference in the research note.
+
+Before writing I measured all three exports on the amplifier tick clock, where frame *k* holds second *k*, so the numbers are facts rather than the earlier estimate:
+
+| Export | Event | Event offset | Nearest stored sample | Data missing |
+|---|---|---|---|---|
+| 1 | Start Recording | −0.008 s | frame 0 starts at 0 s | 0.008 s |
+| 1 | Stop Recording | 46.06 s | frame 44 ends at 45 s | 1.06 s |
+| 2 | Start Recording | −0.001 s | frame 1 starts at 1 s | 1.00 s |
+| 2 | Stop Recording | 962.52 s | frame 961 ends at 962 s | 0.52 s |
+| 3, pause | Stop Recording | 329.97 s | frame 327 ends at 328 s | 1.97 s |
+| 3, pause | Start Recording | 337.19 s | frame 338 starts at 338 s | 0.81 s |
+| 3, end | Stop Recording | 1218.90 s | frame 1217 ends at 1218 s | 0.90 s |
+
+**What the README says.** The stored data begin at the first whole amplifier-clock second after Start Recording and end at a whole second between half a second and two seconds before Stop Recording. The partial second at each press is dropped, and in some cases one complete frame with it, which looks like the frame in progress being discarded along with the partial one. The vendor's own EDF export of export 3 places the events the same way: its zero-filled run covers record seconds 327 to 337, the Stop annotation sits 1.94 s into the zeros, and the Start annotation 0.84 s before the data resume, with a 7 s Impedance event inside the pause.
+
+**Guidance for users, as written.** Use the plugin's pause events or `EEG.etc.cadwell.gaps` to locate data edges, since they come from the frame numbering and agree with the vendor's GapInfo rows to the millisecond. With padding on, the Stop and Start events lie inside the zeros as in the vendor's EDF. With padding off, they move onto the join together with everything else stamped during the pause. Up to about 2 s of EEG before a stop and 1 s after a start is not in the export at all, so an event stamped in that window has no data under it.
+
+One caveat on the mechanism: the one-frame loss is an observation across three recordings, not something Cadwell documents, so the README phrases the cause as apparent rather than certain.
 
