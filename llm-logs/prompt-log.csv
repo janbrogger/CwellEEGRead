@@ -645,3 +645,4 @@ zapline-plus	1.2.1	Zapline-plus (Klug and Kloosterman, 2022) is a wrapper for Za
 2026-09-28,12:49:56,jan@brogger.no,adede7d2-9fc1-585c-a838-bea822978308,Make padgaps default off.
 2026-09-28,12:53:34,jan@brogger.no,adede7d2-9fc1-585c-a838-bea822978308,"Delete the section on ""Submitting to the EEGLAB plugin list"" and ""fieldtrip"" in README.md"
 2026-09-28,13:14:31,jan@brogger.no,adede7d2-9fc1-585c-a838-bea822978308,Can we make a github release that only contains the EEGLAB plugin? In effect releasing several different products out of this project in the future?
+2026-09-28,13:34:38,jan@brogger.no,adede7d2-9fc1-585c-a838-bea822978308,"Tag cadwellio-v0.2.0 and push it, then check the release"
