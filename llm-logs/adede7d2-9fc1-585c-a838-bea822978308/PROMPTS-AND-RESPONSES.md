@@ -2,7 +2,7 @@
 # Session `adede7d2-9fc1-585c-a838-bea822978308`
 
 - Started (UTC): 2026-09-15T07:29:43.798Z  
-- Last event (UTC): 2026-09-28T13:19:16.620Z (span 317 h 49 min)  
+- Last event (UTC): 2026-09-28T13:21:13.829Z (span 317 h 51 min)  
 - User: jan@brogger.no; source: claude-code-remote; branch: `main`  
 - Models: claude-fable-5-1; Claude Code 2.1.283  
 - Prompts: 33; transcript: transcript.jsonl (14.3 MB)
@@ -1917,7 +1917,7 @@ One consequence needed care: the self-test's tick-versus-stamp comparison read w
 Can we make a github release that only contains the EEGLAB plugin? In effect releasing several different products out of this project in the future?
 ```
 
-_Tools used in this turn: Bash ×7, Read ×3, Edit ×2, Glob ×1, Grep ×1, Write ×1, ToolSearch ×1, mcp__github__push_files ×1_
+_Tools used in this turn: Bash ×12, Read ×3, Edit ×2, Glob ×1, Grep ×1, Write ×1, ToolSearch ×1, mcp__github__push_files ×1_
 
 ### Response 33
 
@@ -1947,4 +1947,20 @@ Then check the Actions tab for the run and the Releases page for the asset. Acti
 
 - GitHub attaches "Source code (zip)" and "Source code (tar.gz)" of the whole repository to every release and this cannot be turned off. The release notes say the plugin is the named zip asset.
 - I could not run anything to validate the workflow file or sync the local checkout. The local working tree holds the same three files as uncommitted changes, identical to what is on `origin/main`. Once commands work again, a `git checkout -- .github README.md uses/EEGLAB/README.md` followed by `git pull` brings it in line, and I will do that at the next opportunity. If the first tagged run fails on a YAML detail, the fix is a one-line follow-up.
+
+**[13:20 UTC]**
+
+Commands respond again. The local branch and the API-pushed commit have diverged, so I'll commit the remaining log files, merge `origin/main` in, and push.
+
+**[13:21 UTC]**
+
+Everything is committed and pushed, and the working tree is clean.
+
+What happened: the release workflow commit had gone to `origin/main` through the GitHub API while shell commands were blocked, so the local branch and the remote had diverged. Once commands responded again I committed the session-log files, discarded the duplicate local copies of the two README edits, merged `origin/main` in, and pushed. `main` now ends in a merge commit that joins the session-log commits with the workflow commit, and the workflow file is present locally.
+
+Two checks I could not do earlier are done now: the workflow file parses as valid YAML with its five steps in order, and `make_zip.sh` still builds `cadwellio0.2.0.zip`. Cutting the first release remains a tag push on your side:
+
+```bash
+git tag cadwellio-v0.2.0 && git push origin cadwellio-v0.2.0
+```
 
