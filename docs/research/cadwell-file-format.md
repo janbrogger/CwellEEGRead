@@ -499,3 +499,22 @@ high-pass / 15 Hz low-pass viewer filter. Findings:
 `cwelleegread/edf.py` implements all of this in `--mode vendor`
 (`vendor_highpass`, `vendor_resample`, `--start-at record-origin`,
 `SKIPPED_EVENT_TYPES/TEXTS`).
+
+---
+
+# MATLAB/Octave port (added 2026-09-28)
+
+`uses/EEGLAB/cadwellio/` re-implements the reader natively for EEGLAB users:
+`cadwell_decode_frame.m` (frame blob to samples), `cadwell_read_index.m`,
+`cadwell_read_events.m`, `cadwell_read.m`, `cadwell_layout.m`. SQLite access
+goes through `cadwell_sqlite.m`, a thin layer over existing libraries
+(mksqlite, Database Toolbox / Octave sqlite package, xerial sqlite-jdbc,
+py.sqlite3), so no SQLite parsing is hand-rolled. Under GNU Octave 8.4 with
+the JDBC backend the port equals the Python decoder bit for bit on the
+first 20 frames of all three public exports, reproduces the index, labels,
+events and gaps, and equals the vendor text export of export 1 within
+0.05 µV (`cadwell_selftest.m`, run by `tests/test_octave_port.py`). Two
+portability lessons: `Class.forName` cannot see jars added with
+`javaaddpath`, so the JDBC driver is instantiated with `javaObject`; and
+`datenum` differences lose microseconds at 2026 dates, so time differences
+are computed from a seconds-since-2000 parser (`cadwell_timestamp_sec.m`).

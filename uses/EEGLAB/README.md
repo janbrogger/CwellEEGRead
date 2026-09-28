@@ -27,9 +27,12 @@ its own GitHub repository.
 
 | File | Purpose |
 |---|---|
-| `cadwellio/eegplugin_cadwellio.m` | plugin entry point: adds *File > Import data > From Cadwell (.ezdata / converted EDF)* |
+| `cadwellio/eegplugin_cadwellio.m` | plugin entry point: adds *File > Import data > From Cadwell (.ezdataindex / converted EDF)* |
 | `cadwellio/pop_cadwell.m` | importer; GUI when called without arguments, returns `[EEG, com]` |
-| `cadwellio/cadwell_sqlite_info.m` | lists tables and row counts of a `.ezdata` file (outer structure) |
+| `cadwellio/cadwell_read.m`, `cadwell_read_index.m`, `cadwell_read_events.m`, `cadwell_decode_frame.m` | the native reader (port of `cwelleegread/ezdata.py`) |
+| `cadwellio/cadwell_sqlite.m`, `cadwell_get_jdbc.m` | SQLite access layer with pluggable backends; JDBC driver download |
+| `cadwellio/cadwell_layout.m` | per-headbox channel labels (port of `cwelleegread/layout.py`) |
+| `cadwellio/cadwell_selftest.m`, `tools/make_matlab_reference.py`, `tests/test_octave_port.py` | verification of the port against the Python decoder and the vendor text export |
 | `cadwellio/README.md`, `cadwellio/LICENSE` | shipped inside the zip |
 | `make_zip.sh` | builds `cadwellio<version>.zip` for manual install or submission to the EEGLAB plugin list |
 
@@ -41,6 +44,11 @@ its own GitHub repository.
 # through the sccn/eeglab issue template "New plugin or plugin update"
 # (the old web upload form is closed)
 ```
+
+**Design note**: the SQLite layer is a separate module with a one-call
+interface (`open`, `query`, `close`) so that backends can be added without
+touching the decoder, and the decoder works on plain `uint8` blobs so it can
+be tested without any database library.
 
 **FieldTrip**: the cheapest route is a function `cadwell_sqlite.m` on the
 path implementing the three call forms `hdr = f(file)`,

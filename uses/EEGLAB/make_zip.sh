@@ -8,5 +8,6 @@ VERSION=$(sed -n "s/.*vers = 'cadwellio\([0-9.]*\)'.*/\1/p" cadwellio/eegplugin_
 NAME="cadwellio$VERSION"
 rm -rf "dist/$NAME" && mkdir -p "dist/$NAME"
 cp cadwellio/*.m cadwellio/README.md cadwellio/LICENSE "dist/$NAME/"
+if ls cadwellio/lib/sqlite-jdbc*.jar >/dev/null 2>&1; then mkdir -p "dist/$NAME/lib" && cp cadwellio/lib/sqlite-jdbc*.jar "dist/$NAME/lib/"; fi
 ( cd dist && rm -f "$NAME.zip" && zip -qr "$NAME.zip" "$NAME" )
 echo "built dist/$NAME.zip"

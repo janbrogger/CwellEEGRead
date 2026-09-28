@@ -19,6 +19,6 @@ function vers = eegplugin_cadwellio(fig, trystrs, catchstrs)
     end
     menu = findobj(fig, 'tag', 'import data');
     cb = ['try, [EEG LASTCOM] = pop_cadwell;' catchstrs.new_and_hist];
-    uimenu(menu, 'Label', 'From Cadwell (.ezdata / converted EDF)', ...
+    uimenu(menu, 'Label', 'From Cadwell (.ezdataindex / converted EDF)', ...
         'CallBack', cb, 'Separator', 'on');
 end
