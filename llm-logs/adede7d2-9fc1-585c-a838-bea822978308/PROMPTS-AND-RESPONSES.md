@@ -2,10 +2,10 @@
 # Session `adede7d2-9fc1-585c-a838-bea822978308`
 
 - Started (UTC): 2026-09-15T07:29:43.798Z  
-- Last event (UTC): 2026-09-28T08:05:32.757Z (span 312 h 35 min)  
+- Last event (UTC): 2026-09-28T08:26:57.583Z (span 312 h 57 min)  
 - User: jan@brogger.no; source: claude-code-remote; branch: `claude/zen-lovelace-vq1to3`  
 - Models: claude-fable-5-1; Claude Code 2.1.283  
-- Prompts: 16; transcript: transcript.jsonl (9.0 MB)
+- Prompts: 17; transcript: transcript.jsonl (9.4 MB)
 
 This file is derived from the transcript for readers without an LLM. Prompts are verbatim; responses are the assistant's text messages (tool calls and their output are only summarised - see the JSONL for those).
 
@@ -708,4 +708,44 @@ Sources: [Convert numpy array to double](https://www.mathworks.com/matlabcentral
 Done. The pending changes were only the session log files under `llm-logs/` staged by the Stop hook after the EEGLAB design answer. They are committed as a log-only commit and pushed to `claude/zen-lovelace-vq1to3`; the working tree is clean.
 
 Nothing further is outstanding. The prototype of the command-line-based `pop_cadwell` and the backend interface sketch for a native module wait for your decision.
+
+
+## Prompt 17 - 2026-09-28 08:13:25 UTC
+
+```text
+Let's go native MATLAB/Octave and bite the bullet.
+```
+
+_Tools used in this turn: Bash ×15_
+
+### Response 17
+
+**[08:14 UTC]**
+
+Good. Native it is. The plan: a backend-agnostic SQLite access layer with the available library backends, a MATLAB/Octave port of the frame decoder, a top-level reader, and tests that pin the port to the Python implementation and to the vendor text export. First I'll check what I can test in this container, while writing the decoder and layout code, which need no database access.
+
+**[08:23 UTC]**
+
+All green: the Octave self-test passes fully and the pytest wrapper runs it. Last steps, in parallel: build the plugin zip as a smoke test and run the whole test suite; then commit and push.
+
+**[08:26 UTC]**
+
+The native MATLAB/Octave reader is done, verified under GNU Octave, and pushed. All 31 tests pass.
+
+**What was built** (`uses/EEGLAB/cadwellio/`)
+
+- `cadwell_sqlite.m`: a one-call read-only SQLite layer with pluggable library backends: mksqlite, the Database Toolbox or Octave `sqlite` package, the xerial sqlite-jdbc driver, and MATLAB's `py.sqlite3`. It returns rows as cell arrays with blobs as `uint8`, so nothing above it knows which library is in use. No SQLite parsing is hand-rolled.
+- `cadwell_decode_frame.m`, `cadwell_read_index.m`, `cadwell_read_events.m`, `cadwell_read.m`, `cadwell_layout.m`: the port of the Python reader. `pop_cadwell` now imports a CadLink export straight into an EEG structure with labels, events, gap padding and `EEG.ref = 'Cz'`; converted EDF files are still accepted.
+- `cadwell_get_jdbc.m` downloads the JDBC driver into `lib/`; the plugin zip bundles it, the repo ignores it.
+
+**Verification**
+
+- The decoder equals the Python decoder bit for bit on the first 20 frames of all three public exports.
+- The full native read through the JDBC backend reproduces the Python index, labels, events, gaps, clock correction and samples.
+- Export 1 read natively equals the vendor's text export for all 7755 rows within 0.05 µV.
+- `tests/test_octave_port.py` regenerates the reference data from Python and runs `cadwell_selftest` under Octave, so the port stays pinned to the Python implementation.
+
+**Two portability findings** worth knowing if you touch this code: `Class.forName` cannot see jars added with `javaaddpath`, so the JDBC driver is created with `javaObject` and connected directly; and `datenum` differences lose microseconds at 2026 dates, so time differences use a seconds-since-2000 parser.
+
+**What is not verified**: nothing has run inside MATLAB or a real EEGLAB session, since there is no MATLAB here. The three MATLAB-only backends are written from their documented interfaces. A first run of `cadwell_selftest` on your MATLAB, with the reference folder produced by `tools/make_matlab_reference.py`, would close that gap; I would expect the JDBC path to work as is and possible small type-conversion fixes in the other backends.
 
