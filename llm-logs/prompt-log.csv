@@ -647,3 +647,22 @@ zapline-plus	1.2.1	Zapline-plus (Klug and Kloosterman, 2022) is a wrapper for Za
 2026-09-28,13:14:31,jan@brogger.no,adede7d2-9fc1-585c-a838-bea822978308,Can we make a github release that only contains the EEGLAB plugin? In effect releasing several different products out of this project in the future?
 2026-09-28,13:34:38,jan@brogger.no,adede7d2-9fc1-585c-a838-bea822978308,"Tag cadwellio-v0.2.0 and push it, then check the release"
 2026-09-28,13:42:44,jan@brogger.no,adede7d2-9fc1-585c-a838-bea822978308,"Repo is public, go ahead"
+2026-09-28,13:44:42,jan@brogger.no,adede7d2-9fc1-585c-a838-bea822978308,"Write me text in markdown boxes for the new issue template on EEGLAB: ## Plugin submission
+
+Please provide the following information:
+
+**Plugin name:**  
+**Current version:**  
+**New or revised version:**  
+
+**Description of the update:**  
+(Briefly describe changes, fixes, or additions)
+
+---
+
+### Upload instructions
+Drag and drop the ZIP file of your plugin directly into this issue.
+
+---
+
+**Note:** The previous submission page has been closed due to security concerns."

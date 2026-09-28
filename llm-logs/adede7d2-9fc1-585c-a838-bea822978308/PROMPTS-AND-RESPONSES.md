@@ -2,10 +2,10 @@
 # Session `adede7d2-9fc1-585c-a838-bea822978308`
 
 - Started (UTC): 2026-09-15T07:29:43.798Z  
-- Last event (UTC): 2026-09-28T13:38:47.206Z (span 318 h 9 min)  
+- Last event (UTC): 2026-09-28T13:44:54.222Z (span 318 h 15 min)  
 - User: jan@brogger.no; source: claude-code-remote; branch: `main`  
 - Models: claude-fable-5-1; Claude Code 2.1.283  
-- Prompts: 34; transcript: transcript.jsonl (14.7 MB)
+- Prompts: 36; transcript: transcript.jsonl (14.7 MB)
 
 This file is derived from the transcript for readers without an LLM. Prompts are verbatim; responses are the assistant's text messages (tool calls and their output are only summarised - see the JSONL for those).
 
@@ -2012,4 +2012,99 @@ The release exists and is correct. It was published by the workflow, though not 
 | Page | https://github.com/janbrogger/CwellEEGRead/releases/tag/cadwellio-v0.2.0 |
 
 **Two things I could not do from here.** Unauthenticated fetches of the release page and the asset URL return 404 through this proxy, which is what a private repository looks like from outside, so I could not download the asset to inspect it. If the repository is private, the EEGLAB plugin manager will not be able to fetch that URL either, and the repository would need to be public before submitting to the plugin list. And the temporary `release/cadwellio-v0.2.0` branch could not be deleted from here, since the proxy refuses ref deletions the same way it refuses tags. It is harmless, and one click under Branches on GitHub removes it.
+
+
+## Prompt 35 - 2026-09-28 13:42:44 UTC
+
+```text
+Repo is public, go ahead
+```
+
+_Tools used in this turn: Bash ×2, Write ×1_
+
+### Response 35
+
+**[13:42 UTC]**
+
+The repository being public, I can now verify the asset the way a user or the EEGLAB plugin manager would fetch it.
+
+**[13:43 UTC]**
+
+The release checks out completely, and the submission text is ready and pushed.
+
+**Asset verified as a user would fetch it.** Downloaded unauthenticated from the release URL: 32 677 bytes, sha256 identical to what the GitHub API reports for the asset, one top-level folder `cadwellio0.2.0` with all 18 plugin files, `vers` inside equal to the folder name. The code taken from that zip, not from the repository, reads public export 1 under Octave with the expected 32 channels, 11 258 samples and 14 events. So the plugin manager will get exactly what was tested.
+
+**Submission text.** `uses/EEGLAB/SUBMISSION.md` holds the issue text for sccn/eeglab's "New plugin or plugin update" template: name, version, a description, tags, licence, repository link and the release zip URL, plus the note on how later versions are released. I did not post the issue myself: it goes to a repository outside this session's GitHub scope, and the tutorial's one remaining step, opening the plugin in a real MATLAB GUI to see the menu item and replay the history line, is still yours to do first. Once that passes, the issue is a copy-paste.
+
+One leftover: the `release/cadwellio-v0.2.0` branch still exists on GitHub because the proxy here refuses ref deletions. It is harmless and can be deleted from the Branches page.
+
+
+## Prompt 36 - 2026-09-28 13:44:42 UTC
+
+```text
+Write me text in markdown boxes for the new issue template on EEGLAB: ## Plugin submission
+
+Please provide the following information:
+
+**Plugin name:**  
+**Current version:**  
+**New or revised version:**  
+
+**Description of the update:**  
+(Briefly describe changes, fixes, or additions)
+
+---
+
+### Upload instructions
+Drag and drop the ZIP file of your plugin directly into this issue.
+
+---
+
+**Note:** The previous submission page has been closed due to security concerns.
+```
+
+### Response 36
+
+**[13:44 UTC]**
+
+Here is the issue, ready to paste. The first box is the title field, the second the body.
+
+```markdown
+New plugin: cadwellio 0.2.0 (import Cadwell Arc EEG)
+```
+
+```markdown
+## Plugin submission
+
+Please provide the following information:
+
+**Plugin name:** cadwellio  
+**Current version:** none (new plugin)  
+**New or revised version:** 0.2.0  
+
+**Description of the update:**  
+Import plugin for Cadwell Arc EEG recordings (CadLink study exports: the `.ezdataindex` / `.ezdata` / `.ezevents` SQLite files written by Cadwell Arc systems from about 2020 on). Pure MATLAB/Octave: the plugin parses the SQLite files and decodes the compressed EEG frames itself, so no toolbox, MEX file, Java or Python is required.
+
+Adds *File > Import data > Using EEGLAB functions and plugins > From Cadwell (.ezdataindex / converted EDF)* (`pop_cadwell`, with a history command). The dataset has data in microvolts referential to the recording reference (Cz), electrode labels from a table per headbox (Apollo, Essentia), the recording's events with durations, events placed on the amplifier's sample clock, and recording pauses represented as standard `boundary` events (or zero-filled with a `Recording gap` event, as an option). It can also load an EDF converted by the companion Python tool through BIOSIG or File-IO.
+
+Verification: the frame decoder is checked sample for sample against the vendor's own text and EDF exports of three public test recordings, and the importer is tested with EEGLAB's own functions under GNU Octave (`eeg_checkset`, `pop_saveset` / `pop_loadset` round trip).
+
+Tags: import  
+Licence: Unlicense (public domain)  
+Repository and documentation: https://github.com/janbrogger/CwellEEGRead (plugin under `uses/EEGLAB/`, README at `uses/EEGLAB/README.md`)  
+Release zip: https://github.com/janbrogger/CwellEEGRead/releases/download/cadwellio-v0.2.0/cadwellio0.2.0.zip (also attached below)
+
+---
+
+### Upload instructions
+Drag and drop the ZIP file of your plugin directly into this issue.
+
+(cadwellio0.2.0.zip attached; the same file as the release asset above.)
+
+---
+
+**Note:** The previous submission page has been closed due to security concerns.
+```
+
+Two notes for posting. Attach the zip by dragging `cadwellio0.2.0.zip` from the release into the issue after pasting; GitHub then appends its own link below the text. And the template's other fields are left as they are, since the maintainers read them as-is.
 
