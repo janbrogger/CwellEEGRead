@@ -40,3 +40,4 @@ work in progress
 #186·[janbrogger](https://github.com/fieldtrip/fieldtrip/pulls?q=is%3Apr+author%3Ajanbrogger) opened on Jul 2, 2016 · Closed on Jul 6, 2016Contributor
 
 Your task is to write a report that scopes an implementation of Cadwell reading for EEGLAB, or EEGLAB via fieldtrip. Dispatch agents if necessary."
+2026-09-28,07:05:28,jan@brogger.no,831b87b8-e6bd-4acd-901b-d67180234ee3,Dispatch an agent to look for SQLITE reading in canonical matlab or eeglab

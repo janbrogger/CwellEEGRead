@@ -2,10 +2,10 @@
 # Session `831b87b8-e6bd-4acd-901b-d67180234ee3`
 
 - Started (UTC): 2026-09-28T06:31:51.815Z  
-- Last event (UTC): 2026-09-28T06:44:30.567Z (span 12 min)  
+- Last event (UTC): 2026-09-28T07:06:23.080Z (span 34 min)  
 - User: jan@brogger.no; source: claude-code-remote; branch: `claude/zen-lovelace-vq1to3`  
 - Models: claude-fable-5-1; Claude Code 2.1.283  
-- Prompts: 1; transcript: transcript.jsonl (1.1 MB)
+- Prompts: 2; transcript: transcript.jsonl (2.1 MB)
 
 This file is derived from the transcript for readers without an LLM. Prompts are verbatim; responses are the assistant's text messages (tool calls and their output are only summarised - see the JSONL for those).
 
@@ -32,7 +32,7 @@ work in progress
 Your task is to write a report that scopes an implementation of Cadwell reading for EEGLAB, or EEGLAB via fieldtrip. Dispatch agents if necessary.
 ```
 
-_Tools used in this turn: Bash ×20, WebFetch ×13, WebSearch ×10, Read ×9, Agent ×5, Grep ×3, Glob ×2, ToolSearch ×1, Write ×1_
+_Tools used in this turn: Bash ×28, WebFetch ×13, Edit ×12, Read ×10, WebSearch ×10, Agent ×5, Grep ×3, Glob ×2, Write ×2, ToolSearch ×1_
 
 ### Response 1
 
@@ -59,4 +59,56 @@ Bash is working again. Next I'll run a sqlite-jdbc smoke test with the container
 **[06:44 UTC]**
 
 Both prototypes work on the test recordings: a 115-line dependency-free b-tree reader returns every frame blob byte-exactly, and sqlite-jdbc reads all 1922 frames of export 2 in 30 ms under Java 21 with no DriverManager registration. I'm waiting for the FieldTrip and EEGLAB research agents before writing the report.
+
+**[06:54 UTC]**
+
+The FieldTrip report is in. I'll draft the scoping report now and fill in the EEGLAB section when that agent reports.
+
+**[06:57 UTC]**
+
+The EEGLAB report is in and corrects several points in my draft (submission is now via a GitHub issue, EEGLAB core is BSD-2, boundary latency convention, File-IO snapshot lag). Updating the report.
+
+**[07:01 UTC]**
+
+Doorstop validates and all 30 tests pass. Committing the report, the supporting notes and the prototype, then pushing.
+
+**[07:02 UTC]**
+
+The scoping report is written, committed and pushed to `claude/zen-lovelace-vq1to3` (commit 21498d5). It lives at `docs/research/eeglab-fieldtrip-cadwell-reader.md`.
+
+**Recommendation in one line:** write one pure-MATLAB/Octave Cadwell reader with its own read-only SQLite b-tree parser, and expose it twice, as the `cadwellio` EEGLAB plugin and as a FieldTrip `cadwell_ezdata.m` external-format function that is later upstreamed.
+
+**Why that shape**
+
+- The Cadwell decoding is the easy part. The verified Python decoder is about 330 lines and ports 1:1 to `typecast` and `cumsum`. The vendor high-pass, resampling and EDF policy are not needed by a reader.
+- Getting BLOBs out of SQLite in MATLAB is the crux, and every off-the-shelf option has a real drawback for a distributed plugin. The Database Toolbox `fetch` does not return BLOBs. `sqlite-jdbc` works, and I verified it here under Java 21 in read-only mode without `DriverManager`, but MATLAB stopped loading Java by default in R2025a and ships no JRE from R2026b. `mksqlite` is BSD but needs MEX binaries per platform and MATLAB ABI.
+- A dependency-free reader of the SQLite file format sidesteps all of that. I wrote a 115-line prototype (`tools/sqlite_pure_reader.py`) that walks the table b-tree, follows overflow chains and decodes records. It returns every frame blob of all three public exports byte-identically to `sqlite3`. The Cadwell files use 4096-byte pages, rollback-journal mode (not WAL) and UTF-16LE text, all handled.
+- FieldTrip's current guidance is exactly the "one function, three call forms by `nargin`" pattern, dispatched from the `otherwise` branches by function name. The reader can be used outside FieldTrip first via `cfg.headerformat`, then upstreamed with a one-clause `ft_filetype` change and a test script, with no edits to the three `ft_read_*` files. Your PR history shows merges took days when a test and out-of-band data were supplied (#186, #266, #1358) and years without (#302).
+- Pure MATLAB code runs under Octave, so the reader can be tested in GitHub Actions against reference values from the Python decoder without a MATLAB licence.
+
+**Things that changed since the earlier notes**
+
+- The EEGLAB plugin upload form is closed; submission is now the `sccn/eeglab` issue template "New plugin or plugin update" with the zip attached.
+- EEGLAB core is BSD-2, not GPL, and explicitly allows plugins under other licences.
+- EEGLAB gaps are `boundary` events at `n_before + 0.5` with `duration` in samples; padding is never used. `pop_fileio` has no boundary logic, so FieldTrip events need both `type` and `value` set to `boundary`.
+- The File-IO plugin in EEGLAB is a dated snapshot (`Fileio250523`), so the FieldTrip route reaches EEGLAB plugin-manager users months to a year after a merge. Route A stays the primary EEGLAB delivery.
+
+**Estimate:** roughly 12 to 16 working days for both front ends, tests, CI, docs and the FieldTrip PR, laid out in seven phases in section 7. The report proposes three new Doorstop requirements (REQ021 to REQ023) for the MATLAB reader, the EEGLAB dataset contents and the FieldTrip contract.
+
+Also in the commit: the two agent reports as `docs/research/support/fieldtrip-findings.md` and `eeglab-findings.md` (with line references into FieldTrip master and EEGLAB develop), updated `docs/research/README.md` and `uses/EEGLAB/README.md`. Doorstop validates and all 30 tests pass. Not done: no MATLAB or Octave timing of the port yet, which the plan makes the first milestone.
+
+
+## Prompt 2 - 2026-09-28 07:05:28 UTC
+
+```text
+Dispatch an agent to look for SQLITE reading in canonical matlab or eeglab
+```
+
+_Tools used in this turn: Agent ×1_
+
+### Response 2
+
+**[07:06 UTC]**
+
+The agent is running. It will check base MATLAB (bundled jars and libraries, internal packages, third-party notices), the Database Toolbox BLOB status, File Exchange add-ons, EEGLAB core and plugins, the BioSig stubs, the MFF jar, and Brainstorm. I'll fold its findings into section 2 of the scoping report when it reports back.
 
