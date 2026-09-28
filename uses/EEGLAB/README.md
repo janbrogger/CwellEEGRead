@@ -95,6 +95,22 @@ must match (`cadwellio0.2.0`). Steps:
    issue on https://github.com/sccn/eeglab with the zip attached. Later
    versions go through http://sccn.ucsd.edu/eeglab/plugin_uploader/version_update.php.
 
+Checked against the tutorial (eeglab.org/tutorials/contribute/design_plugin.html)
+and EEGLAB's own code: `eegplugin_cadwellio(fig, trystrs, catchstrs)` returns
+the version string and adds one `uimenu` under the `import data` tag with
+the `catchstrs.new_and_hist` callback, exactly as EEGLAB's neuroscanio
+importer does; `pop_cadwell` pops up a file dialog without arguments and
+returns the history string. Importers take a file name rather than `EEG` as
+first argument, like `pop_loadcnt` and `pop_biosig`. The item needs no
+`userdata` keywords: `eeglab.m` enables every menu item at startup except
+those tagged `startup:off` (the tutorial's table listing `startup` as off
+by default describes the keyword, not the code's behaviour), and disables
+the whole *Import data* menu while a STUDY is loaded, plugin items included.
+The plugin list is not a pull request: the plugin stays in this repository,
+the zip is served from a GitHub release, and the form only registers name,
+version, zip URL, description and tags with SCCN's server, which the
+plugin manager queries (`functions/adminfunc/plugin_getweb.m`).
+
 **Prerequisites**
 
 - MATLAB R2016b or newer, or GNU Octave 6 or newer, with EEGLAB 2021 or newer.
