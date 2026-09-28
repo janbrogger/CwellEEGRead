@@ -79,21 +79,32 @@ Consequences for users:
   right before stopping) has no data under it. The Python converter reports
   the same figures (`inspect --json`, `gaps` and `events`).
 
-**Submitting to the EEGLAB plugin list.** EEGLAB's plugin manager fetches a
-zip whose root (or single top-level folder) holds `eegplugin_cadwellio.m`;
-the folder name and the `vers` string returned by `eegplugin_cadwellio`
-must match (`cadwellio0.2.0`). Steps:
+**Submitting to the EEGLAB plugin list.** The upload forms that the
+tutorial page still links are closed ("for security reasons", says the
+sccn/eeglab issue template). Submission is a GitHub issue on
+https://github.com/sccn/eeglab using the template *New plugin or plugin
+update*, which asks for plugin name, current version, new version, a
+description, and the zip dragged into the issue (or linked as a GitHub
+release archive). The plugin manager then serves the zip from SCCN's
+server; the folder name inside the zip and the `vers` string returned by
+`eegplugin_cadwellio` must match (`cadwellio0.2.0`). Survey of how the 177
+listed plugins are hosted and released: `docs/research/eeglab-plugin-list-survey.md`.
+Steps:
 
 1. `./make_zip.sh` -> `dist/cadwellio0.2.0.zip` (pure MATLAB/Octave; no jar).
 2. Test once in a real MATLAB + EEGLAB: unzip into `<eeglab>/plugins/`,
    start EEGLAB, check that *File > Import data > From Cadwell* appears and
    imports a public test export, and that the history command it writes
    replays. This is the one step the container cannot do.
-3. Submit with the upload form http://sccn.ucsd.edu/eeglab/plugin_uploader/upload_form.php
-   (name `cadwellio`, version `0.2.0`, the zip, a one-paragraph description,
-   the GitHub URL, licence Unlicense) or, as recently recommended, open an
-   issue on https://github.com/sccn/eeglab with the zip attached. Later
-   versions go through http://sccn.ucsd.edu/eeglab/plugin_uploader/version_update.php.
+3. Tag a release (`cadwellio-0.2.0`) with the zip attached, so the issue can
+   link a stable URL.
+4. Open the issue with the template: name `cadwellio`, version `0.2.0`, a
+   one-paragraph description (Cadwell Arc CadLink import, own SQLite
+   reader, no toolbox/Java/Python, Unlicense), the repository link, the zip.
+   Updates use the same template with current and new version.
+5. Optionally a pull request on sccn/sccn.github.io adding a line to the
+   extensions page (`others/EEGLAB_Extensions.md`) next to biosig and
+   neuroscanio.
 
 Checked against the tutorial (eeglab.org/tutorials/contribute/design_plugin.html)
 and EEGLAB's own code: `eegplugin_cadwellio(fig, trystrs, catchstrs)` returns
@@ -107,9 +118,9 @@ those tagged `startup:off` (the tutorial's table listing `startup` as off
 by default describes the keyword, not the code's behaviour), and disables
 the whole *Import data* menu while a STUDY is loaded, plugin items included.
 The plugin list is not a pull request: the plugin stays in this repository,
-the zip is served from a GitHub release, and the form only registers name,
-version, zip URL, description and tags with SCCN's server, which the
-plugin manager queries (`functions/adminfunc/plugin_getweb.m`).
+and the issue only registers name, version, zip, description and tags with
+SCCN's server, which the plugin manager queries
+(`functions/adminfunc/plugin_getweb.m`).
 
 **Prerequisites**
 
