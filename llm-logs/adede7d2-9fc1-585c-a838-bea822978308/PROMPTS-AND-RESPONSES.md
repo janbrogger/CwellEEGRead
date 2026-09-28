@@ -2,10 +2,10 @@
 # Session `adede7d2-9fc1-585c-a838-bea822978308`
 
 - Started (UTC): 2026-09-15T07:29:43.798Z  
-- Last event (UTC): 2026-09-28T08:26:57.583Z (span 312 h 57 min)  
+- Last event (UTC): 2026-09-28T08:48:41.910Z (span 313 h 18 min)  
 - User: jan@brogger.no; source: claude-code-remote; branch: `claude/zen-lovelace-vq1to3`  
 - Models: claude-fable-5-1; Claude Code 2.1.283  
-- Prompts: 17; transcript: transcript.jsonl (9.4 MB)
+- Prompts: 18; transcript: transcript.jsonl (9.4 MB)
 
 This file is derived from the transcript for readers without an LLM. Prompts are verbatim; responses are the assistant's text messages (tool calls and their output are only summarised - see the JSONL for those).
 
@@ -748,4 +748,39 @@ The native MATLAB/Octave reader is done, verified under GNU Octave, and pushed. 
 **Two portability findings** worth knowing if you touch this code: `Class.forName` cannot see jars added with `javaaddpath`, so the JDBC driver is created with `javaObject` and connected directly; and `datenum` differences lose microseconds at 2026 dates, so time differences use a seconds-since-2000 parser.
 
 **What is not verified**: nothing has run inside MATLAB or a real EEGLAB session, since there is no MATLAB here. The three MATLAB-only backends are written from their documented interfaces. A first run of `cadwell_selftest` on your MATLAB, with the reference folder produced by `tools/make_matlab_reference.py`, would close that gap; I would expect the JDBC path to work as is and possible small type-conversion fixes in the other backends.
+
+
+## Prompt 18 - 2026-09-28 08:48:12 UTC
+
+```text
+Why are we using Java?
+```
+
+### Response 18
+
+**[08:48 UTC]**
+
+Because it was the one SQLite route that works in both MATLAB and Octave with a single, prebuilt dependency and no compiler, toolbox or Python, and because it was the only backend I could actually run here.
+
+**The situation the backend layer had to cover**
+
+- MATLAB users: `mksqlite` needs a MEX binary per platform, the Database Toolbox costs money, `py.sqlite3` needs a MATLAB-compatible Python. Each is fine for some users and unavailable for others.
+- Octave users: the official `sqlite` package must be compiled at install time against libsqlite3, and Octave has no Python bridge.
+- Both ships a JVM, so one jar with bundled natives for Windows, macOS and Linux covers everyone at the cost of 14 MB and a working Java interface.
+
+**Why it became the tested one**
+
+There is no MATLAB in this container. Octave installs from apt, but the Octave package server and the package's GitHub release page are blocked by the proxy, while Maven Central is reachable. So the JDBC driver was the only backend I could exercise end to end, and that is where the self-test runs. The other three backends exist in `cadwell_sqlite.m` but are untested.
+
+**Java is not required by the design**
+
+`cadwell_sqlite` tries backends in the order mksqlite, Database Toolbox or Octave `sqlite`, JDBC, Python, and uses the first one it finds. A MATLAB user with mksqlite or the Database Toolbox, or an Octave user with the `sqlite` package, never touches Java. The decoder and readers do not know which backend served the rows.
+
+**The costs, honestly**
+
+- The jar in the plugin zip is 14 MB, which is most of the zip.
+- MATLAB started with `-nojvm`, or an Octave built without Java, cannot use it.
+- JDBC type mapping is the fiddliest part of the backend code, which is why it converts by column type rather than by Java object class.
+
+If you would rather not ship Java at all, the alternatives are to make the Octave `sqlite` package the tested Octave path, which I can do once its source is reachable, or to bundle mksqlite binaries for MATLAB. I would keep JDBC as the fallback that always works and demote it to last in the order, and I can make that change now if you want.
 
