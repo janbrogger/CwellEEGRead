@@ -37,7 +37,7 @@ def cmd_convert(args):
     try:
         report = convert(rec, tmp, mode=args.mode, labels=labels, timezone=args.timezone,
                          anonymize=args.anonymize, report_path=None, all_events=args.all_events,
-                         highpass=args.highpass, start_at=args.start_at,
+                         highpass=args.highpass, start_at=args.start_at, event_timing=args.event_timing,
                          patient={"name": args.patient_name} if args.patient_name else None)
         os.replace(tmp, args.output)
     except Exception:
@@ -76,6 +76,9 @@ def main(argv=None):
                    help="vendor EDF-export high-pass (2nd-order Butterworth 0.16 Hz): auto = in vendor mode for Essentia")
     c.add_argument("--start-at", choices=["first-frame", "record-origin"], default="first-frame",
                    help="data start: first stored frame (default) or the record origin with leading zeros")
+    c.add_argument("--event-timing", choices=["auto", "ticks", "stamp"], default="auto",
+                   help="place annotations on the sample clock (ticks, accurate) or by wall-clock stamp as the vendor does "
+                        "(stamp, early by the clock drift, ~0.35 s/h on Essentia); auto = ticks in raw mode, stamp in vendor mode")
     c.add_argument("--json", help="write a JSON conversion report here")
     c.add_argument("--force", action="store_true", help="overwrite an existing output file")
     args = ap.parse_args(argv)

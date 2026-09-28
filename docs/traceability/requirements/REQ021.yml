@@ -1,0 +1,30 @@
+active: true
+derived: false
+header: |
+  Event placement on the sample clock
+level: 20.1
+links:
+- NEED002: -3b22MT9D16eSDE9DvFsiQ809NMm3_W9zT3RSJOoJA4=
+- NEED003: RvD-6a6d_WOKUUx5CuBdfvRWBP3ZpbmhlSuyqq55XL4=
+normative: true
+ref: ''
+reviewed: MfcNKZxqSyxXxYYKSfLJw4XihuMcGj-xcJ93lA_8c8o=
+text: |
+  Cadwell events carry two times: a wall-clock stamp (`StartTime`, 100 ns
+  resolution) and an offset on the amplifier sample clock (`StartOffset`
+  ticks from the record origin). The stored frames carry the same pair, and
+  the two clocks drift relative to each other (about 96 ppm on the Essentia
+  recordings seen, 0.35 s per hour). The samples are on the tick clock.
+
+  The program shall by default place events on the sample clock: the onset
+  of an event is derived from its tick offset through the tick spans of the
+  stored frames (linear within a frame, nominal rate across padded gaps and
+  beyond the stored range), so that an event lands on the sample it
+  belongs to regardless of recording length. Placement by wall-clock stamp,
+  which the vendor's EDF export uses and which lands early by the
+  accumulated drift (the stamp clock runs behind the sample clock), shall
+  remain available as an option (`--event-timing
+  stamp`) and shall be the default in vendor-compatible mode so that the
+  equivalence tests against the vendor's export (REQ008, REQ020) still
+  hold. The conversion report shall state which placement was used. The
+  EEGLAB plugin shall offer the same choice with the same default.

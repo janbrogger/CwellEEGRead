@@ -570,17 +570,19 @@ per tick-second), so an event must be placed by `StartOffset` to land on
 the right sample. The vendor's EDF export places annotations by wall-clock
 stamp (onset = stamp − EDF start stamp) on a stream of exactly 500 samples
 per record, i.e. it puts them on the tick axis with the stamp clock's
-value, and this converter reproduces that (REQ012). The error is the
-drift: 78 ms at the photic stimulation of export 2 (13.5 min in), 96 ms at
-that of export 3 (17 min in), 0.35 s after an hour.
+value, and this converter reproduced that until REQ021. The error is the
+drift, and its sign is *early*: the stamp clock runs behind the tick clock,
+so a stamp-placed event sits before the sample it belongs to by 78 ms at
+the photic stimulation of export 2 (13.5 min in), 96 ms at that of export
+3 (17 min in), 0.35 s after an hour.
 
 Physiological check (`Photic Stim` flash events, 13 flashes at 2 Hz per
 export, O1/O2 average referenced to Cz, baseline −50..0 ms): on the tick
 axis the occipital flash response rises at 100 ms and peaks at 110–130 ms
 in export 3 (128 ms, +15 µV) and at about 130 ms in export 2, the latency
-of a flash VEP; on the stamp axis the identical complex sits 96 ms (78 ms)
-later, peaking at 210–270 ms, which is not a flash VEP latency. The tick
-axis is the right one. (The intra-train flash spacing is the same on both
+of a flash VEP; on the stamp axis the identical complex appears 96 ms
+(78 ms) later after the (too early) flash marker, peaking at 210–270 ms,
+which is not a flash VEP latency. The tick axis is the right one. (The intra-train flash spacing is the same on both
 axes, so the test is purely about the absolute offset.)
 
 What this means:
@@ -593,14 +595,16 @@ What this means:
   `Stop Recording`, resume 0.8–1 s after `Start Recording`) were computed
   on the tick axis and stand; on the stamp axis they would carry the drift
   in addition.
-- The converter and the EEGLAB plugin currently place events by stamp, as
-  the vendor does. Placing them by `StartOffset` ticks (available in every
-  `.ezevents` row) is the accurate choice and needs a requirement decision:
-  a mode or option (`--event-timing ticks|stamp`), with `stamp` kept for
-  vendor equivalence (REQ012/TST) and `ticks` for analysis use; the
-  equivalence tests against the vendor EDF then compare annotation onsets
-  only in `stamp` mode, and a new test checks that `ticks` mode puts the
-  photic response at 100–130 ms.
+- Implemented as REQ021/TST016: the converter's `--event-timing
+  ticks|stamp|auto` (auto = ticks in raw mode, stamp in vendor mode, so the
+  vendor-equivalence tests are untouched) and the EEGLAB plugin's
+  `'eventtiming'` option (default ticks). Ticks are mapped through the
+  stored frames' tick spans (`event_sample` in `edf.py` and in
+  `cadwell_read.m`): linear within a frame, which also absorbs the
+  248–251-sample Apollo frames, nominal rate across padded pauses, the
+  join for an instant inside a concatenated pause. Durations come from the
+  tick offsets too. `tests/test_event_timing.py` checks the drift and the
+  flash VEP latency on both axes for exports 2 and 3.
 - The absolute EDF start time is unaffected (first frame stamp plus the
   PcTimeSync correction, both wall clock). PcTimeSync itself (two rows per
   record, PC time minus sync time growing 10–30 ppm) is a third relation

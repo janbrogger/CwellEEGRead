@@ -15,6 +15,7 @@
  * 13 Downstream use scaffolds present (TST013)
  * 14 Supported-version coverage (TST014)
  * 15 Gap handling (TST015)
+ * 16 Event timing on the sample clock (TST016)
 
 # 1.0 EDF structural validity _(TST001)_ {#TST001}
 
@@ -186,4 +187,25 @@ Stop/Start Recording events appear at the correct offsets, and the
 conversion report lists the gap. Implemented in tests/test_export3_gap.py.
 
 *Parent links: REQ008, REQ019*
+
+# 16 Event timing on the sample clock _(TST016)_ {#TST016}
+
+Using a recording with photic stimulation (cadwell-export2 and 3: 244
+`Photic Stim` flash events each), convert in raw mode with every event
+exported, once with `--event-timing ticks` and once with `stamp`. Pass if:
+the difference between the two onsets of every flash equals the drift
+between the frame time stamps and the frame ticks at that point of the
+recording within 1 ms (78 ms at 13.5 min in export 2, 96 ms at 17 min in
+export 3); the flash-locked average of O1 and O2 (referenced to Cz)
+peaks before 150 ms after the flash with `ticks` (a flash VEP) and
+later than 170 ms with `stamp` (the stamp-placed flash is early, so the
+response appears late); the report states the placement; and
+vendor-mode annotations are unchanged (the existing equivalence tests
+against the vendor EDF, TST003/TST005, keep passing). For the EEGLAB
+plugin the self-test checks that `EventTiming` ticks and stamp differ by
+the drift the frames show at each event (tolerance 5 ms, widened by the
+stamp jitter on Apollo recordings). Implemented in
+tests/test_event_timing.py and cadwell_selftest check F.
+
+*Parent links: REQ005, REQ021*
 

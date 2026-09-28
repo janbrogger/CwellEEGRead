@@ -33,6 +33,18 @@ Both modes list the pauses in `EEG.etc.cadwell.gaps` (`startSample`,
 `seconds`, `startSec` since the first frame, `padded`). The same rule
 applies in the Python converter (REQ019: zeros plus an EDF+ annotation).
 
+**Event timing: two clocks.** Every Cadwell event carries a wall-clock
+stamp and a sample-clock offset, and the two clocks drift: on the Essentia
+recordings the stamp clock runs 96 ppm behind the amplifier's sample
+clock, 0.35 s per hour. The vendor's EDF export places events by stamp,
+which puts them *early* by the accumulated drift (96 ms at 17 minutes in
+export 3); the photic flash response then appears 200 ms or more after the
+marker instead of the 100–130 ms of a flash VEP. `pop_cadwell` therefore
+places events by their sample-clock offset (`'eventtiming','ticks'`, the
+default; `'stamp'` reproduces the vendor). The converter does the same
+(`--event-timing`, REQ021). Details and measurements:
+`docs/research/cadwell-file-format.md`, "Two clocks".
+
 **Where the vendor's Stop/Start Recording events sit relative to the data.**
 The pause markers of the plugin come from the frame numbering, not from
 the vendor's `RecordingOnOff` events, because the two do not coincide. The

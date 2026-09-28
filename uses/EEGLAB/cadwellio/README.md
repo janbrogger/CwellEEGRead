@@ -56,6 +56,17 @@ labels are the electrode names of a per-headbox table (Fp1 ... O2, E1/Pg1,
 1A ...) because the Cadwell files store none; the EDF-style names
 ('EEG Fp1-Cz') are kept in EEG.etc.cadwell.edfLabels.
 
+Event timing: Cadwell stamps every event on a wall clock that drifts
+against the amplifier's sample clock (about 96 ppm, 0.35 s per hour, on
+the Essentia recordings seen; the stamp clock runs behind). The vendor's
+EDF export places events by wall-clock stamp, which puts them early by the
+accumulated drift. pop_cadwell places events by the event's sample-clock
+offset instead ('eventtiming','ticks', the default), mapped through the
+stored frames' tick spans, so a photic flash marker lands where the
+occipital response follows at 100-130 ms. 'eventtiming','stamp' reproduces
+the vendor's placement. Both onsets are kept per event in
+EEG.etc.cadwell (the reader's events carry onsetSecTicks and onsetSecStamp).
+
 Recording pauses (vendor "Stop Recording"/"Start Recording": missing frame
 numbers, plus a GapInfo row) are always reported. 'padgaps','on' (default):
 zeros fill the pause so latencies stay aligned with wall-clock time, and an

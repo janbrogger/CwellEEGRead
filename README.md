@@ -25,6 +25,13 @@ python -m cwelleegread convert testdata/public/cadwell-export2 out.edf --timezon
 python -m cwelleegread convert testdata/public/cadwell-export1 out.edf --mode vendor --timezone Europe/Oslo
 ```
 
+Events are placed on the amplifier's sample clock by default (`--event-timing
+ticks`); the vendor's EDF export places them by a wall-clock stamp that runs
+about 96 ppm behind the sample clock on Essentia recordings, so its
+annotations sit early by up to 0.35 s per hour. `--event-timing stamp`
+reproduces the vendor's placement and is the default in `--mode vendor`
+(REQ021, `docs/research/cadwell-file-format.md`, "Two clocks").
+
 ## Repository layout
 
 | Path | What |

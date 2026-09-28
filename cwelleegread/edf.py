@@ -65,11 +65,13 @@ def vendor_resample(data: np.ndarray, per_frame: list[int], rate: int) -> tuple[
     return out, removed, frames_used
 
 
-def read_padded(rec: CadwellRecording, unit_uv: float):
+def read_padded(rec: CadwellRecording, unit_uv: float, frame_table: list | None = None):
     """Decode all track-0 frames and pad missing frame numbers (recording gaps)
     with zeros so that the sample axis stays aligned with wall-clock time, as
     the vendor's EDF export does (REQ019). Returns (data, amp_inputs, per_frame,
-    gaps) where gaps = [(first padded sample index, seconds)]."""
+    gaps) where gaps = [(first padded sample index, seconds)]. If frame_table is
+    a list it is filled with one (start_ticks, end_ticks, first_sample, n_samples)
+    per stored frame, the sample-clock map used by event_sample (REQ021)."""
     rate = rec.sample_rate
     cols = {a: [] for a in rec.amp_inputs}
     per_frame, gaps = [], []
@@ -89,6 +91,8 @@ def read_padded(rec: CadwellRecording, unit_uv: float):
             cols[a].append(x)
             n = len(x) if n is None else n
         per_frame.append(n)
+        if frame_table is not None:
+            frame_table.append((fr.start_ticks, fr.end_ticks, cursor, n))
         cursor += n
         prev = fr.number
     data = np.column_stack([np.concatenate(cols[a]) for a in rec.amp_inputs]) * unit_uv
@@ -105,6 +109,26 @@ def nice_range(x: np.ndarray, margin: float = 0.01, minimum: float = 100.0) -> t
 
 
 VENDOR_HIGHPASS_HZ = 0.16      # causal 2nd-order Butterworth, identified on cadwell-export2 (max 0.52 steps)
+
+
+def event_sample(ticks: int, frame_table: list, rate: int) -> float:
+    """Sample position (fractional, 0 = first sample of the first stored frame) of an
+    instant given in amplifier ticks, using the per-frame tick spans of the stored
+    frames (REQ021): inside a frame, linear between its first and last sample;
+    in a padded gap, after the end or before the start, at the nominal rate from
+    the nearest frame edge. Frame ticks are exact seconds on Essentia and
+    measured (jittered) on Apollo, so this also absorbs the 248-251 samples per
+    Apollo frame."""
+    import bisect
+    starts = [f[0] for f in frame_table]
+    k = bisect.bisect_right(starts, ticks) - 1
+    if k < 0:
+        s0, _, first, _ = frame_table[0]
+        return first - (s0 - ticks) / TICKS_PER_SECOND * rate
+    s, e, first, n = frame_table[k]
+    if ticks < e and e > s:
+        return first + (ticks - s) / (e - s) * n
+    return first + n + (ticks - e) / TICKS_PER_SECOND * rate
 
 
 def vendor_highpass(data: np.ndarray, per_frame: list[int], gaps: list, rate: int, restart_at_gaps: bool = True) -> np.ndarray:
@@ -136,7 +160,8 @@ def vendor_highpass(data: np.ndarray, per_frame: list[int], gaps: list, rate: in
 def convert(rec: CadwellRecording, out_path: str, *, mode: str = "raw", labels: dict | None = None,
             timezone: str | None = None, anonymize: bool = False, patient: dict | None = None,
             unit_uv: float = UNIT_UV, report_path: str | None = None, all_events: bool = False,
-            highpass: str = "auto", start_at: str = "first-frame", restart_filter_at_gaps: bool = True) -> dict:
+            highpass: str = "auto", start_at: str = "first-frame", restart_filter_at_gaps: bool = True,
+            event_timing: str = "auto") -> dict:
     """highpass: 'auto' (vendor mode: on for Essentia, off for Apollo), 'on', 'off'.
     start_at: 'first-frame' (data start = first stored frame) or 'record-origin' (tick 0,
     leading missing frames padded with zeros, as the vendor does when the export range
@@ -144,7 +169,12 @@ def convert(rec: CadwellRecording, out_path: str, *, mode: str = "raw", labels: 
     if mode not in ("raw", "vendor"):
         raise ValueError("mode must be 'raw' or 'vendor'")
     rate = rec.sample_rate
-    data, amp_inputs, per_frame, gaps_padded = read_padded(rec, unit_uv)
+    frame_table: list = []
+    data, amp_inputs, per_frame, gaps_padded = read_padded(rec, unit_uv, frame_table)
+    if event_timing not in ("auto", "ticks", "stamp"):
+        raise ValueError("event_timing must be 'auto', 'ticks' or 'stamp'")
+    if event_timing == "auto":
+        event_timing = "stamp" if mode == "vendor" else "ticks"
     lead = 0
     if start_at == "record-origin" and rec.frame_index and rec.frame_index[0]["number"] > 0:
         lead = rec.frame_index[0]["number"]
@@ -184,14 +214,20 @@ def convert(rec: CadwellRecording, out_path: str, *, mode: str = "raw", labels: 
                         "physical_min": pmin, "physical_max": pmax, "digital_min": -32768, "digital_max": 32767,
                         "transducer": "X", "prefilter": ""})
 
-    # events -> annotations (onset relative to the EDF start = frame-0 origin + clock correction)
+    # events -> annotations. 'stamp': onset = wall-clock stamp relative to the first
+    # frame's stamp, as the vendor's export does; the stamp clock drifts against the
+    # sample clock (about 96 ppm on Essentia, the stamp clock behind), so this lands early by up to 0.35 s/h.
+    # 'ticks': onset from the event's StartOffset ticks through the frames' tick
+    # spans, i.e. on the sample clock (REQ021, the accurate choice).
     events = rec.events()
     ann, skipped = [], []
     for e in events:
-        # The vendor places annotations by the event's absolute time stamp relative to
-        # the frame-0 origin (the tick offsets can differ from that by a few ms).
-        onset = (e.start - rec.origin).total_seconds() + lead
-        dur = (e.end - e.start).total_seconds()
+        if event_timing == "ticks":
+            onset = event_sample(e.start_ticks, frame_table, rate) / rate + lead
+            dur = (e.end_ticks - e.start_ticks) / 1e7
+        else:
+            onset = (e.start - rec.origin).total_seconds() + lead
+            dur = (e.end - e.start).total_seconds()
         if e.deleted or (not all_events and (e.type in SKIPPED_EVENT_TYPES or e.text in SKIPPED_EVENT_TEXTS)):
             skipped.append((e.type, e.text, "deleted" if e.deleted else "type skipped"))
         elif onset < 0 or onset > seconds:
@@ -222,7 +258,7 @@ def convert(rec: CadwellRecording, out_path: str, *, mode: str = "raw", labels: 
     span = (rec.frame_index[-1]["timestamp"] - rec.origin).total_seconds() if len(rec.frame_index) > 1 else None
     report = {
         "cwelleegread_version": __version__, "input": rec.index_path, "output": os.path.abspath(out_path),
-        "mode": mode, "highpass_hz": VENDOR_HIGHPASS_HZ if apply_hp else None, "start_at": start_at,
+        "mode": mode, "highpass_hz": VENDOR_HIGHPASS_HZ if apply_hp else None, "start_at": start_at, "event_timing": event_timing,
         "leading_padded_seconds": lead, "record_guid": rec.record_guid, "patient_guid": None if anonymize else rec.patient_guid,
         "schema_versions": rec.schema_versions,
         "start_utc": start_utc.isoformat(), "start_written": start_naive.isoformat(), "timezone": timezone or "UTC",

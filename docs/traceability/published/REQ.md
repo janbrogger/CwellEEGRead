@@ -20,6 +20,7 @@
  * 18 Clear failure on unsupported input (REQ018)
  * 19 Recording gaps and discontinuities (REQ019)
  * 20 Sample clock and resampling policy (REQ020)
+    * 20.1 Event placement on the sample clock (REQ021)
 
 # 1.0 Input: Cadwell EEG recordings from around 2020 onward _(REQ001)_ {#REQ001}
 
@@ -94,7 +95,7 @@ that cannot be mapped shall be listed in the conversion report.
 
 *Parent links: NEED002, NEED003*
 
-*Child links: TST004*
+*Child links: TST004, TST016*
 
 # 6.0 Command-line interface _(REQ006)_ {#REQ006}
 
@@ -312,4 +313,29 @@ recording-additional field and in the conversion report.
 *Parent links: NEED002, NEED003*
 
 *Child links: TST003*
+
+## 20.1 Event placement on the sample clock _(REQ021)_ {#REQ021}
+
+Cadwell events carry two times: a wall-clock stamp (`StartTime`, 100 ns
+resolution) and an offset on the amplifier sample clock (`StartOffset`
+ticks from the record origin). The stored frames carry the same pair, and
+the two clocks drift relative to each other (about 96 ppm on the Essentia
+recordings seen, 0.35 s per hour). The samples are on the tick clock.
+
+The program shall by default place events on the sample clock: the onset
+of an event is derived from its tick offset through the tick spans of the
+stored frames (linear within a frame, nominal rate across padded gaps and
+beyond the stored range), so that an event lands on the sample it
+belongs to regardless of recording length. Placement by wall-clock stamp,
+which the vendor's EDF export uses and which lands early by the
+accumulated drift (the stamp clock runs behind the sample clock), shall
+remain available as an option (`--event-timing
+stamp`) and shall be the default in vendor-compatible mode so that the
+equivalence tests against the vendor's export (REQ008, REQ020) still
+hold. The conversion report shall state which placement was used. The
+EEGLAB plugin shall offer the same choice with the same default.
+
+*Parent links: NEED002, NEED003*
+
+*Child links: TST016*
 

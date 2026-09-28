@@ -2,10 +2,10 @@
 # Session `adede7d2-9fc1-585c-a838-bea822978308`
 
 - Started (UTC): 2026-09-15T07:29:43.798Z  
-- Last event (UTC): 2026-09-28T11:28:24.515Z (span 315 h 58 min)  
+- Last event (UTC): 2026-09-28T11:39:52.888Z (span 316 h 10 min)  
 - User: jan@brogger.no; source: claude-code-remote; branch: `claude/zen-lovelace-vq1to3`  
 - Models: claude-fable-5-1; Claude Code 2.1.283  
-- Prompts: 27; transcript: transcript.jsonl (12.8 MB)
+- Prompts: 28; transcript: transcript.jsonl (13.0 MB)
 
 This file is derived from the transcript for readers without an LLM. Prompts are verbatim; responses are the assistant's text messages (tool calls and their output are only summarised - see the JSONL for those).
 
@@ -1731,4 +1731,47 @@ No, those integers give no extra precision. They are the same event stamps the .
 
 - The JSON event list is the EDF export's own selection: deleted events and the bookkeeping types are absent, matching the skip rule the converter already applies.
 - Because the values are local time with no zone marker, they are ambiguous around the DST change and must not be read as UTC epoch values. `RecordCreateDate` uses the same convention and shows the records were created between 8 s and 112 min before recording started.
+
+
+## Prompt 28 - 2026-09-28 11:35:16 UTC
+
+```text
+So if we already have microsecond timestamps, why are the events not accurate?
+```
+
+_Tools used in this turn: Bash ×6_
+
+### Response 28
+
+**[11:35 UTC]**
+
+The stamps are precise; the question is what they are precise about. Let me measure how the event clock relates to the sample clock across a whole recording before answering.
+
+**[11:38 UTC]**
+
+The tick axis puts the flash response at 90–134 ms, the stamp axis at 194–220 ms. That already points at the answer, but I want the waveform shape, not just the peak picker, before concluding.
+
+**[11:39 UTC]**
+
+Because precision and accuracy are different things here, and your question led to a finding I had missed: the events and the samples are on two different clocks, and the vendor places events on the wrong one.
+
+**What the microsecond stamps are.** Every event row has two times. `StartTime` is a wall-clock stamp with 100 ns digits. `StartOffset` is a tick count on the amplifier's sample clock, where frame *k* holds exactly second *k* of samples. The frames carry the same pair. The stamps are precise about the wall-clock instant the software registered the event. They say nothing by themselves about which sample that instant corresponds to.
+
+**The two clocks drift.** Measured over whole recordings:
+
+| export | stamp clock versus sample clock |
+|---|---|
+| 1, Apollo 250 Hz | +24 ppm, jittery reception stamps |
+| 2, Essentia 500 Hz | −96.6 ppm, smooth |
+| 3, Essentia 500 Hz | −95.7 ppm, smooth |
+
+On the Essentia recordings the stamp clock loses 96 µs per second: 116 ms over the 20 minutes of export 3, about 0.35 s per hour. The event rows follow the frame drift exactly, with a constant 0.42 ms offset and 0.3 ms spread across 620 events. So an event's stamp and its ticks are one measurement expressed through one clock relation, not two independent readings.
+
+**Which axis the samples are on.** The tick axis, by construction. But the vendor's EDF export, Metadata.json, and our converter and plugin all place events by stamp difference onto a stream of exactly 500 samples per second. That puts every event late by the drift accumulated since the recording started.
+
+**Physiological confirmation.** The photic flash events give a ground truth. Averaging O1 and O2 around the 2 Hz flashes, the tick axis places the occipital response rising at 100 ms and peaking near 128 ms in export 3, a normal flash VEP. The stamp axis shows the identical waveform shifted 96 ms later, peaking around 210–270 ms, which no flash VEP does. Export 2 behaves the same way with a 78 ms shift.
+
+**So, to your question:** the events are accurate to well under a millisecond on the wall clock, and inaccurate by up to a tenth of a second per 20 minutes relative to the EEG because they were mapped through the wrong clock. The pause offsets I reported earlier were computed on the tick axis and stand.
+
+**What I have not done.** The fix is a behaviour change: place events by ticks instead of stamps. That needs a requirement decision, since stamp placement is what the vendor-equivalence tests check. My proposal is an option `--event-timing ticks|stamp`, with `stamp` kept for vendor equivalence and `ticks` for analysis use, the same choice in the EEGLAB plugin, and a test asserting the photic response lands at 100–130 ms in `ticks` mode. The finding and the proposal are in the research note and pushed. Say the word and I will implement it with the Doorstop items.
 

@@ -20,6 +20,12 @@
 %                    removed, as eeg_eegrej writes them) and the latencies of
 %                    later events move up accordingly. Both list the pauses in
 %                    EEG.etc.cadwell.gaps.
+%   'eventtiming' - 'ticks' (default) | 'stamp'. Cadwell stamps events on a
+%                    wall clock that drifts against the amplifier's sample clock
+%                    (about 0.35 s per hour on Essentia). 'ticks' places each
+%                    event on the sample it belongs to (the event's StartOffset
+%                    through the frames' tick spans); 'stamp' reproduces the
+%                    vendor's EDF export, which lands early by the drift.
 %   'backend'     - SQLite backend name, see cadwell_sqlite (default 'native':
 %                    the pure MATLAB/Octave reader; nothing to install)
 %
@@ -43,7 +49,7 @@ function [EEG, com] = pop_cadwell(filename, varargin)
         if isequal(f, 0), return; end
         filename = fullfile(p, f);
     end
-    opts = struct('importevent', 'on', 'padgaps', 'on', 'backend', '');
+    opts = struct('importevent', 'on', 'padgaps', 'on', 'backend', '', 'eventtiming', 'ticks');
     for k = 1:2:numel(varargin), opts.(lower(varargin{k})) = varargin{k+1}; end
     [~, name, ext] = fileparts(filename);
     if strcmpi(ext, '.edf')
@@ -53,7 +59,7 @@ function [EEG, com] = pop_cadwell(filename, varargin)
         end
     else
         padgaps = strcmpi(opts.padgaps, 'on');
-        rec = cadwell_read(filename, 'PadGaps', padgaps, 'Backend', opts.backend);
+        rec = cadwell_read(filename, 'PadGaps', padgaps, 'Backend', opts.backend, 'EventTiming', opts.eventtiming);
         EEG = eeg_emptyset();
         EEG.data = single(rec.data); EEG.srate = rec.srate;
         EEG.nbchan = size(EEG.data, 1); EEG.pnts = size(EEG.data, 2); EEG.trials = 1;
@@ -74,7 +80,8 @@ function [EEG, com] = pop_cadwell(filename, varargin)
     EEG.comments = sprintf('Imported with cadwellio (pop_cadwell) from %s', filename);
     EEG = eeg_checkset(EEG, 'eventconsistency');
     EEG = eeg_checkset(EEG, 'makeur');
-    com = sprintf('EEG = pop_cadwell(''%s'', ''importevent'', ''%s'', ''padgaps'', ''%s'');', filename, opts.importevent, opts.padgaps);
+    com = sprintf('EEG = pop_cadwell(''%s'', ''importevent'', ''%s'', ''padgaps'', ''%s'', ''eventtiming'', ''%s'');', ...
+                  filename, opts.importevent, opts.padgaps, opts.eventtiming);
 end
 
 function chanlocs = channel_locs(rec)

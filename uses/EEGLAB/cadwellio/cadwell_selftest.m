@@ -15,6 +15,9 @@ function res = cadwell_selftest(refDir, backends)
 %      tables.bin byte for byte
 %   E  exports with a recording pause: padded and concatenated reads agree
 %      (data, pause position and length, event onsets shifted by the pause)
+%   F  event timing (REQ021): the tick-clock and stamp-clock onsets of every
+%      event differ by the drift the frames show at that point, within 5 ms,
+%      and 'EventTiming' 'stamp' reproduces the old stamp placement
 % and C: export 1 through each backend vs the vendor's text export.
 % Prints one line per check and returns a struct with ok (logical) and the
 % individual results. Public domain (Unlicense).
@@ -69,6 +72,15 @@ function res = cadwell_selftest(refDir, backends)
                 res = check(res, sprintf('%s recording pause check failed: %s', subs(s).name, err.message), false);
             end
         end
+        % ---- F: event timing, ticks versus stamps against the frame drift
+        % (Essentia frame stamps are smooth to a few us; Apollo stamps are reception
+        % times with a few ms of jitter, so the tolerance follows the stamp jitter)
+        try
+            [worst, tol] = check_timing(meta.index_path);
+            res = check(res, sprintf('%s event timing: tick-clock onsets = stamp onsets + frame drift (max |resid| %.2f ms, tolerance %.0f ms)', subs(s).name, worst, tol), worst < tol);
+        catch err
+            res = check(res, sprintf('%s event timing check failed: %s', subs(s).name, err.message), false);
+        end
         % ---- D: native SQLite reader, every table of every file, byte for byte
         tb = fullfile(d, 'tables.bin');
         if exist(tb, 'file')
@@ -99,6 +111,28 @@ function res = cadwell_selftest(refDir, backends)
     if res.ok, fprintf('cadwell_selftest: ALL OK\n'); else fprintf('cadwell_selftest: FAILURES\n'); end
 end
 
+function [worst, tol] = check_timing(indexPath)
+    % largest residual (ms) of (onsetSecTicks - onsetSecStamp) against the frame
+    % drift (frame stamp seconds minus frame tick seconds) interpolated at the event
+    r = cadwell_read(indexPath, 'EventTiming', 'ticks'); s = cadwell_read(indexPath, 'EventTiming', 'stamp');
+    f = r.index.frames; ft = r.frameTicks;
+    stampSec = [f.sec] - f(1).sec; tickSec = (ft(:, 1)' - ft(1, 1)) / 1e7; drift = stampSec - tickSec;   % stamp clock minus tick clock
+    % Essentia frames span exactly one tick-second; Apollo frames have measured
+    % spans (about 1.003 s for 248-251 samples), so a sub-frame position is
+    % uncertain by that irregularity: widen the tolerance accordingly
+    jitter = 1e3 * max(abs((ft(:, 2) - ft(:, 1)) / 1e7 - ft(:, 4) / r.srate));   % ms
+    tol = 5; if jitter > 1, tol = 5 + 5 * jitter; end
+    worst = 0;
+    for k = 1:numel(r.events)
+        e = r.events(k); t = (e.startTicks - ft(1, 1)) / 1e7;
+        if t < tickSec(1) || t > tickSec(end), continue; end
+        expected = -interp1(tickSec, drift, t);                    % ticks onset - stamp onset
+        resid = 1e3 * abs((e.onsetSecTicks - e.onsetSecStamp) - expected);
+        worst = max(worst, resid);
+        if abs(s.events(k).onsetSec - e.onsetSecStamp) > 1e-9, worst = inf; end
+    end
+end
+
 function ok = check_gaps(indexPath)
     a = cadwell_read(indexPath, 'PadGaps', true); b = cadwell_read(indexPath, 'PadGaps', false);
     ok = numel(a.gaps) == numel(b.gaps) && numel(a.gaps) >= 1 && all([a.gaps.padded]) && ~any([b.gaps.padded]);
@@ -120,7 +154,7 @@ function ok = check_gaps(indexPath)
             if o >= a.gaps(g).startSec + a.gaps(g).seconds, shift = shift + a.gaps(g).seconds;
             elseif o > a.gaps(g).startSec, inside = true; end
         end
-        ok = ok && a.events(k).onsetSecOrigin == o && (inside || abs(b.events(k).onsetSec - (o - shift)) < 1e-9);
+        ok = ok && (inside || abs(b.events(k).onsetSec - (o - shift)) < 1e-9);
     end
 end
 
