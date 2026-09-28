@@ -2,10 +2,10 @@
 # Session `adede7d2-9fc1-585c-a838-bea822978308`
 
 - Started (UTC): 2026-09-15T07:29:43.798Z  
-- Last event (UTC): 2026-09-28T11:39:52.888Z (span 316 h 10 min)  
+- Last event (UTC): 2026-09-28T12:08:17.891Z (span 316 h 38 min)  
 - User: jan@brogger.no; source: claude-code-remote; branch: `claude/zen-lovelace-vq1to3`  
 - Models: claude-fable-5-1; Claude Code 2.1.283  
-- Prompts: 28; transcript: transcript.jsonl (13.0 MB)
+- Prompts: 29; transcript: transcript.jsonl (13.7 MB)
 
 This file is derived from the transcript for readers without an LLM. Prompts are verbatim; responses are the assistant's text messages (tool calls and their output are only summarised - see the JSONL for those).
 
@@ -1774,4 +1774,52 @@ On the Essentia recordings the stamp clock loses 96 µs per second: 116 ms over 
 **So, to your question:** the events are accurate to well under a millisecond on the wall clock, and inaccurate by up to a tenth of a second per 20 minutes relative to the EEG because they were mapped through the wrong clock. The pause offsets I reported earlier were computed on the tick axis and stand.
 
 **What I have not done.** The fix is a behaviour change: place events by ticks instead of stamps. That needs a requirement decision, since stamp placement is what the vendor-equivalence tests check. My proposal is an option `--event-timing ticks|stamp`, with `stamp` kept for vendor equivalence and `ticks` for analysis use, the same choice in the EEGLAB plugin, and a test asserting the photic response lands at 100–130 ms in `ticks` mode. The finding and the proposal are in the research note and pushed. Say the word and I will implement it with the Doorstop items.
+
+
+## Prompt 29 - 2026-09-28 11:44:47 UTC
+
+```text
+The word.
+```
+
+_Tools used in this turn: Bash ×37, Edit ×10, Read ×2, Write ×1, Agent ×1_
+
+### Response 29
+
+**[11:45 UTC]**
+
+Implementing it: a requirement and test in Doorstop, the `--event-timing` option in the converter, the same option in the MATLAB reader and plugin, and a photic-VEP test. First the code paths involved.
+
+**[11:48 UTC]**
+
+The Doorstop items and the Python side are in; the MATLAB patch failed on one block whose text differs from what I remembered, so I'm re-reading that part of `cadwell_read.m` and reapplying.
+
+**[11:56 UTC]**
+
+Four failures to look at: the CLI help test, my new event-timing test on both exports, and the Octave self-test. Reading the failure details.
+
+**[11:59 UTC]**
+
+Edits applied. Now running the affected Python tests and the Octave self-test at the same time.
+
+**[12:07 UTC]**
+
+All 37 tests pass, including the Octave self-test with the new timing check and the EEGLAB import test. Committing and pushing.
+
+**[12:08 UTC]**
+
+Done and pushed. Events are now placed on the amplifier's sample clock by default, in both the converter and the EEGLAB plugin, with the vendor's placement kept as an option.
+
+**What changed**
+
+- **Converter:** a new `--event-timing` option with `ticks`, `stamp` and `auto`. Auto means ticks in raw mode and stamp in vendor mode, so the equivalence tests against the vendor's EDF are untouched. The tick mapping goes through the stored frames' tick spans: linear inside a frame, which also absorbs the 248–251-sample Apollo frames, nominal rate across padded pauses and beyond the stored range. Durations come from the tick offsets too, and the report states which placement was used.
+- **EEGLAB plugin:** `cadwell_read` has an `EventTiming` option and `pop_cadwell` an `eventtiming` option, both defaulting to ticks. Every event keeps both onsets, and an event stamped inside a concatenated pause lands on the join.
+- **Requirements:** REQ021 states the rule and TST016 the test, linked to the existing events requirement and needs. Traceability documents are republished.
+- **Docs:** the main README, both EEGLAB READMEs and the research note describe the two clocks and the option.
+
+**One correction to what I said earlier.** The stamp clock runs behind the sample clock, so stamp-placed events are *early*, not late, by the accumulated drift. The response appears late relative to the marker. I had the sign wrong in the earlier message and in the first draft of the docs. Both are fixed.
+
+**Verification.** The new Python test converts exports 2 and 3 both ways and checks that the tick-minus-stamp difference of every flash equals the frames' own clock drift within 1 ms, that the occipital flash response peaks before 150 ms with ticks and after 170 ms with stamps, and that vendor mode still uses stamps. The Octave self-test gained a matching check, with a tolerance widened by the measured frame-span irregularity on the Apollo export where sub-frame placement is inherently uncertain by about 3 ms. The full suite passes: 37 tests, including the Octave self-test and the EEGLAB import test.
+
+One practical note: the command classifier in this environment was failing for several minutes mid-task, which is why the run took longer than the work itself.
 
