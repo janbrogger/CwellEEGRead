@@ -2,10 +2,10 @@
 # Session `adede7d2-9fc1-585c-a838-bea822978308`
 
 - Started (UTC): 2026-09-15T07:29:43.798Z  
-- Last event (UTC): 2026-09-28T06:31:49.346Z (span 311 h 2 min)  
+- Last event (UTC): 2026-09-28T08:05:04.569Z (span 312 h 35 min)  
 - User: jan@brogger.no; source: claude-code-remote; branch: `claude/zen-lovelace-vq1to3`  
-- Models: claude-fable-5-1; Claude Code 2.1.272  
-- Prompts: 13; transcript: transcript.jsonl (6.1 MB)
+- Models: claude-fable-5-1; Claude Code 2.1.283  
+- Prompts: 16; transcript: transcript.jsonl (9.0 MB)
 
 This file is derived from the transcript for readers without an LLM. Prompts are verbatim; responses are the assistant's text messages (tool calls and their output are only summarised - see the JSONL for those).
 
@@ -516,4 +516,190 @@ Nothing to the signal path. I would add a short requirement stating that the exp
 Done. The only pending changes were the session log files under `llm-logs/` that the Stop hook staged after my last reply. They are committed as a log-only commit and pushed to `claude/zen-lovelace-vq1to3`, and the working tree is clean.
 
 Nothing else is outstanding. The two items I proposed, a requirement that the converter never disguises the recording reference and a validation note in the SCORE-AI use folder, wait for your go-ahead.
+
+
+## Prompt 14 - 2026-09-28 06:35:30 UTC
+
+```text
+Investigate how to write an EEGLAB plugin that can ingest native Cadwell files into EEGLAB. I wrote code that reads old "Nervus" files for EEGLAB via fieldtrip. This can serve as an example. Fieldtrip is here: https://github.com/fieldtrip/fieldtrip/pulls?q=is%3Apr+author%3Ajanbrogger
+
+With my pull requests listed here.
+
+* [Fixes read of Nervus data with mixed sampling rates, and some unreadable EEGs](https://github.com/fieldtrip/fieldtrip/pull/1358)
+#1358·[janbrogger](https://github.com/fieldtrip/fieldtrip/pulls?q=is%3Apr+author%3Ajanbrogger) opened on Mar 23, 2020 · Closed on Mar 24, 2020Contributor·Approved
+19
+* [Fixes read of Nervus data with mixed sampling rates](https://github.com/fieldtrip/fieldtrip/pull/302)
+work in progress
+#302·[janbrogger](https://github.com/fieldtrip/fieldtrip/pulls?q=is%3Apr+author%3Ajanbrogger) opened on Jan 19, 2017 · Closed on Jul 3, 2019Contributor
+11
+* [Improvements for Nicolet](https://github.com/fieldtrip/fieldtrip/pull/266)
+#266·[janbrogger](https://github.com/fieldtrip/fieldtrip/pulls?q=is%3Apr+author%3Ajanbrogger) opened on Nov 22, 2016 · Closed on Nov 23, 2016Contributor
+1
+* [Reads Nervus/Nicolet files](https://github.com/fieldtrip/fieldtrip/pull/186)
+#186·[janbrogger](https://github.com/fieldtrip/fieldtrip/pulls?q=is%3Apr+author%3Ajanbrogger) opened on Jul 2, 2016 · Closed on Jul 6, 2016Contributor
+
+Your task is to write a report that scopes an implementation of Cadwell reading for EEGLAB, or EEGLAB via fieldtrip. Dispatch agents if necessary.
+```
+
+_Tools used in this turn: Bash ×28, WebFetch ×13, Edit ×12, Read ×10, WebSearch ×10, Agent ×5, Grep ×3, Glob ×2, Write ×2, ToolSearch ×1_
+
+### Response 14
+
+**[06:35 UTC]**
+
+I'll start by surveying the repository's current Cadwell reader and traceability layout, then dispatch research agents for the FieldTrip Nervus reader, EEGLAB plugin architecture, and MATLAB SQLite options in parallel.
+
+**[06:38 UTC]**
+
+Two agents launched; retrying the SQLite research agent and the EEGLAB scaffold read, which failed on a transient check.
+
+**[06:41 UTC]**
+
+I'm now covering the SQLite-from-MATLAB research myself, since that agent could not be launched; the FieldTrip and EEGLAB agents are still running.
+
+**[06:42 UTC]**
+
+The FieldTrip and EEGLAB research agents are still running. I've collected the SQLite-access findings directly and will assemble the report once their reports arrive.
+
+**[06:43 UTC]**
+
+Bash is working again. Next I'll run a sqlite-jdbc smoke test with the container's Java 21 and prototype a dependency-free SQLite b-tree walker on the test files, to ground the effort estimates.
+
+**[06:44 UTC]**
+
+Both prototypes work on the test recordings: a 115-line dependency-free b-tree reader returns every frame blob byte-exactly, and sqlite-jdbc reads all 1922 frames of export 2 in 30 ms under Java 21 with no DriverManager registration. I'm waiting for the FieldTrip and EEGLAB research agents before writing the report.
+
+**[06:54 UTC]**
+
+The FieldTrip report is in. I'll draft the scoping report now and fill in the EEGLAB section when that agent reports.
+
+**[06:57 UTC]**
+
+The EEGLAB report is in and corrects several points in my draft (submission is now via a GitHub issue, EEGLAB core is BSD-2, boundary latency convention, File-IO snapshot lag). Updating the report.
+
+**[07:01 UTC]**
+
+Doorstop validates and all 30 tests pass. Committing the report, the supporting notes and the prototype, then pushing.
+
+**[07:02 UTC]**
+
+The scoping report is written, committed and pushed to `claude/zen-lovelace-vq1to3` (commit 21498d5). It lives at `docs/research/eeglab-fieldtrip-cadwell-reader.md`.
+
+**Recommendation in one line:** write one pure-MATLAB/Octave Cadwell reader with its own read-only SQLite b-tree parser, and expose it twice, as the `cadwellio` EEGLAB plugin and as a FieldTrip `cadwell_ezdata.m` external-format function that is later upstreamed.
+
+**Why that shape**
+
+- The Cadwell decoding is the easy part. The verified Python decoder is about 330 lines and ports 1:1 to `typecast` and `cumsum`. The vendor high-pass, resampling and EDF policy are not needed by a reader.
+- Getting BLOBs out of SQLite in MATLAB is the crux, and every off-the-shelf option has a real drawback for a distributed plugin. The Database Toolbox `fetch` does not return BLOBs. `sqlite-jdbc` works, and I verified it here under Java 21 in read-only mode without `DriverManager`, but MATLAB stopped loading Java by default in R2025a and ships no JRE from R2026b. `mksqlite` is BSD but needs MEX binaries per platform and MATLAB ABI.
+- A dependency-free reader of the SQLite file format sidesteps all of that. I wrote a 115-line prototype (`tools/sqlite_pure_reader.py`) that walks the table b-tree, follows overflow chains and decodes records. It returns every frame blob of all three public exports byte-identically to `sqlite3`. The Cadwell files use 4096-byte pages, rollback-journal mode (not WAL) and UTF-16LE text, all handled.
+- FieldTrip's current guidance is exactly the "one function, three call forms by `nargin`" pattern, dispatched from the `otherwise` branches by function name. The reader can be used outside FieldTrip first via `cfg.headerformat`, then upstreamed with a one-clause `ft_filetype` change and a test script, with no edits to the three `ft_read_*` files. Your PR history shows merges took days when a test and out-of-band data were supplied (#186, #266, #1358) and years without (#302).
+- Pure MATLAB code runs under Octave, so the reader can be tested in GitHub Actions against reference values from the Python decoder without a MATLAB licence.
+
+**Things that changed since the earlier notes**
+
+- The EEGLAB plugin upload form is closed; submission is now the `sccn/eeglab` issue template "New plugin or plugin update" with the zip attached.
+- EEGLAB core is BSD-2, not GPL, and explicitly allows plugins under other licences.
+- EEGLAB gaps are `boundary` events at `n_before + 0.5` with `duration` in samples; padding is never used. `pop_fileio` has no boundary logic, so FieldTrip events need both `type` and `value` set to `boundary`.
+- The File-IO plugin in EEGLAB is a dated snapshot (`Fileio250523`), so the FieldTrip route reaches EEGLAB plugin-manager users months to a year after a merge. Route A stays the primary EEGLAB delivery.
+
+**Estimate:** roughly 12 to 16 working days for both front ends, tests, CI, docs and the FieldTrip PR, laid out in seven phases in section 7. The report proposes three new Doorstop requirements (REQ021 to REQ023) for the MATLAB reader, the EEGLAB dataset contents and the FieldTrip contract.
+
+Also in the commit: the two agent reports as `docs/research/support/fieldtrip-findings.md` and `eeglab-findings.md` (with line references into FieldTrip master and EEGLAB develop), updated `docs/research/README.md` and `uses/EEGLAB/README.md`. Doorstop validates and all 30 tests pass. Not done: no MATLAB or Octave timing of the port yet, which the plan makes the first milestone.
+
+
+## Prompt 15 - 2026-09-28 07:05:28 UTC
+
+```text
+Dispatch an agent to look for SQLITE reading in canonical matlab or eeglab
+```
+
+_Tools used in this turn: Edit ×6, Bash ×3, Agent ×1_
+
+### Response 15
+
+**[07:06 UTC]**
+
+The agent is running. It will check base MATLAB (bundled jars and libraries, internal packages, third-party notices), the Database Toolbox BLOB status, File Exchange add-ons, EEGLAB core and plugins, the BioSig stubs, the MFF jar, and Brainstorm. I'll fold its findings into section 2 of the scoping report when it reports back.
+
+**[07:06 UTC]**
+
+Session log committed and pushed; only the hook-generated `llm-logs` files had changed. The SQLite research agent is still running, and I'll update the report when it reports back.
+
+**[07:19 UTC]**
+
+The agent found nothing reusable in base MATLAB, EEGLAB, FieldTrip, Brainstorm or MNE-MATLAB, and two corrections worth folding in (MathWorks shipped an undocumented `sqlite4java` jar until R2021a; mksqlite now has prebuilt MEX files for all four platforms). Updating the report.
+
+**[07:20 UTC]**
+
+Committed and pushed as 594e61d. The agent's answer is that there is nothing canonical to reuse, and the report now says so in a new section 2.2a plus two new rows in the options table.
+
+**What the agent found**
+
+- **Base MATLAB** has a private `libsqlite3` behind the internal `libmwsqldb` library (seen in `ldd` chains on MATLAB Answers), with no MATLAB API. MathWorks also shipped the undocumented `sqlite4java` jar on the static class path from about R2013a to R2021a and removed it in R2021b. Neither helps on current releases.
+- **Database Toolbox**: the native `sqlite` object still returns no BLOBs as of the latest evidence (Answers threads from 2019, 2022 and 2023, no release note through R2026a). Only the toolbox's JDBC route returns BLOBs as `uint8`, and it needs the paid toolbox.
+- **File Exchange "sqlite3"** (68298) is CC BY-NC-SA and returns NULL for BLOB columns, so it is out.
+- **EEGLAB** core and all bundled plugins at develop 8ac485f contain zero occurrences of `sqlite`, `mksqlite`, `jdbc` or the SQLite magic string. No manager plugin reading SQLite files was found by search. A Cadwell plugin would be the first SQLite-based importer in EEGLAB.
+- **BioSig**'s `sopen_sqlite.c` links the system libsqlite3 only when explicitly enabled (the autoconf check is commented out), fingerprints Cadwell by the table set, dumps rows and then errors "not supported yet". GPL and a stub. The MATLAB `sopen.m` has no SQLite branch.
+- **FieldTrip's MFF jar** bundles Apache Derby and MySQL Connector, not SQLite. **Brainstorm** and **MNE-MATLAB** have nothing.
+
+**One correction in the plugin's favour**: `mksqlite` (BSD-2) now carries prebuilt MEX files for win64, glnxa64, maci64 and maca64 in its GitHub repository, built against SQLite 3.46.0, with a commit from August 2026. The report now names it the best optional accelerator, while the dependency-free pure-MATLAB/Octave reader stays the primary path.
+
+Files: `docs/research/support/sqlite-canonical-findings.md` (new), `docs/research/eeglab-fieldtrip-cadwell-reader.md` and `docs/research/README.md` (updated). Traceability and scaffold tests pass.
+
+
+## Prompt 16 - 2026-09-28 08:03:40 UTC
+
+```text
+Could we use MATLAB's python interface to read sqlite? How would that fit with EEGLAB in Matlab and Octave? I'm skeptical of hand rolled sqlite reading. We could do it, but would have to make it a separate module in EEGLAB's codebase. Here's a forum post about python sqlite reading in Matlab:
+You can access sqlite database tables, and BLOBs, using the Python interface:
+>> dbFileName = 'myDatabase.db';
+>> tableName = 'myTable'
+% Say the field name is data and there is an id field whos value we're after is 300
+>> sql = py.importlib.import_module('sqlite3');
+>> conn = sql.connect(dbFileName);
+>> cur = conn.cursor()
+>> query = 'SELECT data FROM myTable WHERE id=300';
+>> cur.execute(query);
+>> res = cur.fetchone();
+% The above returns a Python tuple containing the id and the blob. This gets you the data:
+>> data = res{2}.uint8;
+https://se.mathworks.com/matlabcentral/answers/451624-how-to-fetch-splite3-blob-data?s_tid=answers_rc1-2_p2_undefined
+```
+
+_Tools used in this turn: WebSearch ×2_
+
+### Response 16
+
+**[08:04 UTC]**
+
+Let me check two facts I'm not certain about before answering: how MATLAB converts numpy arrays natively, and what SQLite access Octave has.
+
+**[08:05 UTC]**
+
+Yes, MATLAB's Python bridge works for this, and your skepticism about hand-rolled SQLite is well founded. But the SQLite layer is the small part of the problem; the frame decoder is the part worth not duplicating. Here is how the options line up.
+
+**Ways to get the bytes out of the SQLite files**
+
+| Route | MATLAB | Octave | Dependency | Notes |
+|---|---|---|---|---|
+| `py.sqlite3` (your forum snippet) | yes | no | a Python installation whose version MATLAB supports, configured with `pyenv` | BLOBs come back as `py.bytes`; `uint8(res{1})` gives the byte array. Open the file read-only with the `file:...?mode=ro&immutable=1` URI as the Python package does, or MATLAB will take a write lock on a study copy. |
+| Database Toolbox `sqlite()` | yes | no | paid toolbox | Clean, but not everyone has it. |
+| mksqlite MEX | yes | untested | compiled per platform, BSD | Free, mature; MEX builds are the maintenance cost. |
+| Octave `sqlite` package or `octave-sqlite` | no | yes | libsqlite3-dev | Official Octave package, needs Octave 6 or newer ([Octave sqlite package](https://gnu-octave.github.io/packages/sqlite/), [octave-sqlite](https://github.com/Andy1978/octave-sqlite)). |
+| Java JDBC (xerial sqlite-jdbc jar) | yes | if Octave was built with Java, which distributions usually do | one jar with bundled natives for all platforms, Apache-2 | The most portable single-dependency path; BLOBs arrive as `byte[]`. |
+| Pure MATLAB page parser | yes | yes | none | About 300 lines including overflow-page chains, since the frames are larger than a 4 KB page. I agree this is the wrong place to spend maintenance effort. |
+
+**The decoder is the real question.** After the bytes are out, someone has to parse the 81-byte channel records, the delta type, the int8 or int16 deltas, the cumsum, the scale constant, the frame numbering across gaps, the event tables and the headbox label tables. In Python that is done and tested against all three vendor exports. A MATLAB port is maybe 150 lines and straightforward, but it becomes a second implementation that has to be kept in step, and its only test oracle would be the Python one.
+
+**Three plugin designs**
+
+1. **Thin plugin over the Python package, via the bridge.** `py.cwelleegread.open_recording(path)` then `read_signals()`, and `double(numpy_array)` into `EEG.data`. Direct numpy conversion has been supported since R2018b and is reliable from R2021a on ([MathWorks Answers on numpy conversion](https://www.mathworks.com/matlabcentral/answers/157347-convert-python-numpy-array-to-double)). One implementation, one test suite, no SQLite code in MATLAB at all. Cost: MATLAB only, and the user must have a MATLAB-supported Python with `cwelleegread` installed, which is a recurring support question in EEGLAB plugins that depend on Python.
+
+2. **Thin plugin over the command line.** `system('cwelleegread convert study out.edf')`, then `pop_biosig` or `pop_fileio` on the EDF. Works identically in MATLAB and Octave, needs only Python on the path, no version binding to MATLAB, and the EDF carries the labels and annotations. This is the least code and the most robust. The cost is a temporary EDF file and the 16-bit quantisation of the raw-mode range, which is about 0.1 µV for real EEG.
+
+3. **Native MATLAB/Octave module.** A separate `cadwell_sqlite` module with a backend interface (`py.sqlite3`, Database Toolbox, mksqlite, JDBC, Octave sqlite) that only returns rows and uint8 blobs, plus a backend-independent `cadwell_decode` that ports the frame decoder. This is what you describe as a separate module in EEGLAB's codebase. It is the only fully offline option, and JDBC would make one code path serve both MATLAB and Octave, but it doubles the decoder and its tests.
+
+**My recommendation**: ship the plugin as option 2 now, add option 1 as a fast path when MATLAB's Python bridge is available, and keep option 3 as the long-term goal only if a Python-free installation turns out to matter to users. In all three the Python package stays the reference implementation, and the MATLAB port, if it comes, is tested against it on the public recordings in this repository. If you want, I can prototype option 2 as the real `pop_cadwell` and sketch the backend interface for option 3 so the boundary is fixed early.
+
+Sources: [Convert numpy array to double](https://www.mathworks.com/matlabcentral/answers/157347-convert-python-numpy-array-to-double), [passing numpy.ndarray to MATLAB](https://www.mathworks.com/matlabcentral/answers/216498-passing-numpy-ndarray-from-python-to-matlab), [Octave sqlite package](https://gnu-octave.github.io/packages/sqlite/), [octave-sqlite wrapper](https://github.com/Andy1978/octave-sqlite), [Octave database package](https://wiki.octave.org/Database_package), [mex sqlite3 on File Exchange](https://www.mathworks.com/matlabcentral/fileexchange/68298-sqlite3).
 
