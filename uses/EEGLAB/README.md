@@ -2,20 +2,24 @@
 
 **Status:** scaffold. The plugin skeleton follows the EEGLAB plugin
 conventions (`eegplugin_<name>.m` registering a menu item, `pop_<name>.m`
-doing the work and returning a history command). Until the `.ezdata` inner
-format is decoded, `pop_cadwell` imports the **EDF produced by
-CwellEEGRead** (via the BIOSIG or File-IO plugin) and only inspects the
-SQLite outer structure of a `.ezdata` file; the direct reader is a stub that
-errors with a clear message. This is enough to build and install the zip
-and to develop the menu/GUI side in parallel with the format work. It may
-later move to its own GitHub repository.
+doing the work and returning a history command). `pop_cadwell` imports the
+**EDF produced by CwellEEGRead** (via the BIOSIG or File-IO plugin) and
+only inspects the SQLite outer structure of a `.ezdata` file; the direct
+reader is a stub that errors with a clear message. The `.ezdata` format is
+now decoded in Python (`cwelleegread/ezdata.py`); the plan for the native
+MATLAB/Octave reader, shared between this plugin and a FieldTrip
+`cadwell_ezdata.m`, is in
+`docs/research/eeglab-fieldtrip-cadwell-reader.md`. It may later move to
+its own GitHub repository.
 
 **Prerequisites**
 
 - MATLAB R2020b or newer with EEGLAB 2021 or newer.
-- For reading `.ezdata` directly: Database Toolbox (`sqlite`) **or** the
-  free `mksqlite` MEX (https://github.com/a-ma72/mksqlite) on the path;
-  `pop_cadwell` uses whichever is available.
+- For the current `.ezdata` table listing only: Database Toolbox
+  (`sqlite`) **or** the free `mksqlite` MEX (https://github.com/a-ma72/mksqlite)
+  **or** MATLAB's Python interface; `cadwell_sqlite_info` uses whichever
+  is available. The planned native reader needs none of these (see the
+  scoping report).
 - For the EDF path: the EEGLAB BIOSIG plugin (`pop_biosig`) or File-IO
   plugin (`pop_fileio`), installed through the EEGLAB plugin manager.
 
@@ -33,8 +37,9 @@ later move to its own GitHub repository.
 
 ```bash
 ./make_zip.sh            # -> dist/cadwellio0.1.0.zip
-# then: unzip into <eeglab>/plugins/ and restart EEGLAB, or submit at
-# http://sccn.ucsd.edu/eeglab/plugin_uploader/upload_form.php
+# then: unzip into <eeglab>/plugins/ and restart EEGLAB, or submit it
+# through the sccn/eeglab issue template "New plugin or plugin update"
+# (the old web upload form is closed)
 ```
 
 **FieldTrip**: the cheapest route is a function `cadwell_sqlite.m` on the
