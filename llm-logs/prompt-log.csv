@@ -76,3 +76,4 @@ You can access sqlite database tables, and BLOBs, using the Python interface:
 https://se.mathworks.com/matlabcentral/answers/451624-how-to-fetch-splite3-blob-data?s_tid=answers_rc1-2_p2_undefined"
 2026-09-28,08:13:25,jan@brogger.no,adede7d2-9fc1-585c-a838-bea822978308,Let's go native MATLAB/Octave and bite the bullet.
 2026-09-28,08:48:13,jan@brogger.no,adede7d2-9fc1-585c-a838-bea822978308,Why are we using Java?
+2026-09-28,08:55:01,jan@brogger.no,adede7d2-9fc1-585c-a838-bea822978308,Can't we roll our own sqlite reader? That was the plan all along.
