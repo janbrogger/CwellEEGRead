@@ -15,6 +15,11 @@ on:
   push:
     tags:
       - "cadwellio-v*"
+  workflow_dispatch:            # Actions > release-cadwellio > Run workflow: creates the tag itself
+    inputs:
+      version:
+        description: "plugin version, must equal vers in eegplugin_cadwellio.m (e.g. 0.2.0)"
+        required: true
 
 permissions:
   contents: write
@@ -28,13 +33,18 @@ jobs:
       - name: Check that the tag matches the plugin version
         id: ver
         run: |
-          tag_version="${GITHUB_REF_NAME#cadwellio-v}"
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            tag_version="${{ github.event.inputs.version }}"
+          else
+            tag_version="${GITHUB_REF_NAME#cadwellio-v}"
+          fi
           plugin_version=$(sed -n "s/.*vers = 'cadwellio\([0-9.]*\)'.*/\1/p" uses/EEGLAB/cadwellio/eegplugin_cadwellio.m)
           echo "tag $tag_version, eegplugin_cadwellio.m $plugin_version"
           if [ "$tag_version" != "$plugin_version" ]; then
             echo "tag version and eegplugin_cadwellio.m vers differ" >&2; exit 1
           fi
           echo "version=$plugin_version" >> "$GITHUB_OUTPUT"
+          echo "tag=cadwellio-v$plugin_version" >> "$GITHUB_OUTPUT"
 
       - name: Build the plugin zip
         run: |
@@ -53,13 +63,15 @@ jobs:
             echo "Install: unzip \`cadwellio$v.zip\` into \`<eeglab>/plugins/\` and restart EEGLAB;"
             echo "the importer appears under *File > Import data > Using EEGLAB functions and plugins*."
             echo
-            echo "Documentation: \`uses/EEGLAB/README.md\` of this repository at tag \`$GITHUB_REF_NAME\`."
+            echo "Documentation: \`uses/EEGLAB/README.md\` of this repository at tag \`${{ steps.ver.outputs.tag }}\`."
             echo "The \"Source code\" archives below are the whole repository, added by GitHub; the plugin is the zip above."
           } > notes.md
 
       - name: Publish the release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.ver.outputs.tag }}
+          target_commitish: ${{ github.sha }}
           name: cadwellio ${{ steps.ver.outputs.version }}
           body_path: notes.md
           files: uses/EEGLAB/dist/cadwellio${{ steps.ver.outputs.version }}.zip
