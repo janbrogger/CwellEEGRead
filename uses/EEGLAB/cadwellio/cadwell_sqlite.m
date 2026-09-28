@@ -1,14 +1,20 @@
 function varargout = cadwell_sqlite(op, varargin)
-% cadwell_sqlite - read-only SQLite access for Cadwell files with pluggable
-% backends, so that no SQLite parsing is hand-rolled in MATLAB/Octave.
+% cadwell_sqlite - read-only SQLite access for Cadwell files.
 %
-%   db   = cadwell_sqlite('open', filename)            % auto-detect backend
+%   db   = cadwell_sqlite('open', filename)            % default backend: 'native'
 %   db   = cadwell_sqlite('open', filename, backend)   % force a backend
-%   rows = cadwell_sqlite('query', db, sql)            % cell array (nrows x ncols)
+%   t    = cadwell_sqlite('table', db, name)           % whole table, rowid order:
+%                                                      %   t.columns (1xN cell), t.rows (cell M x N), t.rowids (M x 1)
+%   rows = cadwell_sqlite('query', db, sql)            % library backends only, cell array (nrows x ncols)
 %   cadwell_sqlite('close', db)
-%   list = cadwell_sqlite('backends')                  % available backends, in order
+%   list = cadwell_sqlite('backends')                  % available backends, in order of preference
 %
-% Backends (first available wins):
+% Backends:
+%   'native'    cadwell_sqlite_native.m, a reader of the SQLite 3 file format
+%               written in plain MATLAB/Octave. No toolbox, no MEX, no Java,
+%               no Python. Always available; the default. Verified byte for
+%               byte against Python's sqlite3 on every table of the public test
+%               exports (cadwell_selftest). Whole tables only, no SQL.
 %   'mksqlite'  mksqlite MEX (https://github.com/a-ma72/mksqlite), MATLAB
 %   'sqlite'    MATLAB Database Toolbox sqlite() or the GNU Octave 'sqlite'
 %               package (same call syntax)
@@ -16,6 +22,9 @@ function varargout = cadwell_sqlite(op, varargin)
 %               in this folder's lib/ or already on the Java class path;
 %               works in MATLAB and in Octave built with Java
 %   'python'    MATLAB's Python interface, py.sqlite3 (MATLAB only)
+% The library backends exist for cross-checking the native reader
+% (cadwell_selftest runs the same checks through every available backend)
+% and for ad-hoc SQL. Use cadwell_tcol to pick a column of a table struct.
 %
 % Cell values: BLOB -> uint8 row vector, TEXT -> char, INTEGER/REAL -> double,
 % NULL -> []. Files are opened read-only where the backend allows it.
@@ -28,18 +37,14 @@ function varargout = cadwell_sqlite(op, varargin)
             filename = varargin{1};
             if ~exist(filename, 'file'), error('cadwell_sqlite:missing', 'file not found: %s', filename); end
             if numel(varargin) >= 2 && ~isempty(varargin{2})
-                backend = varargin{2};
+                backend = lower(varargin{2});
             else
-                bl = available_backends();
-                if isempty(bl)
-                    error('cadwell_sqlite:noBackend', ['no SQLite backend available. Install one of: mksqlite (MATLAB), ' ...
-                        'the Database Toolbox or Octave sqlite package, the sqlite-jdbc jar in %s, or configure Python in MATLAB.'], ...
-                        fullfile(fileparts(mfilename('fullpath')), 'lib'));
-                end
-                backend = bl{1};
+                backend = 'native';
             end
             db = struct('backend', backend, 'file', filename, 'handle', []);
             switch backend
+                case 'native'
+                    db.handle = cadwell_sqlite_native('open', filename);
                 case 'mksqlite'
                     db.handle = mksqlite('open', filename, 'ro');
                 case 'sqlite'
@@ -57,12 +62,28 @@ function varargout = cadwell_sqlite(op, varargin)
                     error('cadwell_sqlite:backend', 'unknown backend %s', backend);
             end
             varargout{1} = db;
+        case 'table'
+            db = varargin{1}; name = varargin{2};
+            if strcmp(db.backend, 'native')
+                varargout{1} = cadwell_sqlite_native('table', db.handle, name);
+            else
+                info = run_query(db, sprintf('PRAGMA table_info("%s")', name));
+                if isempty(info), error('cadwell_sqlite:table', 'no table %s in %s', name, db.file); end
+                cols = cellfun(@char, info(:, 2)', 'UniformOutput', false);
+                r = run_query(db, sprintf('SELECT rowid, * FROM "%s" ORDER BY rowid', name));
+                if isempty(r), r = cell(0, numel(cols) + 1); end
+                varargout{1} = struct('columns', {cols}, 'rows', {r(:, 2:end)}, 'rowids', cell2mat(r(:, 1)));
+            end
         case 'query'
             db = varargin{1}; sql = varargin{2};
+            if strcmp(db.backend, 'native')
+                error('cadwell_sqlite:nosql', 'the native backend reads whole tables only (cadwell_sqlite(''table'', ...)); SQL needs a library backend');
+            end
             varargout{1} = run_query(db, sql);
         case 'close'
             db = varargin{1};
             switch db.backend
+                case 'native',   % nothing to release
                 case 'mksqlite', mksqlite(db.handle, 'close');
                 case 'sqlite',   close(db.handle);
                 case 'jdbc',     db.handle.close();
@@ -74,7 +95,7 @@ function varargout = cadwell_sqlite(op, varargin)
 end
 
 function bl = available_backends()
-    bl = {};
+    bl = {'native'};
     if exist('mksqlite', 'file') == 3 || exist('mksqlite', 'file') == 2, bl{end+1} = 'mksqlite'; end
     if exist('sqlite', 'file') == 2 || exist('sqlite', 'file') == 3 || exist('sqlite', 'file') == 6, bl{end+1} = 'sqlite'; end
     if jdbc_available(), bl{end+1} = 'jdbc'; end

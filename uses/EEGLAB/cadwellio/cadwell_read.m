@@ -2,12 +2,12 @@ function rec = cadwell_read(pathIn, varargin)
 % cadwell_read - read a Cadwell Arc recording (CadLink study export) natively.
 %
 %   rec = cadwell_read(path)                % export folder, CadLink/Data folder or .ezdataindex file
-%   rec = cadwell_read(path, 'PadGaps', true, 'Backend', 'jdbc', 'Frames', [first last])
+%   rec = cadwell_read(path, 'PadGaps', true, 'Backend', 'native', 'Frames', [first last])
 %
 % Options
 %   'PadGaps'  (default true)  missing frame numbers (recording breaks) become
 %                              zeros so that time stays aligned with the events
-%   'Backend'  (default auto)  SQLite backend, see cadwell_sqlite
+%   'Backend'  (default 'native', pure MATLAB/Octave)  SQLite backend, see cadwell_sqlite
 %   'Frames'   (default all)   restrict to frame numbers first..last
 %
 % Output struct
@@ -39,9 +39,10 @@ function rec = cadwell_read(pathIn, varargin)
         f = fullfile(idx.dataDir, dbs{d});
         if ~exist(f, 'file'), error('cadwell_read:missingData', 'frame data file missing: %s', f); end
         db = cadwell_sqlite('open', f, opt.Backend);
-        r = cadwell_sqlite('query', db, 'SELECT hex(FrameKey), Data FROM FrameInfo');
+        t = cadwell_sqlite('table', db, 'FrameInfo');
         cadwell_sqlite('close', db);
-        for i = 1:size(r, 1), blobs(upper(char(r{i, 1}))) = uint8(r{i, 2}); end
+        keys = cadwell_tcol(t, 'FrameKey'); data = cadwell_tcol(t, 'Data');
+        for i = 1:numel(keys), blobs(cadwell_key_hex(keys{i})) = uint8(data{i}); end
     end
     nch = numel(idx.ampInputs); amp = idx.ampInputs; rate = idx.rate;
     cols = cell(1, numel(frames)); spf = zeros(1, numel(frames)); nums = [frames.number];

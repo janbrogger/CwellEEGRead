@@ -507,14 +507,29 @@ high-pass / 15 Hz low-pass viewer filter. Findings:
 `uses/EEGLAB/cadwellio/` re-implements the reader natively for EEGLAB users:
 `cadwell_decode_frame.m` (frame blob to samples), `cadwell_read_index.m`,
 `cadwell_read_events.m`, `cadwell_read.m`, `cadwell_layout.m`. SQLite access
-goes through `cadwell_sqlite.m`, a thin layer over existing libraries
-(mksqlite, Database Toolbox / Octave sqlite package, xerial sqlite-jdbc,
-py.sqlite3), so no SQLite parsing is hand-rolled. Under GNU Octave 8.4 with
-the JDBC backend the port equals the Python decoder bit for bit on the
+goes through `cadwell_sqlite.m`; its default backend `cadwell_sqlite_native.m`
+is a reader of the SQLite 3 file format written in plain MATLAB/Octave
+(database header, table b-tree interior/leaf pages, varints, record serial
+types, overflow chains, `INTEGER PRIMARY KEY` rowid aliases, column names
+from the `CREATE TABLE` text). It reads whole tables in rowid order and the
+readers filter and sort in MATLAB, so no SQL engine is needed. Library
+backends (mksqlite, Database Toolbox / Octave sqlite package, xerial
+sqlite-jdbc, py.sqlite3) remain as optional cross-checks. Two format facts
+that matter for such a reader: Cadwell databases use text encoding 2
+(UTF-16LE, header byte 56), and all values of all tables fit in doubles
+(no integer beyond 2^53 in the public exports; the reader keeps the stored
+storage class per value in `t.kinds`).
+
+Under GNU Octave 8.4 the port equals the Python decoder bit for bit on the
 first 20 frames of all three public exports, reproduces the index, labels,
-events and gaps, and equals the vendor text export of export 1 within
-0.05 µV (`cadwell_selftest.m`, run by `tests/test_octave_port.py`). Two
-portability lessons: `Class.forName` cannot see jars added with
-`javaaddpath`, so the JDBC driver is instantiated with `javaObject`; and
+events and gaps through both the native and the JDBC backend, dumps every
+table of every `.ezdataindex`/`.ezdata`/`.ezevents` file of the three
+exports (102 tables, 19 000 rows, 68 MB) byte for byte identically to
+Python's sqlite3 in a canonical serialization, and equals the vendor text
+export of export 1 within 0.05 µV (`cadwell_selftest.m`, run by
+`tests/test_octave_port.py`). Reading export 3 (32 channels, 20 min) takes
+about 40 s in Octave with either backend; the time is in frame decoding,
+not SQLite. Two portability lessons: `Class.forName` cannot see jars added
+with `javaaddpath`, so the JDBC driver is instantiated with `javaObject`; and
 `datenum` differences lose microseconds at 2026 dates, so time differences
 are computed from a seconds-since-2000 parser (`cadwell_timestamp_sec.m`).

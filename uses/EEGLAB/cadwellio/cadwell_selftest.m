@@ -1,14 +1,24 @@
-function res = cadwell_selftest(refDir, backend)
+function res = cadwell_selftest(refDir, backends)
 % cadwell_selftest - verify the MATLAB/Octave port against reference data
-% written by tools/make_matlab_reference.py (one sub-folder per export) and
-% against the vendor's text export of cadwell-export1.
+% written by tools/make_matlab_reference.py --tables (one sub-folder per
+% export) and against the vendor's text export of cadwell-export1.
 %
-%   res = cadwell_selftest(refDir [, backend])
+%   res = cadwell_selftest(refDir [, backends])
 %
+% backends: cell array of SQLite backends to run the read checks through
+% (default: every available one, cadwell_sqlite('backends'); 'native' first).
+% Checks per export:
+%   A  frame decoder vs Python on the stored frame blobs (no SQLite involved)
+%   B  full read through each backend vs Python metadata and samples
+%   D  native SQLite reader: every table of every file, dumped in the same
+%      canonical serialization as tools/make_matlab_reference.py, must equal
+%      tables.bin byte for byte
+% and C: export 1 through each backend vs the vendor's text export.
 % Prints one line per check and returns a struct with ok (logical) and the
 % individual results. Public domain (Unlicense).
 
-    if nargin < 2, backend = ''; end
+    if nargin < 2 || isempty(backends), backends = cadwell_sqlite('backends'); end
+    if ischar(backends), backends = {backends}; end
     res.ok = true; res.checks = {};
     here = fileparts(mfilename('fullpath'));
     subs = dir(refDir); subs = subs([subs.isdir] & ~ismember({subs.name}, {'.', '..'}));
@@ -34,32 +44,45 @@ function res = cadwell_selftest(refDir, backend)
                     isequal(size(X), size(expected)) && max(abs(X(:) - expected(:))) < 1e-6);
         res = check(res, sprintf('%s decoder: samples per frame and start ticks', subs(s).name), ...
                     isequal(spf, meta.samples_per_frame(:)') && isequal(ticks, meta.start_ticks(:)'));
-        % ---- B: full native read through the SQLite backend vs Python metadata
-        if isempty(cadwell_sqlite('backends')) && isempty(backend)
-            res = check(res, sprintf('%s index/events via SQLite backend (SKIPPED: no backend)', subs(s).name), true); continue;
+        % ---- B: full read through each SQLite backend vs Python metadata
+        for b = 1:numel(backends)
+            try
+                rec = cadwell_read(meta.index_path, 'Backend', backends{b}, 'Frames', [meta.frame_numbers(1) meta.frame_numbers(end)]);
+                ok = rec.srate == meta.rate && isequal(rec.ampInputs(:)', amp) && isequal(rec.labels(:)', meta.labels(:)') ...
+                     && numel(rec.index.frames) == meta.n_index_frames && isequal(rec.index.ampType, meta.amp_type) ...
+                     && strcmp(rec.recordGuid, meta.record_guid) && abs(rec.index.clockCorrectionSec * 1e6 - meta.clock_correction_us) < 1 ...
+                     && numel(rec.events) == meta.n_events && numel(rec.index.gaps) == numel(meta.gaps) ...
+                     && max(max(abs(rec.data - X'))) < 1e-6;
+                res = check(res, sprintf('%s read via ''%s'': index, labels, events, gaps, samples', subs(s).name, backends{b}), ok);
+            catch err
+                res = check(res, sprintf('%s read via ''%s'' failed: %s', subs(s).name, backends{b}, err.message), false);
+            end
         end
-        try
-            rec = cadwell_read(meta.index_path, 'Backend', backend, 'Frames', [meta.frame_numbers(1) meta.frame_numbers(end)]);
-            ok = rec.srate == meta.rate && isequal(rec.ampInputs(:)', amp) && isequal(rec.labels(:)', meta.labels(:)') ...
-                 && numel(rec.index.frames) == meta.n_index_frames && isequal(rec.index.ampType, meta.amp_type) ...
-                 && strcmp(rec.recordGuid, meta.record_guid) && abs(rec.index.clockCorrectionSec * 1e6 - meta.clock_correction_us) < 1 ...
-                 && numel(rec.events) == meta.n_events && numel(rec.index.gaps) == numel(meta.gaps) ...
-                 && max(max(abs(rec.data - X'))) < 1e-6;
-            res = check(res, sprintf('%s native read via ''%s'': index, labels, events, gaps, samples', subs(s).name, rec.index.file(end-12:end)), ok);
-        catch err
-            res = check(res, sprintf('%s native read failed: %s', subs(s).name, err.message), false);
+        % ---- D: native SQLite reader, every table of every file, byte for byte
+        tb = fullfile(d, 'tables.bin');
+        if exist(tb, 'file')
+            try
+                [ok, msg] = compare_tables(fileparts(meta.index_path), tb);
+                res = check(res, sprintf('%s native SQLite reader vs Python sqlite3, all tables of all files: %s', subs(s).name, msg), ok);
+            catch err
+                res = check(res, sprintf('%s native SQLite reader table dump failed: %s', subs(s).name, err.message), false);
+            end
+        else
+            res = check(res, sprintf('%s native SQLite reader tables check (SKIPPED: no tables.bin, rerun make_matlab_reference.py --tables)', subs(s).name), true);
         end
     end
     % ---- C: vendor text export of export 1 (raw ground truth, 7755 rows)
     txt = fullfile(here, '..', '..', '..', 'testdata', 'public', 'cadwell-export1', 'test', 'test-eeg20251031.txt');
-    if exist(txt, 'file') && (~isempty(cadwell_sqlite('backends')) || ~isempty(backend))
-        try
-            rec = cadwell_read(fullfile(fileparts(fileparts(txt))), 'Backend', backend);
-            T = read_text_export(txt); n = size(T, 1);
-            dmax = max(max(abs(rec.data(:, 1:n)' - T)));
-            res = check(res, sprintf('export1 native read vs vendor text export: %d rows, max |diff| %.4f uV', n, dmax), dmax <= 0.06);
-        catch err
-            res = check(res, sprintf('export1 text comparison failed: %s', err.message), false);
+    if exist(txt, 'file')
+        for b = 1:numel(backends)
+            try
+                rec = cadwell_read(fullfile(fileparts(fileparts(txt))), 'Backend', backends{b});
+                T = read_text_export(txt); n = size(T, 1);
+                dmax = max(max(abs(rec.data(:, 1:n)' - T)));
+                res = check(res, sprintf('export1 read via ''%s'' vs vendor text export: %d rows, max |diff| %.4f uV', backends{b}, n, dmax), dmax <= 0.06);
+            catch err
+                res = check(res, sprintf('export1 text comparison via ''%s'' failed: %s', backends{b}, err.message), false);
+            end
         end
     end
     if res.ok, fprintf('cadwell_selftest: ALL OK\n'); else fprintf('cadwell_selftest: FAILURES\n'); end
@@ -69,6 +92,58 @@ function res = check(res, msg, ok)
     res.ok = res.ok && ok; res.checks{end+1} = struct('msg', msg, 'ok', ok);
     if ok, fprintf('  PASS  %s\n', msg); else fprintf('  FAIL  %s\n', msg); end
 end
+
+function [ok, msg] = compare_tables(dataDir, refFile)
+    % Serialize every table of every *.ez* file exactly as dump_tables in
+    % tools/make_matlab_reference.py does and compare with the reference stream.
+    fid = fopen(refFile, 'rb'); ref = fread(fid, inf, 'uint8=>uint8')'; fclose(fid);
+    files = dir(fullfile(dataDir, '*.ez*')); names = sort({files.name});
+    pos = 1; ntab = 0; nrow = 0;
+    for f = 1:numel(names)
+        db = cadwell_sqlite_native('open', fullfile(dataDir, names{f}));
+        tables = cadwell_sqlite_native('tables', db);
+        for k = 1:numel(tables)
+            t = cadwell_sqlite_native('table', db, tables{k});
+            chunk = serialize_table(names{f}, tables{k}, t);
+            n = numel(chunk); ntab = ntab + 1; nrow = nrow + size(t.rows, 1);
+            if pos + n - 1 > numel(ref) || ~isequal(chunk, ref(pos:pos + n - 1))
+                bad = find(chunk ~= ref(pos:min(pos + n - 1, numel(ref))), 1);
+                if isempty(bad), bad = min(n, numel(ref) - pos + 2); end
+                ok = false; msg = sprintf('MISMATCH in %s table %s at byte %d of its dump', names{f}, tables{k}, bad); return;
+            end
+            pos = pos + n;
+        end
+    end
+    ok = pos == numel(ref) + 1;
+    msg = sprintf('%d files, %d tables, %d rows, %d bytes identical', numel(names), ntab, nrow, pos - 1);
+    if ~ok, msg = sprintf('reference has %d bytes left after %d tables', numel(ref) - pos + 1, ntab); end
+end
+
+function out = serialize_table(fileName, tableName, t)
+    parts = {uint8(255), lstr(fileName), lstr(tableName), u32(size(t.rows, 1)), u32(numel(t.columns))};
+    for k = 1:numel(t.columns), parts{end+1} = lstr(t.columns{k}); end %#ok<AGROW>
+    for i = 1:size(t.rows, 1)
+        parts{end+1} = i64(t.rowids(i)); %#ok<AGROW>
+        for k = 1:numel(t.columns)
+            v = t.rows{i, k};
+            switch t.kinds(i, k)                                       % storage class as stored in the file
+                case 0, parts{end+1} = uint8(0);                                          %#ok<AGROW>
+                case 1, parts{end+1} = [uint8(1), i64(v)];                                %#ok<AGROW>
+                case 2, parts{end+1} = [uint8(2), typecast(double(v), 'uint8')];          %#ok<AGROW>
+                case 3, parts{end+1} = [uint8(3), lstr(v)];                               %#ok<AGROW>
+                case 4, parts{end+1} = [uint8(4), u32(numel(v)), reshape(v, 1, [])];      %#ok<AGROW>
+            end
+        end
+    end
+    out = [parts{:}];
+end
+
+function b = lstr(s)
+    e = unicode2native(s, 'UTF-8'); b = [u32(numel(e)), reshape(uint8(e), 1, [])];
+end
+
+function b = u32(v), b = typecast(uint32(v), 'uint8'); end
+function b = i64(v), b = typecast(int64(v), 'uint8'); end
 
 function T = read_text_export(fn)
     lines = strsplit(fileread(fn), '\n'); rows = {};

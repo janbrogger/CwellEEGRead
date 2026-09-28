@@ -15,14 +15,18 @@ function ev = cadwell_read_events(eventsFile, originSec, backend)
     if ~exist(eventsFile, 'file'), return; end
     db = cadwell_sqlite('open', eventsFile, backend);
     c = onCleanup(@() cadwell_sqlite('close', db));
-    r = cadwell_sqlite('query', db, ['SELECT EventType, Text, StartTime, EndTime, StartOffset, EndOffset, Deleted, Priority ' ...
-                                     'FROM Events ORDER BY StartTime']);
-    for i = 1:size(r, 1)
-        s = cadwell_timestamp_sec(char(r{i, 3})); e = cadwell_timestamp_sec(char(r{i, 4}));
-        pr = r{i, 8}; if isempty(pr), pr = NaN; end
-        ev(end+1) = struct('type', char(r{i, 1}), 'text', char(r{i, 2}), ...
+    t = cadwell_sqlite('table', db, 'Events');
+    [~, o] = sort(cadwell_tcol(t, 'StartTime')); t.rows = t.rows(o, :);
+    col = @(name) cadwell_tcol(t, name);
+    ty = col('EventType'); tx = col('Text'); st = col('StartTime'); et = col('EndTime');
+    so = col('StartOffset'); eo = col('EndOffset'); dl = col('Deleted'); pr = col('Priority');
+    for i = 1:size(t.rows, 1)
+        s = cadwell_timestamp_sec(char(st{i})); e = cadwell_timestamp_sec(char(et{i}));
+        p = pr{i}; if isempty(p), p = NaN; end
+        d = dl{i}; if isempty(d), d = 0; end
+        ev(end+1) = struct('type', char(ty{i}), 'text', char(tx{i}), ...
             'onsetSec', s - originSec, 'durationSec', e - s, ...
-            'startTicks', double(r{i, 5}), 'endTicks', double(r{i, 6}), ...
-            'deleted', logical(double(r{i, 7})), 'priority', double(pr));
+            'startTicks', double(so{i}), 'endTicks', double(eo{i}), ...
+            'deleted', logical(double(d)), 'priority', double(p));
     end
 end

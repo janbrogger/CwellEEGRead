@@ -152,9 +152,12 @@ script runs its `--help` or dry-run mode without error. For the EEGLAB
 plugin additionally run its self-test under GNU Octave when available
 (tests/test_octave_port.py): the MATLAB/Octave frame decoder must equal
 the Python decoder bit for bit on stored frames of every public export,
-the native read through a SQLite backend must yield the same index,
-labels, events, gaps and samples as the Python reader, and export 1 must
-equal the vendor's text export within 0.05 µV.
+the read through every available SQLite backend (always the pure
+MATLAB/Octave reader `cadwell_sqlite_native.m`) must yield the same index,
+labels, events, gaps and samples as the Python reader, the native SQLite
+reader's canonical dump of every table of every file must equal the dump
+written by Python's sqlite3 byte for byte, and export 1 must equal the
+vendor's text export within 0.05 µV.
 
 *Parent links: REQ016*
 

@@ -30,7 +30,8 @@ its own GitHub repository.
 | `cadwellio/eegplugin_cadwellio.m` | plugin entry point: adds *File > Import data > From Cadwell (.ezdataindex / converted EDF)* |
 | `cadwellio/pop_cadwell.m` | importer; GUI when called without arguments, returns `[EEG, com]` |
 | `cadwellio/cadwell_read.m`, `cadwell_read_index.m`, `cadwell_read_events.m`, `cadwell_decode_frame.m` | the native reader (port of `cwelleegread/ezdata.py`) |
-| `cadwellio/cadwell_sqlite.m`, `cadwell_get_jdbc.m` | SQLite access layer with pluggable backends; JDBC driver download |
+| `cadwellio/cadwell_sqlite_native.m`, `cadwell_tcol.m` | pure MATLAB/Octave reader of the SQLite 3 file format (default backend), column helper |
+| `cadwellio/cadwell_sqlite.m`, `cadwell_get_jdbc.m` | backend switch (`native` default; mksqlite / Database Toolbox / JDBC / py.sqlite3 for cross-checks); JDBC driver download |
 | `cadwellio/cadwell_layout.m` | per-headbox channel labels (port of `cwelleegread/layout.py`) |
 | `cadwellio/cadwell_selftest.m`, `tools/make_matlab_reference.py`, `tests/test_octave_port.py` | verification of the port against the Python decoder and the vendor text export |
 | `cadwellio/README.md`, `cadwellio/LICENSE` | shipped inside the zip |
@@ -39,16 +40,23 @@ its own GitHub repository.
 **Build and install**
 
 ```bash
-./make_zip.sh            # -> dist/cadwellio0.1.0.zip
+./make_zip.sh            # -> dist/cadwellio0.1.0.zip (pure MATLAB/Octave; --with-jdbc bundles the optional driver)
 # then: unzip into <eeglab>/plugins/ and restart EEGLAB, or submit it
 # through the sccn/eeglab issue template "New plugin or plugin update"
 # (the old web upload form is closed)
 ```
 
-**Design note**: the SQLite layer is a separate module with a one-call
-interface (`open`, `query`, `close`) so that backends can be added without
-touching the decoder, and the decoder works on plain `uint8` blobs so it can
-be tested without any database library.
+**Design note**: the readers ask the SQLite layer for whole tables
+(`cadwell_sqlite('table', db, name)`) and do their filtering and sorting in
+MATLAB, so the default backend can be a plain-MATLAB parser of the SQLite
+file format with no SQL engine (`cadwell_sqlite_native.m`, about 200 lines:
+page b-trees, record serial types, overflow chains, UTF-16). The library
+backends implement the same `table` call through `SELECT rowid, *` and exist
+to cross-check the native reader; `cadwell_selftest` runs every check
+through every available backend and compares the native reader's dump of
+every table of every test file byte for byte with Python's sqlite3. The
+decoder works on plain `uint8` blobs so it can be tested without any
+database at all.
 
 **FieldTrip**: the cheapest route is a function `cadwell_sqlite.m` on the
 path implementing the three call forms `hdr = f(file)`,
