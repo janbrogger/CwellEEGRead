@@ -135,10 +135,11 @@ git tag cadwellio-v0.2.0 && git push origin cadwellio-v0.2.0
 # -> https://github.com/janbrogger/CwellEEGRead/releases/download/cadwellio-v0.2.0/cadwellio0.2.0.zip
 ```
 
-The same workflow can also be started by hand (GitHub: *Actions >
-release-cadwellio > Run workflow*, input the version): it then creates the
-tag itself at the chosen commit, which is the route to use from an
-environment that may push branches but not tags.
+The same workflow also runs when a branch `release/cadwellio-v<version>`
+is pushed, or by hand (GitHub: *Actions > release-cadwellio > Run
+workflow*, input the version); in both cases it creates the tag itself at
+that commit. The branch route is for environments that may push branches
+but not tags; the branch can be deleted once the release exists.
 
 GitHub always adds "Source code" archives of the whole repository to every
 release; they can be ignored, the plugin is the zip asset.

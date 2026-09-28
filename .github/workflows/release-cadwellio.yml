@@ -15,6 +15,9 @@ on:
   push:
     tags:
       - "cadwellio-v*"
+    branches:                   # pushing a branch release/cadwellio-v<version> also works
+      - "release/cadwellio-v*"  # (for environments that may push branches but not tags);
+                                # the workflow then creates the tag at that commit
   workflow_dispatch:            # Actions > release-cadwellio > Run workflow: creates the tag itself
     inputs:
       version:
@@ -35,6 +38,8 @@ jobs:
         run: |
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
             tag_version="${{ github.event.inputs.version }}"
+          elif [ "$GITHUB_REF_TYPE" = "branch" ]; then
+            tag_version="${GITHUB_REF_NAME#release/cadwellio-v}"
           else
             tag_version="${GITHUB_REF_NAME#cadwellio-v}"
           fi
