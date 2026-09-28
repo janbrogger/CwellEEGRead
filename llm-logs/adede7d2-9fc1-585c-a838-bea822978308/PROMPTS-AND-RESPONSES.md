@@ -2,7 +2,7 @@
 # Session `adede7d2-9fc1-585c-a838-bea822978308`
 
 - Started (UTC): 2026-09-15T07:29:43.798Z  
-- Last event (UTC): 2026-09-28T13:44:54.222Z (span 318 h 15 min)  
+- Last event (UTC): 2026-09-28T13:45:08.194Z (span 318 h 15 min)  
 - User: jan@brogger.no; source: claude-code-remote; branch: `main`  
 - Models: claude-fable-5-1; Claude Code 2.1.283  
 - Prompts: 36; transcript: transcript.jsonl (14.7 MB)
@@ -2063,6 +2063,8 @@ Drag and drop the ZIP file of your plugin directly into this issue.
 **Note:** The previous submission page has been closed due to security concerns.
 ```
 
+_Tools used in this turn: Bash ×1_
+
 ### Response 36
 
 **[13:44 UTC]**
@@ -2107,4 +2109,8 @@ Drag and drop the ZIP file of your plugin directly into this issue.
 ```
 
 Two notes for posting. Attach the zip by dragging `cadwellio0.2.0.zip` from the release into the issue after pasting; GitHub then appends its own link below the text. And the template's other fields are left as they are, since the maintainers read them as-is.
+
+**[13:45 UTC]**
+
+The only uncommitted changes were the session log files written by the archive hooks. They are committed as a log-only commit and pushed to `main`, and the working tree is clean.
 
