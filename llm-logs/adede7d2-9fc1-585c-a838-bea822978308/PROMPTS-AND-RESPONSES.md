@@ -2,10 +2,10 @@
 # Session `adede7d2-9fc1-585c-a838-bea822978308`
 
 - Started (UTC): 2026-09-15T07:29:43.798Z  
-- Last event (UTC): 2026-09-28T10:37:13.709Z (span 315 h 7 min)  
+- Last event (UTC): 2026-09-28T10:46:53.953Z (span 315 h 17 min)  
 - User: jan@brogger.no; source: claude-code-remote; branch: `claude/zen-lovelace-vq1to3`  
 - Models: claude-fable-5-1; Claude Code 2.1.283  
-- Prompts: 23; transcript: transcript.jsonl (11.8 MB)
+- Prompts: 24; transcript: transcript.jsonl (12.0 MB)
 
 This file is derived from the transcript for readers without an LLM. Prompts are verbatim; responses are the assistant's text messages (tool calls and their output are only summarised - see the JSONL for those).
 
@@ -1078,4 +1078,47 @@ Before writing I measured all three exports on the amplifier tick clock, where f
 **Guidance for users, as written.** Use the plugin's pause events or `EEG.etc.cadwell.gaps` to locate data edges, since they come from the frame numbering and agree with the vendor's GapInfo rows to the millisecond. With padding on, the Stop and Start events lie inside the zeros as in the vendor's EDF. With padding off, they move onto the join together with everything else stamped during the pause. Up to about 2 s of EEG before a stop and 1 s after a start is not in the export at all, so an event stamped in that window has no data under it.
 
 One caveat on the mechanism: the one-frame loss is an observation across three recordings, not something Cadwell documents, so the README phrases the cause as apparent rather than certain.
+
+
+## Prompt 24 - 2026-09-28 10:45:03 UTC
+
+```text
+Read this web page https://eeglab.org/tutorials/contribute/design_plugin.html and the plugins list here: https://sccn.ucsd.edu/eeglab/plugin_uploader/plugin_list_all.php . How do we submit the Cadwell EEG reader code to EEGLAB?
+```
+
+_Tools used in this turn: WebFetch ×3, Bash ×2, ToolSearch ×1, mcp__Claude_Code_Remote__read_documentation ×1_
+
+### Response 24
+
+**[10:45 UTC]**
+
+I'll fetch both pages live and read the submission section and the plugin list format, then answer from what they actually say.
+
+**[10:46 UTC]**
+
+Enough gathered. One last check on how to unblock those two domains for future sessions, then the answer.
+
+**[10:46 UTC]**
+
+I could not open either page directly: this environment's network policy denies eeglab.org and sccn.ucsd.edu. If you want me to read the live plugin list, add those two hosts under Network access in the environment settings (Edit, then allowed domains). I read the tutorial from its source in the sccn.github.io repository on GitHub instead, and the plugin list's metadata from EEGLAB's own plugin manager code, which is what actually consumes that list.
+
+**How submission works.** There is no pull request to EEGLAB. Plugins stay in their own repository and are registered with SCCN's plugin server, which the EEGLAB plugin manager queries.
+
+1. **Host the code and a release zip yourself.** The plugin manager downloads the zip from a URL you give and unzips it into `eeglab/plugins/<name><version>/`. A single top-level folder inside the zip is fine, the installer moves its contents up. The folder name and the `vers` string returned by the `eegplugin_` function must match. Ours is `cadwellio0.2.0`, built by `make_zip.sh`. The natural URL is a GitHub Release asset on janbrogger/CwellEEGRead, or a separate `cadwellio` repository if you would rather keep the plugin's issues separate from the converter's.
+
+2. **Fill in the new-plugin form** at http://sccn.ucsd.edu/eeglab/plugin_uploader/upload_form.php. From the list's JSON fields the form asks for: plugin name, version, the zip link, a description, tags (the manager filters by them, so "import", "EEG", "Cadwell"), a documentation or web link, and a rough size. SCCN staff approve the entry, after which it appears in the list and in File > Manage EEGLAB extensions. Later versions go through http://sccn.ucsd.edu/eeglab/plugin_uploader/version_update.php. Nothing in the tutorial requires a particular licence; the core plugins are GPL-2 or later, and Unlicense is fine.
+
+3. **Optionally ask for a link on the extensions page** on eeglab.org, which is a hand-maintained Markdown list in the sccn.github.io repository. That one is a pull request, adding a line under the input/output plugins next to biosig, neuroscanio and xdfimport.
+
+**How the plugin measures up to the tutorial's requirements.** I checked each stated rule against the code:
+
+- `eegplugin_cadwellio(fig, trystrs, catchstrs)` returns the version string, errors with fewer than three arguments, and adds one `uimenu` under the `import data` tag with the `catchstrs.new_and_hist` callback. That is the same pattern as EEGLAB's own neuroscanio importer.
+- `pop_cadwell` opens a file dialog when called without arguments and returns the history string `com`, which replays to the same result.
+- The tutorial says a `pop_` function takes EEG as its first input. Importers are the accepted exception: pop_loadcnt and pop_biosig take a filename, and ours does the same.
+
+**What remains before uploading, in order:**
+
+1. Test once in a real MATLAB with EEGLAB: unzip into the plugins folder, check the menu item appears and imports a public export, and that the history line replays. That is the one step this container cannot do. The dataset structure itself is already verified under Octave with EEGLAB's own functions.
+2. Add a GPL-style header block? Not required. But the `eegplugin_` and `pop_` help text should start with the one-line summary format the tutorial shows, which they already do.
+3. Create the release zip URL, then submit the form. I can draft the description and tags text for the form, and the extensions-page pull request line, when you are ready.
 
