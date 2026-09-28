@@ -121,13 +121,42 @@ Measured on all three public exports with a 100-byte header read and
 
 | Option | Licence | Needs | Octave | BLOBs | Verified here | Verdict |
 |---|---|---|---|---|---|---|
-| **A. Database Toolbox `sqlite`** (R2016a+) | MathWorks, paid | Database Toolbox | no | `fetch` returns double/int64/char only, not BLOB (MATLAB Answers 451624, 2019; no later change found) [W] | no (blocked site) | unusable for frames even where the toolbox exists |
+| **A. Database Toolbox `sqlite`** (R2016a+) | MathWorks, paid | Database Toolbox | no | `fetch` returns double/int64/char only, not BLOB (MATLAB Answers 451624 in 2019, 1894625 in 2022, 1986264 in 2023; no release note through R2026a adds it) [W]; the toolbox's *JDBC* route does return BLOBs as `uint8` [W] | no (blocked site) | unusable for frames on the native path even where the toolbox exists |
+| **A2. Base MATLAB internals** | n/a | nothing | no | n/a | no | `matlabroot/bin/<arch>/libsqlite3` exists behind the private `libmwsqldb` library (seen in `ldd` chains posted to MATLAB Answers, R2014b-R2019b) but has no MATLAB API and would need `loadlibrary` or a MEX [W]; MathWorks also shipped the undocumented `sqlite4java` jar (Apache-2.0, `columnBlob` returns `byte[]`) on the static class path from about R2013a to R2021a and removed it in R2021b [W/V]. Nothing canonical to reuse on current releases |
 | **B. `sqlite-jdbc`** (xerial) 3.53.4.0 | Apache-2.0 / BSD-2 | 12.0 MB jar + `slf4j-api` jar on the Java class path; a JVM | Octave has a `java` package; untested | `ResultSet.getBytes` gives `int8` in MATLAB, `typecast` to `uint8` | **yes**: Java 21, read-only via `open_mode=1`, no `DriverManager` needed (`org.sqlite.JDBC().connect(url, props)`), 1922 frames / 28 MB in 0.03 s [V] | works today, but MATLAB R2025a no longer starts Java by default and R2026b ships no JRE (user installs OpenJDK and runs `jenv`) [W]; EEGLAB plugin install already fails on Octave when plugins call Java [W]. Fine as an *optional* accelerator, wrong as the only path |
-| **C. `mksqlite`** 2.13 (2022) | BSD-2-Clause [V] | MEX binary per platform and MATLAB ABI; README claims R13SP1-R2024b and mexw64/mexa64/mexmaci64/mexmaca64, but SourceForge only lists `win64` zips [W] | no | native `uint8` | no | licence fine, distribution painful (plugin would have to build and ship 4 binaries per MATLAB generation); FieldTrip does accept MEX under `external/` (xdf precedent) [V] |
+| **C. `mksqlite`** (a-ma72, last commit 2026-08-14) | BSD-2-Clause since v2.9 [V] | MEX binary per platform and MATLAB ABI; the GitHub repository now carries prebuilt `mexw64`, `mexa64` (glibc >= 2.29), `mexmaci64` and `mexmaca64` built against SQLite 3.46.0, README tested R13SP1-R2024b; SourceForge still lists only `win64` zips [V] | no | native `uint8` vector, byte-exact [V] | no | licence fine and all four MATLAB platforms prebuilt upstream, so the best *optional* binary accelerator; still four MEX files to redistribute per MATLAB ABI generation and no Octave; FieldTrip does accept MEX under `external/` (xdf precedent) [V] |
+| **C2. File Exchange "sqlite3"** (68298, thrynae) | CC BY-NC-SA 4.0 [V] | MEX (mexw32/w64, mexa64, mexmaci64) | compiles on the fly | **none**: `get_column()` returns NULL for BLOB [V] | no | non-commercial licence and no BLOBs; not an option |
 | **D. `matlab-sqlite3-driver`** (kyamagu) | BSD-3 | compile yourself | no | yes | no | archived 2020 [W]; not an option |
 | **E. Octave `sqlite` package** 0.1.4 | GPL-3 [W] | Octave 6+, libsqlite | Octave only | not documented [W] | no | irrelevant for MATLAB users; GPL |
 | **F. `py.sqlite3`** (R2014b+) | n/a | a Python matching the MATLAB release, `pyenv` | no | `uint8(py.bytes)` | in effect: this is the existing Python reader | fallback only; but note it could call `cwelleegread` itself and hand back arrays, which is a cheap "reuse the verified decoder" mode |
 | **G. Pure MATLAB/Octave SQLite table reader** | ours (Unlicense) | nothing | yes | yes | **prototype in Python, 115 lines, byte-exact on all three exports, 0.24 s for 1922 rows** [V] | **recommended primary path** |
+
+### 2.2a Is there anything canonical to reuse? No. [V/W, `support/sqlite-canonical-findings.md`]
+
+A separate search for existing SQLite reading in MATLAB itself and in the
+EEG ecosystem found nothing a plugin could rely on:
+
+- **Base MATLAB**: only the private `libsqlite3`/`libmwsqldb` libraries
+  (no API) and, until R2021a, the undocumented `sqlite4java` jar (row A2).
+  `sqlread`, `sqlwrite`, `fetch` and `sqlite` all belong to the Database
+  Toolbox.
+- **EEGLAB** core and the bundled plugins (EEG-BIDS, ICLabel,
+  clean_rawdata, dipfit, firfilt) at develop 8ac485f: zero occurrences of
+  `sqlite`, `mksqlite`, `jdbc` or the SQLite magic string; none of the
+  compiled-in importers (eepimport, bva_io, neuroscanio, xdfimport,
+  mffmatlabio, musedirect, snapmaster, egilegacy) reads a SQLite format,
+  and no manager plugin reading SQLite files was found by search (the list
+  itself is on a blocked host). A Cadwell plugin would be the first
+  SQLite-based importer in EEGLAB.
+- **BioSig**: `biosig4c++/t210/sopen_sqlite.c` links the *system*
+  libsqlite3 only when built with `-DWITH_SQLITE3` (the autoconf check is
+  commented out), fingerprints Cadwell by the table set, dumps rows at high
+  verbosity and then errors "not supported yet"; the MATLAB `sopen.m` has
+  no SQLite branch. GPL and a stub.
+- **FieldTrip** external jars (the MFF jar bundles Apache Derby and MySQL
+  Connector, not SQLite), **Brainstorm** (a commented-out check for a
+  future `protocol.db`, otherwise hand-written binary parsers) and
+  **MNE-MATLAB** (FIFF only): nothing.
 
 ### 2.3 What the pure reader has to implement [V, from the prototype]
 
@@ -472,7 +501,7 @@ Design points:
 | 5. Test harness and CI | oracle exporter, MATLAB/Octave tests, GitHub Actions with Octave; Doorstop items and published docs | 2 days |
 | 6. Docs and release | READMEs, plugin submission to EEGLAB, version 1.0.0 zip; own repository if wanted | 1 day |
 | 7. FieldTrip PR | `ft_filetype` clause, `fileio/private/cadwell_ezdata.m`, `test/test_cadwell_reading.m`, website page, de-identified test data to the maintainers; Linux/macOS run before submitting | 1-2 days plus review turnaround |
-| Optional | Java backend via `sqlite-jdbc` (two jars, `usejava('jvm')` guard); Python backend calling `cwelleegread`; long-recording chunked reading and a `'range'` option; label parsing from the `MontageEvent` blobs to replace the headbox table | 1-2 days each |
+| Optional | `mksqlite` backend (BSD-2, prebuilt MEX for all four MATLAB platforms in its repository, `exist('mksqlite', 'file')` guard) or Java backend via `sqlite-jdbc` (two jars, `usejava('jvm')` guard); Python backend calling `cwelleegread`; long-recording chunked reading and a `'range'` option; label parsing from the `MontageEvent` blobs to replace the headbox table | 1-2 days each |
 
 Total for phases 1-7: roughly 12-16 working days.
 
@@ -548,6 +577,15 @@ Total for phases 1-7: roughly 12-16 working days.
   the R2026b release highlights (Java no longer included), all via search
   snippets because mathworks.com is blocked; sjqtentacles/sml-sqlite and
   dod-cyber-crime-center/sqlite-dissect as pure-language SQLite parsers.
+- Canonical-reuse search (`support/sqlite-canonical-findings.md`): MATLAB
+  Answers 80942, 164527, 506092, 395831, 1894625, 1986264, 243412 (search
+  snippets); undocumentedmatlab.com "Using SQLite in Matlab" (snippets);
+  ganadist/sqlite4java source; thrynae/sqlite3 (FEX 68298) source and
+  licence; a-ma72/mksqlite repository at b43c43b (2026-08-14) with its
+  prebuilt MEX files; sccn/eeglab develop 8ac485f with submodules;
+  SourceForge BioSig `sopen_sqlite.c`, `Makefile.in`, `configure.ac`,
+  `biosig4matlab/t200_FileAccess/sopen.m`; the MFF jar listing;
+  brainstorm3 c1d5957; mne-tools/mne-matlab.
 - Prototypes run here: `tools/sqlite_pure_reader.py` (115 lines, kept in
   the repository; all three exports match `sqlite3`), and a 20-line
   `JdbcTest.java` with sqlite-jdbc 3.53.4.0 under OpenJDK 21 (1922 rows,
