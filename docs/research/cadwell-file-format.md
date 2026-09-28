@@ -527,9 +527,48 @@ table of every `.ezdataindex`/`.ezdata`/`.ezevents` file of the three
 exports (102 tables, 19 000 rows, 68 MB) byte for byte identically to
 Python's sqlite3 in a canonical serialization, and equals the vendor text
 export of export 1 within 0.05 µV (`cadwell_selftest.m`, run by
-`tests/test_octave_port.py`). Reading export 3 (32 channels, 20 min) takes
-about 40 s in Octave with either backend; the time is in frame decoding,
-not SQLite. Two portability lessons: `Class.forName` cannot see jars added
+`tests/test_octave_port.py`).
+
+Speed (Octave 8.4, one core of a shared cloud container, so absolute
+numbers are rough and vary by ±30 % between runs; the ratios are what
+matters):
+
+| Read of the whole export | before | after vectorising |
+|---|---|---|
+| export 1 (32 ch, 45 s at 250 Hz), native / JDBC | 1.7 s / 4.5 s | 0.5 s / 0.5 s |
+| export 2 (32 ch, 16 min at 500 Hz), native / JDBC | 39 s / 33 s | 8 s / 10 s |
+| export 3 (32 ch, 40 min at 250 Hz), native / JDBC | 57 s / 49 s | 9 s / 10 s |
+
+What was slow, in order of cost, and what changed:
+
+1. `containers.Map` keyed by frame key (one insert per frame): Octave's
+   implementation re-sorts its key list on every insert, so 2414 inserts
+   cost 15 s. Replaced by one `ismember` of the index keys against the
+   data-table keys.
+2. Per-channel assembly `blk(j, :) = fr.samples{k}'` (38 500 indexed
+   assignments): 9 s. The decoder now returns the frame as one
+   `[samples x channels]` matrix, placed with one assignment per frame
+   into a preallocated output (no `[blocks{:}]` concatenation, which
+   allocated a second 155 MB copy).
+3. The decoder's per-channel loop: 5 s. The 32 block headers are gathered
+   with one index matrix; the delta payloads are gathered per group of
+   channels sharing delta type and length (the compressor picks int8 or
+   int16 per channel, so a frame usually has two groups) and decoded with
+   one `typecast` and one `cumsum` per group.
+4. The native SQLite reader (two `FrameInfo` tables of 2414 rows): 2.7 s
+   each, now 1.6 s. One-byte varints are inlined, all serial types of a
+   record header are decoded with one vectorised expression, ASCII text
+   skips `native2unicode`, cell pointers of a page are read at once and
+   the row store grows geometrically. What remains is interpreter cost
+   per value (about 17 000 values per table). The JDBC backend is not
+   faster from Octave: fetching the same table through the Java bridge,
+   one `getString`/`getLong`/`getBytes` call per value, takes about 4 s,
+   so the pure-MATLAB reader is both dependency-free and the quickest
+   of the backends tried here.
+
+The remaining ~9 s for export 3 split roughly into 3.5 s SQLite (native), 3 s
+frame decoding, 1.5 s allocating the 155 MB output (slow in this container)
+and 1 s events and index bookkeeping. Two portability lessons: `Class.forName` cannot see jars added
 with `javaaddpath`, so the JDBC driver is instantiated with `javaObject`; and
 `datenum` differences lose microseconds at 2026 dates, so time differences
 are computed from a seconds-since-2000 parser (`cadwell_timestamp_sec.m`).

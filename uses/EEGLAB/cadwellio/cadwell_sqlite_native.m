@@ -87,7 +87,7 @@ end
 function r = read_btree(db, root)
     b = db.bytes; ps = db.pageSize; U = db.usable;
     X = U - 35; M = floor((U - 12) * 32 / 255) - 23;
-    rows = {}; kinds = zeros(0, 0, 'uint8'); rowids = []; stack = root;
+    rows = cell(0, 0); kinds = zeros(0, 0, 'uint8'); rowids = []; nr = 0; stack = root;
     while ~isempty(stack)
         page = stack(end); stack(end) = [];
         off = (page - 1) * ps; hdr = 0; if page == 1, hdr = 100; end
@@ -102,11 +102,16 @@ function r = read_btree(db, root)
             end
             stack = [stack, right, fliplr(children)];            % pop order: children left to right, then right-most
         elseif ptype == 13                                       % leaf table page
+            q = off + hdr + 9 + 2 * (0:ncells - 1);              % cell pointer array, all at once
+            ptrs = double(b(q)) * 256 + double(b(q + 1));
+            if nr + ncells > numel(rowids)                       % grow the row store geometrically
+                grow = max(ncells, numel(rowids));
+                rows(end + grow, 1) = {[]}; kinds(end + grow, 1) = 0; rowids(end + grow) = 0;
+            end
             for c = 1:ncells
-                ptr = be16(b, off + hdr + 9 + 2 * (c - 1));
-                i = off + ptr + 1;
-                [P, n] = varint(b, i); i = i + n;
-                [rowid, n] = varint(b, i); i = i + n;
+                i = off + ptrs(c) + 1;
+                if b(i) < 128, P = double(b(i)); i = i + 1; else, [P, n] = varint(b, i); i = i + n; end
+                if b(i) < 128, rowid = double(b(i)); i = i + 1; else, [rowid, n] = varint(b, i); i = i + n; end
                 if P <= X, local = P; else, K = M + mod(P - M, U - 4); if K <= X, local = K; else, local = M; end; end
                 payload = b(i:i + local - 1);
                 if local < P
@@ -120,32 +125,46 @@ function r = read_btree(db, root)
                     payload = [chunks{:}];
                 end
                 [vals, kd] = decode_record(payload, db.charset);
-                nc = max(size(rows, 2), numel(vals));
-                if nc > size(rows, 2) && ~isempty(rows), rows(:, end+1:nc) = {[]}; kinds(:, end+1:nc) = 0; end
-                rows(end+1, :) = [vals, cell(1, nc - numel(vals))]; %#ok<AGROW>
-                kinds(end+1, :) = [kd, zeros(1, nc - numel(kd), 'uint8')]; %#ok<AGROW>
-                rowids(end+1) = rowid; %#ok<AGROW>
+                nv = numel(vals); nr = nr + 1;
+                if nv > size(rows, 2), rows(:, end+1:nv) = {[]}; kinds(:, end+1:nv) = 0; end
+                rows(nr, 1:nv) = vals; kinds(nr, 1:nv) = kd; rowids(nr) = rowid;
             end
         else
             error('cadwell_sqlite_native:page', 'unexpected page type %d on page %d', ptype, page);
         end
     end
-    r.rows = rows; r.rowids = rowids; r.kinds = kinds;
+    r.rows = rows(1:nr, :); r.rowids = rowids(1:nr); r.kinds = kinds(1:nr, :);
 end
 
 % ------------------------------------------------------------------ record format
 function [vals, kinds] = decode_record(p, charset)
-    [H, n] = varint(p, 1); pos = 1 + n; types = [];
-    while pos <= H
-        [t, n] = varint(p, pos); types(end+1) = t; pos = pos + n; %#ok<AGROW>
+    if p(1) < 128, H = double(p(1)); pos = 2; else, [H, n] = varint(p, 1); pos = 1 + n; end
+    hb = double(p(pos:H));
+    if all(hb < 128)                                             % every serial type fits one byte
+        types = hb;
+    elseif hb(end) < 128 && ~any(conv(double(hb >= 128), ones(1, 8), 'valid') >= 8)
+        % multi-byte serial types (text/blob columns over 57 bytes), none 9 bytes long:
+        % decode all varints of the header at once
+        grp = cumsum([1, hb(1:end - 1) < 128]);                  % varint number of every byte
+        ends = find(hb < 128);
+        types = accumarray(grp', (bitand(hb, 127) .* 128 .^ (ends(grp) - (1:numel(hb))))')';
+    else
+        types = zeros(1, 0);
+        while pos <= H
+            [t, n] = varint(p, pos); types(end+1) = t; pos = pos + n; %#ok<AGROW>
+        end
     end
     pos = H + 1; vals = cell(1, numel(types)); kinds = zeros(1, numel(types), 'uint8');
+    intLen = [1 2 3 4 6 8];
     for k = 1:numel(types)
         t = types(k);
         switch t
             case 0, vals{k} = []; kinds(k) = 0;
-            case {1, 2, 3, 4, 5, 6}
-                len = [1 2 3 4 6 8]; len = len(t);
+            case 1                                               % one-byte integer, common for flags and small ids
+                v = double(p(pos)); if v >= 128, v = v - 256; end
+                vals{k} = v; pos = pos + 1; kinds(k) = 1;
+            case {2, 3, 4, 5, 6}
+                len = intLen(t);
                 vals{k} = signed_be(p(pos:pos + len - 1)); pos = pos + len; kinds(k) = 1;
             case 7
                 vals{k} = typecast(fliplr(p(pos:pos + 7)), 'double'); pos = pos + 8; kinds(k) = 2;
@@ -165,6 +184,14 @@ end
 
 function s = decode_text(bytes, charset)
     if isempty(bytes), s = ''; return; end
+    switch charset                                               % ASCII-only strings (the usual case) need no conversion
+        case 'UTF-8'
+            if all(bytes < 128), s = char(bytes); return; end
+        case 'UTF-16LE'
+            if all(bytes(2:2:end) == 0) && all(bytes(1:2:end) < 128), s = char(bytes(1:2:end)); return; end
+        case 'UTF-16BE'
+            if all(bytes(1:2:end) == 0) && all(bytes(2:2:end) < 128), s = char(bytes(2:2:end)); return; end
+    end
     s = native2unicode(bytes, charset);
     if ~ischar(s), s = char(s); end
     s = reshape(s, 1, []);
@@ -177,6 +204,7 @@ function v = signed_be(bytes)
 end
 
 function [v, n] = varint(b, i)
+    if b(i) < 128, v = double(b(i)); n = 1; return; end            % one-byte varint: the common case
     v = uint64(0);
     for k = 1:8
         c = double(b(i + k - 1)); n = k;

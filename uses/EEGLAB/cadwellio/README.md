@@ -44,6 +44,11 @@ Usage
   >> rec = cadwell_read('...\record.ezdataindex');  % without EEGLAB
   >> rec = cadwell_read(path, 'Backend', 'jdbc');   % force a library backend
 
+Speed: a 40-minute 32-channel recording loads in about 10 s under Octave
+(the decoder and the SQLite reader are vectorised; see the research note
+in the repository for the profile). The optional library backends are not
+faster overall, since SQLite is a small part of the time.
+
 Data are referential to the recording reference (Cz on all recordings
 seen so far; EEG.ref is set accordingly). Recording breaks are padded with
 zeros by default so that event latencies stay aligned ('padgaps','off' to

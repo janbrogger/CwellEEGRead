@@ -55,11 +55,13 @@ function idx = cadwell_read_index(indexFile, backend)
     off = cadwell_tcol(t, 'Offset'); ts = cadwell_tcol(t, 'TimeStamp'); jd = cadwell_tcol(t, 'JoinDatabase'); fk = cadwell_tcol(t, 'FrameKey');
     n = numel(off);
     idx.frames = repmat(struct('number', 0, 'timestamp', '', 'datenum', 0, 'sec', 0, 'joinDb', '', 'keyHex', ''), n, 1);
-    for i = 1:n
-        idx.frames(i).number = double(off{i}); idx.frames(i).timestamp = char(ts{i});
-        idx.frames(i).datenum = cadwell_parse_timestamp(char(ts{i}));
-        idx.frames(i).sec = cadwell_timestamp_sec(char(ts{i}));
-        idx.frames(i).joinDb = char(jd{i}); idx.frames(i).keyHex = cadwell_key_hex(fk{i});
+    if n > 0
+        dn = cadwell_parse_timestamp(ts); sec = cadwell_timestamp_sec(ts);       % all stamps at once
+        for i = 1:n
+            idx.frames(i).number = double(off{i}); idx.frames(i).timestamp = char(ts{i});
+            idx.frames(i).datenum = dn(i); idx.frames(i).sec = sec(i);
+            idx.frames(i).joinDb = char(jd{i}); idx.frames(i).keyHex = cadwell_key_hex(fk{i});
+        end
     end
     % gaps
     idx.gaps = struct('track', {}, 'startOffset', {}, 'endOffset', {}, 'startTime', {}, 'endTime', {});

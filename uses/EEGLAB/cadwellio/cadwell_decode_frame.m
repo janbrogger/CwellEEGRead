@@ -13,6 +13,9 @@ function fr = cadwell_decode_frame(blob)
 %          rate (1xN)      sampling rate per channel,
 %          samples {1xN}   double column vectors in amplifier units
 %                          (multiply by cadwell_unit_uv() to get microvolts)
+%          matrix          [nSamples x N] double, the same samples as one
+%                          matrix when every channel has the same length
+%                          (always the case on the EEG track), else []
 %
 % Layout (see docs/research/cadwell-file-format.md): u32 magic 0x033149BD,
 % ..., u32 channel count at 0x2E, u64 start/end ticks at 0x32/0x3A when the
@@ -21,43 +24,70 @@ function fr = cadwell_decode_frame(blob)
 % [11] rate), 8 zero bytes, u8 1, u8 delta type (1 = int16, 2 = int8),
 % u32 length (8 + delta bytes), f32 first sample, f32 scale, deltas.
 % Samples = first + cumsum(deltas) * scale.
+%
+% The channel blocks are decoded together, not one at a time: the fixed-size
+% block headers are gathered with one index matrix, and the delta payloads
+% are gathered per group of channels that share a delta type and length (the
+% compressor picks int8 or int16 per channel, so a frame typically has two
+% groups), each group being one typecast and one cumsum.
 % Public domain (Unlicense).
 
     blob = uint8(blob(:)');
-    if numel(blob) < 4 || typecast(blob(1:4), 'uint32') ~= uint32(hex2dec('033149BD'))
+    if numel(blob) < 4 || typecast(blob(1:4), 'uint32') ~= uint32(53561789)     % 0x033149BD
         error('cadwell_decode_frame:magic', 'not a Cadwell frame blob (bad magic)');
     end
     tag = uint8([171 121 33 147 222 66 37 162]);               % AB 79 21 93 DE 42 25 A2
-    pos = strfind(char(blob), char(tag));                        % 1-based positions
+    pos = strfind(char(blob), char(tag));                        % 1-based positions of the tags
     if isempty(pos)
         error('cadwell_decode_frame:noBlocks', 'frame has no channel blocks');
     end
-    if pos(1) == hex2dec('42') + 1
-        fr.nChannels = double(typecast(blob(hex2dec('2E') + (1:4)), 'uint32'));
-        fr.startTicks = double(typecast(blob(hex2dec('32') + (1:8)), 'uint64'));
-        fr.endTicks = double(typecast(blob(hex2dec('3A') + (1:8)), 'uint64'));
-        if fr.nChannels ~= numel(pos)
-            error('cadwell_decode_frame:count', 'frame says %d channels but has %d blocks', fr.nChannels, numel(pos));
+    n = numel(pos); p = pos(:) - 1;                              % 0-based offsets of the tags
+    if pos(1) == 67                                              % 0x42 + 1: full header with tick stamps
+        fr.nChannels = double(typecast(blob(47:50), 'uint32'));  % 0x2E
+        fr.startTicks = double(typecast(blob(51:58), 'uint64')); % 0x32
+        fr.endTicks = double(typecast(blob(59:66), 'uint64'));   % 0x3A
+        if fr.nChannels ~= n
+            error('cadwell_decode_frame:count', 'frame says %d channels but has %d blocks', fr.nChannels, n);
         end
     else
-        fr.nChannels = numel(pos); fr.startTicks = NaN; fr.endTicks = NaN;
+        fr.nChannels = n; fr.startTicks = NaN; fr.endTicks = NaN;
     end
-    n = numel(pos);
-    fr.channel = zeros(1, n); fr.ampInput = zeros(1, n); fr.rate = zeros(1, n); fr.samples = cell(1, n);
-    for k = 1:n
-        p = pos(k) - 1;                                           % 0-based offset of the tag
-        u = typecast(blob(p + 8 + (1:64)), 'uint32');
-        fr.channel(k) = double(u(2)); fr.ampInput(k) = double(u(5)); fr.rate(k) = double(u(11));
-        deltaType = double(blob(p + 81 + 1));
-        len = double(typecast(blob(p + 82 + (1:4)), 'uint32'));
-        first = double(typecast(blob(p + 86 + (1:4)), 'single'));
-        scale = double(typecast(blob(p + 90 + (1:4)), 'single'));
-        payload = blob(p + 94 + (1:len - 8));
-        switch deltaType
-            case 1, deltas = double(typecast(payload, 'int16'));
-            case 2, deltas = double(typecast(payload, 'int8'));
-            otherwise, error('cadwell_decode_frame:deltaType', 'unknown delta type %d in channel %d', deltaType, fr.channel(k));
+    % fixed part of every block: 8 tag + 64 record + 8 zero + 1 + 1 type + 4 length + 4 first + 4 scale = 94 bytes
+    hdr = blob(bsxfun(@plus, p, 9:94));                          % n x 86, bytes after the tag
+    if n == 1, hdr = reshape(hdr, 1, []); end
+    u = reshape(typecast(reshape(hdr(:, 1:64)', 1, []), 'uint32'), 16, n);
+    fr.channel = double(u(2, :)); fr.ampInput = double(u(5, :)); fr.rate = double(u(11, :));
+    deltaType = double(hdr(:, 74));                              % all per-channel vectors are n x 1 columns
+    len = double(typecast(reshape(hdr(:, 75:78)', 1, []), 'uint32'))';
+    first = double(typecast(reshape(hdr(:, 79:82)', 1, []), 'single'))';
+    scale = double(typecast(reshape(hdr(:, 83:86)', 1, []), 'single'))';
+    if any(deltaType ~= 1 & deltaType ~= 2)
+        k = find(deltaType ~= 1 & deltaType ~= 2, 1);
+        error('cadwell_decode_frame:deltaType', 'unknown delta type %d in channel %d', deltaType(k), fr.channel(k));
+    end
+    nb = len - 8;                                                % delta bytes per channel
+    ns = nb ./ (3 - deltaType);                                  % samples after the first (type 1 int16: nb/2, type 2 int8: nb)
+    if all(ns == ns(1))
+        fr.matrix = zeros(ns(1) + 1, n); fr.matrix(1, :) = first';
+    else
+        fr.matrix = [];
+    end
+    fr.samples = cell(1, n);
+    for dt = [1 2]
+        for L = reshape(unique(nb(deltaType == dt)), 1, [])
+            g = find(deltaType == dt & nb == L);                 % channels sharing type and length: one gather
+            raw = blob(bsxfun(@plus, p(g) + 94, 1:L));           % numel(g) x L
+            if numel(g) == 1, raw = reshape(raw, 1, []); end
+            if dt == 1
+                d = reshape(typecast(reshape(raw', 1, []), 'int16'), L / 2, numel(g));
+            else
+                d = reshape(typecast(reshape(raw', 1, []), 'int8'), L, numel(g));
+            end
+            s = bsxfun(@plus, first(g)', bsxfun(@times, cumsum(double(d), 1), scale(g)'));
+            if ~isempty(fr.matrix)
+                fr.matrix(2:end, g) = s;
+            end
+            for k = 1:numel(g), fr.samples{g(k)} = [first(g(k)); s(:, k)]; end
         end
-        fr.samples{k} = [first; first + cumsum(deltas(:)) * scale];
     end
 end

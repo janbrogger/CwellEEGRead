@@ -33,41 +33,51 @@ function rec = cadwell_read(pathIn, varargin)
     end
     if isempty(frames), error('cadwell_read:noFrames', 'no frames selected'); end
     % load the blobs of every data file the index names
-    dbs = unique({frames.joinDb});
-    blobs = containers.Map('KeyType', 'char', 'ValueType', 'any');
+    % (all blobs of a file in one table read; frames are matched to blobs by
+    % FrameKey with one ismember instead of a containers.Map, which is slow in Octave)
+    dbs = unique({frames.joinDb}); blobKeys = {}; blobs = {};
     for d = 1:numel(dbs)
         f = fullfile(idx.dataDir, dbs{d});
         if ~exist(f, 'file'), error('cadwell_read:missingData', 'frame data file missing: %s', f); end
         db = cadwell_sqlite('open', f, opt.Backend);
         t = cadwell_sqlite('table', db, 'FrameInfo');
         cadwell_sqlite('close', db);
-        keys = cadwell_tcol(t, 'FrameKey'); data = cadwell_tcol(t, 'Data');
-        for i = 1:numel(keys), blobs(cadwell_key_hex(keys{i})) = uint8(data{i}); end
+        keys = cadwell_tcol(t, 'FrameKey');
+        blobKeys = [blobKeys; cellfun(@cadwell_key_hex, keys, 'UniformOutput', false)];   %#ok<AGROW>
+        blobs = [blobs; cadwell_tcol(t, 'Data')];                                          %#ok<AGROW>
     end
-    nch = numel(idx.ampInputs); amp = idx.ampInputs; rate = idx.rate;
-    cols = cell(1, numel(frames)); spf = zeros(1, numel(frames)); nums = [frames.number];
+    [found, where] = ismember({frames.keyHex}, blobKeys);
+    if ~all(found)
+        i = find(~found, 1);
+        error('cadwell_read:missingFrame', 'frame %d (%s) not found in %s', frames(i).number, frames(i).keyHex, frames(i).joinDb);
+    end
+    nch = numel(idx.ampInputs); amp = idx.ampInputs; rate = idx.rate; nf = numel(frames);
+    nums = [frames.number]; unit = cadwell_unit_uv();
+    % decode every frame (a [samples x channels] matrix each), then place the
+    % blocks into one preallocated output instead of concatenating
+    mats = cell(1, nf); spf = zeros(1, nf);
+    for i = 1:nf
+        fr = cadwell_decode_frame(uint8(blobs{where(i)}));
+        if isempty(fr.matrix), fr.matrix = [fr.samples{:}]; end   % channels of unequal length: fails, as it should
+        [~, j] = ismember(fr.ampInput, amp);                       % data row of every channel block (0 = not in the layout)
+        m = zeros(size(fr.matrix, 1), nch); m(:, j(j > 0)) = fr.matrix(:, j > 0);
+        mats{i} = m; spf(i) = size(m, 1);
+    end
     padded = struct('startSample', {}, 'seconds', {});
-    blocks = {}; cursor = 0; prev = [];
-    for i = 1:numel(frames)
-        if ~isKey(blobs, frames(i).keyHex)
-            error('cadwell_read:missingFrame', 'frame %d (%s) not found in %s', frames(i).number, frames(i).keyHex, frames(i).joinDb);
-        end
-        if opt.PadGaps && ~isempty(prev) && frames(i).number > prev + 1
-            missing = frames(i).number - prev - 1;
-            blocks{end+1} = zeros(nch, missing * rate);
+    gapSamples = 0;
+    if opt.PadGaps && nf > 1, gapSamples = sum(max(diff(nums) - 1, 0)) * rate; end
+    rec.data = zeros(nch, sum(spf) + gapSamples);
+    cursor = 0;
+    for i = 1:nf
+        if opt.PadGaps && i > 1 && nums(i) > nums(i - 1) + 1
+            missing = nums(i) - nums(i - 1) - 1;
             padded(end+1) = struct('startSample', cursor + 1, 'seconds', missing);
-            cursor = cursor + missing * rate;
+            cursor = cursor + missing * rate;                       % already zero
         end
-        fr = cadwell_decode_frame(blobs(frames(i).keyHex));
-        n = numel(fr.samples{1}); blk = zeros(nch, n);
-        for k = 1:numel(fr.ampInput)
-            j = find(amp == fr.ampInput(k), 1);
-            if ~isempty(j), blk(j, :) = fr.samples{k}'; end
-        end
-        blocks{end+1} = blk; spf(i) = n; cursor = cursor + n; prev = frames(i).number;
+        rec.data(:, cursor + (1:spf(i))) = mats{i}' * unit;
+        cursor = cursor + spf(i);
     end
-    rec.data = [blocks{:}] * cadwell_unit_uv();
-    rec.srate = rate; rec.ampInputs = amp; rec.unitUv = cadwell_unit_uv();
+    rec.srate = rate; rec.ampInputs = amp; rec.unitUv = unit;
     [rec.labels, rec.headbox] = cadwell_layout(amp, idx.ampType);
     rec.samplesPerFrame = spf; rec.frameNumbers = nums; rec.gaps = padded;
     rec.startDatenum = frames(1).datenum + idx.clockCorrectionSec / 86400;
