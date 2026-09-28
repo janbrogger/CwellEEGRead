@@ -502,6 +502,45 @@ high-pass / 15 Hz low-pass viewer filter. Findings:
 
 ---
 
+# Metadata.json of the vendor's EDF export (checked 2026-09-28)
+
+The EDF export writes a `Metadata.json` beside the `.edf` with export
+settings, patient fields, `CaseInformation.RecordCreateDate` and an
+`Events` list whose `Timestamp`s are 16-digit integers such as
+`1781260149854329`. They are **microseconds since 1970-01-01, in local
+wall-clock time** (Europe/Oslo: +1 h for export 1 recorded on 2025-10-31,
++2 h for exports 2 and 3 recorded in June), and equal the `.ezevents`
+`StartTime` **plus the PcTimeSync clock correction**, rounded to the
+microsecond. Over all 143 json events of the three exports the difference
+to the predicted value is at most 1 µs (`tests/test_metadata_json.py`):
+
+| export | json minus StartTime | = local offset + clock correction |
+|---|---|---|
+| 1 | 3 600 000 341–342 µs | 1 h + 341 µs |
+| 2 | 7 200 011 198 µs | 2 h + 11 198 µs |
+| 3 | 7 200 011 114 µs | 2 h + 11 114 µs |
+
+Consequences:
+
+- They add no precision. The database keeps 100 ns (7 decimals), the EDF+
+  annotations written by the same export keep 7 decimals too, the json
+  keeps 6. Event timing in this project therefore stays on the `.ezevents`
+  stamps (converted the same way: stamp + clock correction, which is also
+  the EDF start rule).
+- They are not on the amplifier tick clock (`StartOffset`): the tick-based
+  prediction differs from the json by several milliseconds with a spread,
+  the stamp-based one by a constant.
+- The json event list is the EDF export's own selection: deleted events
+  and the bookkeeping types (`AmpConfigurationData`,
+  `LiveAmpConfigurationData`, `ReviewedDataEvent`,
+  `ContinuousImpedanceEvent`, `BaselineImpedanceEvent`) are absent, the
+  same rule the converter applies.
+- `RecordCreateDate` follows the same local-time convention (export 1:
+  7.8 s before the first frame; exports 2 and 3: 20.7 and 112.5 min before,
+  i.e. the record was created long before recording started).
+- Being local time without a zone marker, the integers are ambiguous
+  around the DST change and must not be read as UTC epoch values.
+
 # MATLAB/Octave port (added 2026-09-28)
 
 `uses/EEGLAB/cadwellio/` re-implements the reader natively for EEGLAB users:
