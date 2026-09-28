@@ -1,185 +1,153 @@
-# uses/EEGLAB - EEGLAB import plugin for Cadwell EEG (and FieldTrip notes)
+# cadwellio - EEGLAB plugin for Cadwell Arc EEG
 
-**Status:** working, ready to submit to the EEGLAB plugin list. The plugin
-`cadwellio` reads a Cadwell Arc CadLink study export directly with plain
-MATLAB/Octave code (own SQLite file reader, frame decoder ported from
-`cwelleegread/ezdata.py`) and can also load the EDF produced by
-CwellEEGRead through the BIOSIG or File-IO plugin. `pop_cadwell` returns a
-dataset whose samples equal the Python reader's bit for bit and the
-vendor's text export within 0.05 µV (`cadwellio/cadwell_selftest.m`,
-run by `tests/test_octave_port.py` under GNU Octave).
+`cadwellio` imports a Cadwell Arc EEG recording (a CadLink study export,
+the folder with `CadLink/Data/*.ezdataindex`) straight into EEGLAB. It
+is plain MATLAB/Octave code: it parses the SQLite files itself and decodes
+the compressed EEG frames, so no toolbox, MEX file, Java or Python is
+needed. It can also load an EDF written by the Python converter in this
+repository through the BIOSIG or File-IO plugin.
 
-What has been verified, and where:
+Version 0.2.0. Public domain (Unlicense). Part of
+[CwellEEGRead](https://github.com/janbrogger/CwellEEGRead), whose Python
+converter uses the same decoding rules and against which this plugin is
+tested.
 
-| Check | How |
-|---|---|
-| decoder, index, events, samples, every SQLite table | `cadwell_selftest` against Python reference dumps, all three public exports |
-| dataset structure accepted by EEGLAB | `pop_cadwell` run under Octave 8.4 with EEGLAB's own `functions/` (git `develop`) and dipfit on the path: `eeg_checkset` passes, `pop_saveset`/`pop_loadset` round trip keeps samples and events (`tests/test_eeglab_import.py`, runs when `EEGLAB_DIR` points at an EEGLAB checkout) |
-| recording pauses | export 3 (10 s pause): padded read has zeros and a `Recording gap` event at the pause; concatenated read is 5000 samples shorter with a `boundary` event and the later events moved up (self-test check E) |
-| the EEGLAB GUI menu item | **not yet**: no MATLAB or EEGLAB GUI in the development container; `eegplugin_cadwellio.m` follows the documented template (`sccn.github.io` tutorials/contribute/design_plugin.md) |
+## Requirements
 
-**Recording pauses.** Cadwell numbers frames by the second since the record
-origin, so a pause (the vendor's *Stop Recording* / *Start Recording*)
-leaves missing frame numbers, confirmed by a `GapInfo` row. With
-`'padgaps','on'` (default) the pause is filled with zeros so latencies stay
-aligned with wall-clock time and an event of type `Recording gap` with the
-pause length in `duration` marks it. With `'padgaps','off'` the segments are
-concatenated, the pause becomes a standard EEGLAB `boundary` event
-(latency at the join minus 0.5, `duration` = samples removed, as
-`eeg_eegrej` writes them, so filtering and epoching respect the
-discontinuity) and the latencies of all later events move up by the pause
-length; the vendor's own events stamped inside the pause land on the join.
-Both modes list the pauses in `EEG.etc.cadwell.gaps` (`startSample`,
-`seconds`, `startSec` since the first frame, `padded`). The same rule
-applies in the Python converter (REQ019: zeros plus an EDF+ annotation).
+- MATLAB R2016b or newer, or GNU Octave 6 or newer.
+- EEGLAB 2021 or newer.
+- For EDF files only: the BIOSIG (`pop_biosig`) or File-IO (`pop_fileio`)
+  plugin from the EEGLAB plugin manager.
 
-**Event timing: two clocks.** Every Cadwell event carries a wall-clock
-stamp and a sample-clock offset, and the two clocks drift: on the Essentia
-recordings the stamp clock runs 96 ppm behind the amplifier's sample
-clock, 0.35 s per hour. The vendor's EDF export places events by stamp,
-which puts them *early* by the accumulated drift (96 ms at 17 minutes in
-export 3); the photic flash response then appears 200 ms or more after the
-marker instead of the 100–130 ms of a flash VEP. `pop_cadwell` therefore
-places events by their sample-clock offset (`'eventtiming','ticks'`, the
-default; `'stamp'` reproduces the vendor). The converter does the same
-(`--event-timing`, REQ021). Details and measurements:
-`docs/research/cadwell-file-format.md`, "Two clocks".
+## Install
 
-**Where the vendor's Stop/Start Recording events sit relative to the data.**
-The pause markers of the plugin come from the frame numbering, not from
-the vendor's `RecordingOnOff` events, because the two do not coincide. The
-events are stamped when the button was pressed; the stored data start and
-end on whole seconds of the amplifier clock, and some data around each
-press is never stored. Measured on the three public exports (frame *k*
-holds amplifier-clock second *k*; the event offsets are the events'
-`StartOffset` ticks on the same clock):
+From the EEGLAB plugin manager (*File > Manage EEGLAB extensions*) once
+the plugin is listed there, or manually:
 
-| Export | Event | Event offset | Nearest stored sample | Data missing |
-|---|---|---|---|---|
-| 1 (frames 0–44) | Start Recording | −0.008 s | frame 0 starts at 0 s | 0.008 s |
-| 1 | Stop Recording | 46.06 s | frame 44 ends at 45 s | 1.06 s before the stop |
-| 2 (frames 1–961) | Start Recording | −0.001 s | frame 1 starts at 1 s | 1.00 s after the start |
-| 2 | Stop Recording | 962.52 s | frame 961 ends at 962 s | 0.52 s before the stop |
-| 3 (frames 1–327, 338–1217) | Start Recording | −0.001 s | frame 1 starts at 1 s | 1.00 s after the start |
-| 3, pause | Stop Recording | 329.97 s | frame 327 ends at 328 s | 1.97 s before the stop |
-| 3, pause | Start Recording | 337.19 s | frame 338 starts at 338 s | 0.81 s after the start |
-| 3 | Stop Recording | 1218.90 s | frame 1217 ends at 1218 s | 0.90 s before the stop |
+1. Build or download `cadwellio0.2.0.zip` (see *Building the zip* below).
+2. Unzip it into `<eeglab>/plugins/`, giving `<eeglab>/plugins/cadwellio0.2.0/`.
+3. Restart EEGLAB. *File > Import data > Using EEGLAB functions and plugins*
+   now has *From Cadwell (.ezdataindex / converted EDF)*.
 
-So in every case the data begin at the first whole amplifier-clock second
-after Start Recording (the partial second is dropped; in exports 2 and 3
-the whole of second 0 is missing, apparently because the frame in progress
-when the button was pressed is discarded together with the partial one) and
-end at a whole second between 0.5 and 2 s before Stop Recording (the
-partial last second, plus in some cases one complete frame, is discarded).
-The vendor's own EDF export shows exactly the same placement: in export 3
-its zero-filled run covers record seconds 327–337 while its *Stop Recording*
-annotation is 1.94 s into the zeros and *Start Recording* 0.84 s before
-the data resume (the *Impedance* event of 7.06 s lies inside the pause).
-Consequences for users:
+## Use
 
-- Do not use the `Stop Recording` / `Start Recording` events to find where
-  the data stop and resume; use the `Recording gap` / `boundary` events
-  (or `EEG.etc.cadwell.gaps`), which are placed from the frame numbers and
-  agree with the vendor's `GapInfo` rows to the millisecond.
-- With `'padgaps','on'` the vendor's Stop and Start events lie *inside* the
-  zero-filled pause, as in the vendor's EDF. With `'padgaps','off'` they
-  are moved onto the join, together with anything else stamped during the
-  pause (for export 3: Stop Recording, Impedance, Start Recording, all at
-  the boundary latency).
-- Up to about 2 s of EEG before each stop and 1 s after each start are not
-  in the export at all, so an event stamped in that window (a button press
-  right before stopping) has no data under it. The Python converter reports
-  the same figures (`inspect --json`, `gaps` and `events`).
+From the menu: pick the `.ezdataindex` file inside `CadLink/Data/` of the
+export (or a converted `.edf`). From the command line:
 
-**Submitting to the EEGLAB plugin list.** The upload forms that the
-tutorial page still links are closed ("for security reasons", says the
-sccn/eeglab issue template). Submission is a GitHub issue on
-https://github.com/sccn/eeglab using the template *New plugin or plugin
-update*, which asks for plugin name, current version, new version, a
-description, and the zip dragged into the issue (or linked as a GitHub
-release archive). The plugin manager then serves the zip from SCCN's
-server; the folder name inside the zip and the `vers` string returned by
-`eegplugin_cadwellio` must match (`cadwellio0.2.0`). Survey of how the 177
-listed plugins are hosted and released: `docs/research/eeglab-plugin-list-survey.md`.
-Steps:
+```matlab
+EEG = pop_cadwell('D:\exports\study1');                 % export folder, CadLink/Data folder or .ezdataindex
+EEG = pop_cadwell(path, 'padgaps', 'off');              % concatenate recording pauses instead of zero-filling
+EEG = pop_cadwell(path, 'eventtiming', 'stamp');        % vendor-style event placement (see below)
+rec = cadwell_read(path);                               % the reader alone, without EEGLAB
+```
 
-1. `./make_zip.sh` -> `dist/cadwellio0.2.0.zip` (pure MATLAB/Octave; no jar).
-2. Test once in a real MATLAB + EEGLAB: unzip into `<eeglab>/plugins/`,
-   start EEGLAB, check that *File > Import data > From Cadwell* appears and
-   imports a public test export, and that the history command it writes
-   replays. This is the one step the container cannot do.
-3. Tag a release (`cadwellio-0.2.0`) with the zip attached, so the issue can
-   link a stable URL.
-4. Open the issue with the template: name `cadwellio`, version `0.2.0`, a
-   one-paragraph description (Cadwell Arc CadLink import, own SQLite
-   reader, no toolbox/Java/Python, Unlicense), the repository link, the zip.
-   Updates use the same template with current and new version.
-5. Optionally a pull request on sccn/sccn.github.io adding a line to the
-   extensions page (`others/EEGLAB_Extensions.md`) next to biosig and
-   neuroscanio.
+| Option | Values | Default | Meaning |
+|---|---|---|---|
+| `importevent` | `on`, `off` | `on` | copy the recording's events to `EEG.event` (deleted events and amplifier bookkeeping types are left out, as in the vendor's EDF export) |
+| `padgaps` | `on`, `off` | `on` | `on`: recording pauses become zeros and a `Recording gap` event; `off`: the segments are concatenated and each pause becomes an EEGLAB `boundary` event |
+| `eventtiming` | `ticks`, `stamp` | `ticks` | `ticks`: events on the amplifier's sample clock (accurate); `stamp`: by wall-clock stamp, as the vendor's EDF export does |
+| `backend` | `native`, `mksqlite`, `sqlite`, `jdbc`, `python` | `native` | SQLite reader; the library backends exist only to cross-check the native one |
 
-Checked against the tutorial (eeglab.org/tutorials/contribute/design_plugin.html)
-and EEGLAB's own code: `eegplugin_cadwellio(fig, trystrs, catchstrs)` returns
-the version string and adds one `uimenu` under the `import data` tag with
-the `catchstrs.new_and_hist` callback, exactly as EEGLAB's neuroscanio
-importer does; `pop_cadwell` pops up a file dialog without arguments and
-returns the history string. Importers take a file name rather than `EEG` as
-first argument, like `pop_loadcnt` and `pop_biosig`. The item needs no
-`userdata` keywords: `eeglab.m` enables every menu item at startup except
-those tagged `startup:off` (the tutorial's table listing `startup` as off
-by default describes the keyword, not the code's behaviour), and disables
-the whole *Import data* menu while a STUDY is loaded, plugin items included.
-The plugin list is not a pull request: the plugin stays in this repository,
-and the issue only registers name, version, zip, description and tags with
-SCCN's server, which the plugin manager queries
-(`functions/adminfunc/plugin_getweb.m`).
+## What you get
 
-**Prerequisites**
+- `EEG.data` in microvolts, referential to the recording reference (Cz on
+  the recordings seen so far; `EEG.ref` is `'Cz'` and each channel's own
+  reference is in `EEG.chanlocs(k).ref`).
+- Channel labels are electrode names (`Fp1` ... `O2`, `E1/Pg1`, `1A` ...)
+  from a table per headbox (Apollo, Essentia), since the Cadwell files store
+  none; the EDF-style names (`EEG Fp1-Cz`) are in `EEG.etc.cadwell.edfLabels`.
+- `EEG.event` with the technician's comments and the system's markers, with
+  `duration` and the Cadwell event type in `cadwelltype`.
+- `EEG.etc.cadwell` with the index, headbox, frame table and the list of
+  recording pauses (`gaps`: `startSample`, `seconds`, `startSec`, `padded`).
 
-- MATLAB R2016b or newer, or GNU Octave 6 or newer, with EEGLAB 2021 or newer.
-  The direct `.ezdataindex` reader needs no toolbox, MEX, Java or Python.
-- For the EDF path only: the EEGLAB BIOSIG plugin (`pop_biosig`) or File-IO
-  plugin (`pop_fileio`), installed through the EEGLAB plugin manager.
+### Recording pauses
 
-**Files**
+A pause (the vendor's *Stop Recording* / *Start Recording*) leaves missing
+seconds in the frame numbering. With `padgaps` on, the pause is filled with
+zeros so latencies stay aligned with wall-clock time, and an event of type
+`Recording gap` with the pause length as `duration` marks it. With
+`padgaps` off, the segments are joined, the pause becomes a standard EEGLAB
+`boundary` event (`duration` = samples removed, as `eeg_eegrej` writes them,
+so filtering and epoching respect the discontinuity) and later events move
+up accordingly; events the vendor stamped inside the pause land on the join.
+
+Do not use the *Stop Recording* / *Start Recording* events to find the
+data edges: the recorder drops the partial second around each press, so
+the stored data end 0.5-2 s before the Stop event and begin about 1 s after
+the Start event. The `Recording gap` / `boundary` events come from the
+frame numbering and are exact. Measurements: `docs/research/cadwell-file-format.md`.
+
+### Event timing
+
+Every Cadwell event carries a wall-clock stamp and an offset on the
+amplifier's sample clock, and the two clocks drift (about 96 ppm, 0.35 s
+per hour, on Essentia recordings; the stamp clock runs behind). The
+vendor's EDF export places events by stamp, which puts them early by the
+accumulated drift: a photic flash marker then sits 100 ms before the
+sample it belongs to after 17 minutes of recording. `cadwellio` uses the
+sample-clock offset by default (`eventtiming`, `ticks`), which puts the
+occipital flash response at the 100-130 ms of a normal flash VEP.
+`stamp` reproduces the vendor's placement. Details: the "Two clocks"
+section of `docs/research/cadwell-file-format.md`.
+
+## Verification
+
+`cadwellio/cadwell_selftest.m` checks, against reference dumps written by
+the Python reader (`tools/make_matlab_reference.py`), that the frame
+decoder equals the Python decoder bit for bit, that the read through every
+available SQLite backend yields the same index, labels, events and samples,
+that the native SQLite reader's dump of every table of every test file
+equals Python's sqlite3 byte for byte, that padded and concatenated reads
+of a recording with a pause agree, that tick- and stamp-based event onsets
+differ by exactly the clocks' drift, and that the first public export equals
+the vendor's text export within 0.05 uV. `tests/test_octave_port.py` runs
+it under GNU Octave; `tests/test_eeglab_import.py` runs `pop_cadwell` with
+EEGLAB's own functions on the Octave path (`eeg_checkset`, a
+`pop_saveset`/`pop_loadset` round trip, one `boundary` event per pause)
+when `EEGLAB_DIR` names an EEGLAB checkout. Not yet exercised: the menu
+item in the MATLAB GUI itself.
+
+## Building the zip
+
+```bash
+cd uses/EEGLAB
+./make_zip.sh                 # -> dist/cadwellio0.2.0.zip
+./make_zip.sh --with-jdbc     # also bundles the optional sqlite-jdbc driver
+```
+
+The version in the folder name and the `vers` string returned by
+`eegplugin_cadwellio` must match; `make_zip.sh` reads it from there.
+
+## Submitting to the EEGLAB plugin list
+
+Submission is a GitHub issue on https://github.com/sccn/eeglab with the
+template *New plugin or plugin update* (plugin name, version, description,
+the zip attached or linked as a release asset); the old upload forms are
+closed. Before submitting, test once in MATLAB with EEGLAB: unzip into
+`plugins/`, check that the menu item appears and imports a public test
+export, and that the history line it writes replays. How the other listed
+plugins are hosted and released, and how this plugin meets the plugin
+tutorial's rules: `docs/research/eeglab-plugin-list-survey.md`.
+
+## Files
 
 | File | Purpose |
 |---|---|
-| `cadwellio/eegplugin_cadwellio.m` | plugin entry point (version `cadwellio0.2.0`): adds *File > Import data > From Cadwell (.ezdataindex / converted EDF)* |
-| `cadwellio/pop_cadwell.m` | importer; GUI when called without arguments, returns `[EEG, com]` |
-| `cadwellio/cadwell_read.m`, `cadwell_read_index.m`, `cadwell_read_events.m`, `cadwell_decode_frame.m` | the native reader (port of `cwelleegread/ezdata.py`) |
-| `cadwellio/cadwell_sqlite_native.m`, `cadwell_tcol.m` | pure MATLAB/Octave reader of the SQLite 3 file format (default backend), column helper |
-| `cadwellio/cadwell_sqlite.m`, `cadwell_get_jdbc.m` | backend switch (`native` default; mksqlite / Database Toolbox / JDBC / py.sqlite3 for cross-checks); JDBC driver download |
-| `cadwellio/cadwell_layout.m` | per-headbox channel labels (port of `cwelleegread/layout.py`) |
-| `cadwellio/cadwell_selftest.m`, `tools/make_matlab_reference.py`, `tests/test_octave_port.py` | verification of the port against the Python decoder and the vendor text export |
+| `cadwellio/eegplugin_cadwellio.m` | plugin entry point: menu item and version string |
+| `cadwellio/pop_cadwell.m` | importer; file dialog when called without arguments, returns `[EEG, com]` |
+| `cadwellio/cadwell_read.m` | reader: data, labels, events, pauses, frame table |
+| `cadwellio/cadwell_read_index.m`, `cadwell_read_events.m` | the `.ezdataindex` and `.ezevents` tables |
+| `cadwellio/cadwell_decode_frame.m` | one EEG frame blob to samples (vectorised) |
+| `cadwellio/cadwell_sqlite_native.m`, `cadwell_sqlite.m`, `cadwell_tcol.m`, `cadwell_get_jdbc.m` | SQLite 3 file reader, backend switch, column helper, optional JDBC download |
+| `cadwellio/cadwell_layout.m`, `cadwell_unit_uv.m` | channel labels per headbox, microvolts per unit |
+| `cadwellio/cadwell_parse_timestamp.m`, `cadwell_timestamp_sec.m`, `cadwell_key_hex.m` | small helpers |
+| `cadwellio/cadwell_selftest.m` | verification against the Python reference dumps |
 | `cadwellio/README.md`, `cadwellio/LICENSE` | shipped inside the zip |
-| `make_zip.sh` | builds `cadwellio<version>.zip` for manual install or submission to the EEGLAB plugin list |
+| `make_zip.sh` | builds the plugin zip |
 
-**Build and install**
+## FieldTrip
 
-```bash
-./make_zip.sh            # -> dist/cadwellio0.2.0.zip (pure MATLAB/Octave; --with-jdbc bundles the optional driver)
-# then: unzip into <eeglab>/plugins/ and restart EEGLAB, or submit it
-# through the sccn/eeglab issue template "New plugin or plugin update"
-# (the old web upload form is closed)
-```
-
-**Design note**: the readers ask the SQLite layer for whole tables
-(`cadwell_sqlite('table', db, name)`) and do their filtering and sorting in
-MATLAB, so the default backend can be a plain-MATLAB parser of the SQLite
-file format with no SQL engine (`cadwell_sqlite_native.m`, about 200 lines:
-page b-trees, record serial types, overflow chains, UTF-16). The library
-backends implement the same `table` call through `SELECT rowid, *` and exist
-to cross-check the native reader; `cadwell_selftest` runs every check
-through every available backend and compares the native reader's dump of
-every table of every test file byte for byte with Python's sqlite3. The
-decoder works on plain `uint8` blobs so it can be tested without any
-database at all.
-
-**FieldTrip**: the cheapest route is a function `cadwell_sqlite.m` on the
-path implementing the three call forms `hdr = f(file)`,
-`dat = f(file, hdr, begsample, endsample, chanindx)`, `evt = f(file, hdr)`
-and passing `'headerformat','cadwell_sqlite'` (and data/event) to
-`ft_read_header/data/event`; upstreaming later means a `ft_filetype` clause
-and `case 'cadwell_sqlite'` in the three readers. See
-`docs/research/downstream-uses.md`, section C2.
+Not implemented. The cheapest route is a function on the path with the
+three `ft_read_header` / `ft_read_data` / `ft_read_event` call forms,
+wrapping `cadwell_read`; see `docs/research/downstream-uses.md`, section C2.

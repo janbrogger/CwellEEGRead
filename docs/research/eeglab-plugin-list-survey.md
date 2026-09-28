@@ -112,3 +112,21 @@ changed; new-plugin issues can stay open for weeks.
    (import Cadwell Arc CadLink exports, pure MATLAB/Octave, Unlicense),
    the repository link, and the zip attached or linked.
 4. Later versions: same template with current and new version.
+
+## How cadwellio meets the plugin tutorial
+
+Checked against the tutorial (eeglab.org/tutorials/contribute/design_plugin.html)
+and EEGLAB's own code: `eegplugin_cadwellio(fig, trystrs, catchstrs)` returns
+the version string and adds one `uimenu` under the `import data` tag with
+the `catchstrs.new_and_hist` callback, exactly as EEGLAB's neuroscanio
+importer does; `pop_cadwell` pops up a file dialog without arguments and
+returns the history string. Importers take a file name rather than `EEG` as
+first argument, like `pop_loadcnt` and `pop_biosig`. The item needs no
+`userdata` keywords: `eeglab.m` enables every menu item at startup except
+those tagged `startup:off` (the tutorial's table listing `startup` as off
+by default describes the keyword, not the code's behaviour), and disables
+the whole *Import data* menu while a STUDY is loaded, plugin items included.
+The plugin list is not a pull request: the plugin stays in this repository,
+and the issue only registers name, version, zip, description and tags with
+SCCN's server, which the plugin manager queries
+(`functions/adminfunc/plugin_getweb.m`).
