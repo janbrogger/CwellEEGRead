@@ -621,3 +621,4 @@ zapline-plus	1.2.1	Zapline-plus (Klug and Kloosterman, 2022) is a wrapper for Za
 28,2026-09-28,11:35:16,"So if we already have microsecond timestamps, why are the events not accurate?"
 29,2026-09-28,11:44:47,The word.
 30,2026-09-28,12:39:58,"Merge this work to the main branch, and work in the main branch from now on."
+31,2026-09-28,12:46:46,"Edit the README.md for EEGLAB so it is an actual readme, not a half-design note. Then git commit and push."

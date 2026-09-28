@@ -36,7 +36,7 @@ export (or a converted `.edf`). From the command line:
 
 ```matlab
 EEG = pop_cadwell('D:\exports\study1');                 % export folder, CadLink/Data folder or .ezdataindex
-EEG = pop_cadwell(path, 'padgaps', 'off');              % concatenate recording pauses instead of zero-filling
+EEG = pop_cadwell(path, 'padgaps', 'on');               % zero-fill recording pauses instead of concatenating
 EEG = pop_cadwell(path, 'eventtiming', 'stamp');        % vendor-style event placement (see below)
 rec = cadwell_read(path);                               % the reader alone, without EEGLAB
 ```
@@ -44,7 +44,7 @@ rec = cadwell_read(path);                               % the reader alone, with
 | Option | Values | Default | Meaning |
 |---|---|---|---|
 | `importevent` | `on`, `off` | `on` | copy the recording's events to `EEG.event` (deleted events and amplifier bookkeeping types are left out, as in the vendor's EDF export) |
-| `padgaps` | `on`, `off` | `on` | `on`: recording pauses become zeros and a `Recording gap` event; `off`: the segments are concatenated and each pause becomes an EEGLAB `boundary` event |
+| `padgaps` | `off`, `on` | `off` | `off`: the segments around a pause are concatenated and each pause becomes an EEGLAB `boundary` event; `on`: pauses become zeros and a `Recording gap` event |
 | `eventtiming` | `ticks`, `stamp` | `ticks` | `ticks`: events on the amplifier's sample clock (accurate); `stamp`: by wall-clock stamp, as the vendor's EDF export does |
 | `backend` | `native`, `mksqlite`, `sqlite`, `jdbc`, `python` | `native` | SQLite reader; the library backends exist only to cross-check the native one |
 
@@ -64,13 +64,14 @@ rec = cadwell_read(path);                               % the reader alone, with
 ### Recording pauses
 
 A pause (the vendor's *Stop Recording* / *Start Recording*) leaves missing
-seconds in the frame numbering. With `padgaps` on, the pause is filled with
-zeros so latencies stay aligned with wall-clock time, and an event of type
-`Recording gap` with the pause length as `duration` marks it. With
-`padgaps` off, the segments are joined, the pause becomes a standard EEGLAB
-`boundary` event (`duration` = samples removed, as `eeg_eegrej` writes them,
-so filtering and epoching respect the discontinuity) and later events move
-up accordingly; events the vendor stamped inside the pause land on the join.
+seconds in the frame numbering. By default (`padgaps` off) the segments are
+joined, the pause becomes a standard EEGLAB `boundary` event (`duration` =
+samples removed, as `eeg_eegrej` writes them, so filtering and epoching
+respect the discontinuity) and later events move up accordingly; events
+the vendor stamped inside the pause land on the join. With `padgaps` on,
+the pause is filled with zeros instead so latencies stay aligned with
+wall-clock time, and an event of type `Recording gap` with the pause length
+as `duration` marks it.
 
 Do not use the *Stop Recording* / *Start Recording* events to find the
 data edges: the recorder drops the partial second around each press, so
@@ -119,17 +120,6 @@ cd uses/EEGLAB
 The version in the folder name and the `vers` string returned by
 `eegplugin_cadwellio` must match; `make_zip.sh` reads it from there.
 
-## Submitting to the EEGLAB plugin list
-
-Submission is a GitHub issue on https://github.com/sccn/eeglab with the
-template *New plugin or plugin update* (plugin name, version, description,
-the zip attached or linked as a release asset); the old upload forms are
-closed. Before submitting, test once in MATLAB with EEGLAB: unzip into
-`plugins/`, check that the menu item appears and imports a public test
-export, and that the history line it writes replays. How the other listed
-plugins are hosted and released, and how this plugin meets the plugin
-tutorial's rules: `docs/research/eeglab-plugin-list-survey.md`.
-
 ## Files
 
 | File | Purpose |
@@ -145,9 +135,3 @@ tutorial's rules: `docs/research/eeglab-plugin-list-survey.md`.
 | `cadwellio/cadwell_selftest.m` | verification against the Python reference dumps |
 | `cadwellio/README.md`, `cadwellio/LICENSE` | shipped inside the zip |
 | `make_zip.sh` | builds the plugin zip |
-
-## FieldTrip
-
-Not implemented. The cheapest route is a function on the path with the
-three `ft_read_header` / `ft_read_data` / `ft_read_event` call forms,
-wrapping `cadwell_read`; see `docs/research/downstream-uses.md`, section C2.

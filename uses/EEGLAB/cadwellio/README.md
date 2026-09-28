@@ -68,13 +68,13 @@ the vendor's placement. Both onsets are kept per event in
 EEG.etc.cadwell (the reader's events carry onsetSecTicks and onsetSecStamp).
 
 Recording pauses (vendor "Stop Recording"/"Start Recording": missing frame
-numbers, plus a GapInfo row) are always reported. 'padgaps','on' (default):
-zeros fill the pause so latencies stay aligned with wall-clock time, and an
-event of type 'Recording gap' with the pause length as duration marks it.
-'padgaps','off': the segments are concatenated, the pause becomes an EEGLAB
-'boundary' event (duration = samples removed, as eeg_eegrej writes them) and
-the latencies of later events move up by the pause length; events the
-vendor stamped inside the pause land on the join. EEG.etc.cadwell.gaps
+numbers, plus a GapInfo row) are always reported. 'padgaps','off' (default):
+the segments are concatenated, the pause becomes an EEGLAB 'boundary' event
+(duration = samples removed, as eeg_eegrej writes them) and the latencies of
+later events move up by the pause length; events the vendor stamped inside
+the pause land on the join. 'padgaps','on': zeros fill the pause so
+latencies stay aligned with wall-clock time, and an event of type
+'Recording gap' with the pause length as duration marks it. EEG.etc.cadwell.gaps
 lists the pauses in both modes. Note that the vendor's 'Stop Recording'
 and 'Start Recording' events do not mark the data edges: the stored data
 end 0.5-2 s before the stop event and begin about 1 s after the start

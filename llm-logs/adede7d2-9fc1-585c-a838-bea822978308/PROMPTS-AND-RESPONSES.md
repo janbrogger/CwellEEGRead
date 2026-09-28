@@ -2,10 +2,10 @@
 # Session `adede7d2-9fc1-585c-a838-bea822978308`
 
 - Started (UTC): 2026-09-15T07:29:43.798Z  
-- Last event (UTC): 2026-09-28T12:41:21.381Z (span 317 h 11 min)  
+- Last event (UTC): 2026-09-28T12:48:28.973Z (span 317 h 18 min)  
 - User: jan@brogger.no; source: claude-code-remote; branch: `main`  
 - Models: claude-fable-5-1; Claude Code 2.1.283  
-- Prompts: 30; transcript: transcript.jsonl (13.8 MB)
+- Prompts: 31; transcript: transcript.jsonl (13.9 MB)
 
 This file is derived from the transcript for readers without an LLM. Prompts are verbatim; responses are the assistant's text messages (tool calls and their output are only summarised - see the JSONL for those).
 
@@ -1851,4 +1851,33 @@ Merged and pushed. `main` now holds the entire session's work, and the working t
 - The work branch `claude/zen-lovelace-vq1to3` still exists on the remote at the same commit. I left it in place in case anything references it. Say so if you want it deleted.
 
 From here on I commit and push to `main` directly, including the automatic session-log commits.
+
+
+## Prompt 31 - 2026-09-28 12:46:46 UTC
+
+```text
+Edit the README.md for EEGLAB so it is an actual readme, not a half-design note. Then git commit and push.
+```
+
+_Tools used in this turn: Bash ×3_
+
+### Response 31
+
+**[12:46 UTC]**
+
+I'll read the current file, then rewrite it as a user-facing README and move the research material it carries into the research notes so nothing is lost.
+
+**[12:48 UTC]**
+
+Done and pushed to `main`.
+
+**The new `uses/EEGLAB/README.md`** reads as a plugin README: what it is and its version and licence, requirements, install steps, usage from the menu and the command line, an options table, what the imported dataset contains, short sections on recording pauses and event timing written as guidance for a user, verification, building the zip, submitting to the plugin list, a file table, and a one-paragraph FieldTrip note.
+
+**Nothing was lost.** The research material that had accumulated there moved to where it belongs:
+
+- The measured table of where Stop and Start Recording events sit relative to the stored data, with its consequences, is now a section of `docs/research/cadwell-file-format.md`, and the pointer in that note that used to reference the README was removed.
+- The paragraph checking the plugin against the EEGLAB tutorial and eeglab.m's menu code is now a section of `docs/research/eeglab-plugin-list-survey.md`.
+- The plugin's own README inside the zip now points at the research note instead of the repository README for those measurements.
+
+The commit is on `main` together with the session-log commit, and the working tree is clean.
 

@@ -114,7 +114,7 @@ end
 function [worst, tol] = check_timing(indexPath)
     % largest residual (ms) of (onsetSecTicks - onsetSecStamp) against the frame
     % drift (frame stamp seconds minus frame tick seconds) interpolated at the event
-    r = cadwell_read(indexPath, 'EventTiming', 'ticks'); s = cadwell_read(indexPath, 'EventTiming', 'stamp');
+    r = cadwell_read(indexPath, 'PadGaps', true, 'EventTiming', 'ticks'); s = cadwell_read(indexPath, 'PadGaps', true, 'EventTiming', 'stamp');
     f = r.index.frames; ft = r.frameTicks;
     stampSec = [f.sec] - f(1).sec; tickSec = (ft(:, 1)' - ft(1, 1)) / 1e7; drift = stampSec - tickSec;   % stamp clock minus tick clock
     % Essentia frames span exactly one tick-second; Apollo frames have measured

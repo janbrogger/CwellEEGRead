@@ -10,16 +10,16 @@
 % Optional inputs:
 %   'importevent' - 'on'|'off' (default 'on'): events -> EEG.event (deleted events and
 %                    amplifier bookkeeping types are skipped, as in the vendor's EDF export)
-%   'padgaps'     - 'on'|'off' (default 'on'). Recording pauses (the vendor's
+%   'padgaps'     - 'off'|'on' (default 'off'). Recording pauses (the vendor's
 %                    "Stop Recording" / "Start Recording") leave holes in the
-%                    frame numbering. 'on': the holes become zeros, so latencies
-%                    stay aligned with wall-clock time, and each pause is an
-%                    event of type 'Recording gap' with its duration in samples.
-%                    'off': the segments are concatenated, each pause becomes a
-%                    standard EEGLAB 'boundary' event (duration = samples
-%                    removed, as eeg_eegrej writes them) and the latencies of
-%                    later events move up accordingly. Both list the pauses in
-%                    EEG.etc.cadwell.gaps.
+%                    frame numbering. 'off': the segments are concatenated, each
+%                    pause becomes a standard EEGLAB 'boundary' event (duration =
+%                    samples removed, as eeg_eegrej writes them) and the
+%                    latencies of later events move up accordingly. 'on': the
+%                    holes become zeros, so latencies stay aligned with
+%                    wall-clock time, and each pause is an event of type
+%                    'Recording gap' with its duration in samples. Both list the
+%                    pauses in EEG.etc.cadwell.gaps.
 %   'eventtiming' - 'ticks' (default) | 'stamp'. Cadwell stamps events on a
 %                    wall clock that drifts against the amplifier's sample clock
 %                    (about 0.35 s per hour on Essentia). 'ticks' places each
@@ -49,7 +49,7 @@ function [EEG, com] = pop_cadwell(filename, varargin)
         if isequal(f, 0), return; end
         filename = fullfile(p, f);
     end
-    opts = struct('importevent', 'on', 'padgaps', 'on', 'backend', '', 'eventtiming', 'ticks');
+    opts = struct('importevent', 'on', 'padgaps', 'off', 'backend', '', 'eventtiming', 'ticks');
     for k = 1:2:numel(varargin), opts.(lower(varargin{k})) = varargin{k+1}; end
     [~, name, ext] = fileparts(filename);
     if strcmpi(ext, '.edf')

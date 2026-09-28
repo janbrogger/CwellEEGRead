@@ -2,7 +2,8 @@
 functions on the path (TST013): the dataset must pass eeg_checkset and a
 pop_saveset/pop_loadset round trip, and a recording pause must appear as a
 'Recording gap' event (padded) or as one 'boundary' event whose duration is
-the number of removed samples (concatenated), with the later events moved up.
+the number of removed samples (concatenated, the default), with the later
+events moved up.
 
 Needs octave, the public test exports and an EEGLAB checkout named by the
 environment variable EEGLAB_DIR (its functions/ folder is used) plus the
@@ -30,7 +31,7 @@ pytestmark = pytest.mark.skipif(
 SCRIPT = r"""
 warning('off', 'all');
 addpath(genpath(fullfile('{eeglab}', 'functions'))); addpath('{dipfit}'); addpath('{plugin}');
-A = pop_cadwell('{export}');
+A = pop_cadwell('{export}', 'padgaps', 'on');
 B = pop_cadwell('{export}', 'padgaps', 'off');
 gap = A.event(strcmp({{A.event.type}}, 'Recording gap'));
 bnd = B.event(strcmp({{B.event.type}}, 'boundary'));

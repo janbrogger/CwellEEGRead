@@ -2,13 +2,14 @@ function rec = cadwell_read(pathIn, varargin)
 % cadwell_read - read a Cadwell Arc recording (CadLink study export) natively.
 %
 %   rec = cadwell_read(path)                % export folder, CadLink/Data folder or .ezdataindex file
-%   rec = cadwell_read(path, 'PadGaps', true, 'Backend', 'native', 'Frames', [first last], 'EventTiming', 'ticks')
+%   rec = cadwell_read(path, 'PadGaps', false, 'Backend', 'native', 'Frames', [first last], 'EventTiming', 'ticks')
 %
 % Options
-%   'PadGaps'  (default true)  missing frame numbers (recording pauses) become
-%                              zeros so that time stays aligned with wall-clock
-%                              time; false concatenates the segments and shifts
-%                              the event onsets after each pause accordingly
+%   'PadGaps'  (default false) false concatenates the segments around recording
+%                              pauses (missing frame numbers) and shifts the
+%                              event onsets after each pause accordingly; true
+%                              fills the pauses with zeros so that time stays
+%                              aligned with wall-clock time
 %   'Backend'  (default 'native', pure MATLAB/Octave)  SQLite backend, see cadwell_sqlite
 %   'Frames'   (default all)   restrict to frame numbers first..last
 %   'EventTiming' 'ticks' (default) places events on the amplifier sample
@@ -38,7 +39,7 @@ function rec = cadwell_read(pathIn, varargin)
 %   recordGuid, patientGuid, headbox (struct), unitUv, index (the full index struct)
 % Public domain (Unlicense).
 
-    opt = struct('PadGaps', true, 'Backend', '', 'Frames', [], 'EventTiming', 'ticks');
+    opt = struct('PadGaps', false, 'Backend', '', 'Frames', [], 'EventTiming', 'ticks');
     for k = 1:2:numel(varargin), opt.(varargin{k}) = varargin{k+1}; end
     indexFile = locate_index(pathIn);
     idx = cadwell_read_index(indexFile, opt.Backend);
