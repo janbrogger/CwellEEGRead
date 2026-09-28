@@ -1,0 +1,65 @@
+# Release of the EEGLAB plugin only. Push a tag "cadwellio-v<version>" and this
+# builds uses/EEGLAB/dist/cadwellio<version>.zip and publishes a GitHub release
+# named after the tag with that zip as its asset. Other products of this
+# repository get their own tag prefix and workflow (e.g. cwelleegread-v*).
+#
+#   git tag cadwellio-v0.2.0 && git push origin cadwellio-v0.2.0
+#
+# The version in the tag must equal the 'vers' string in eegplugin_cadwellio.m,
+# which is also the folder name inside the zip, as the EEGLAB plugin manager
+# requires. The asset URL is stable:
+#   https://github.com/<owner>/<repo>/releases/download/cadwellio-v<version>/cadwellio<version>.zip
+name: release-cadwellio
+
+on:
+  push:
+    tags:
+      - "cadwellio-v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check that the tag matches the plugin version
+        id: ver
+        run: |
+          tag_version="${GITHUB_REF_NAME#cadwellio-v}"
+          plugin_version=$(sed -n "s/.*vers = 'cadwellio\([0-9.]*\)'.*/\1/p" uses/EEGLAB/cadwellio/eegplugin_cadwellio.m)
+          echo "tag $tag_version, eegplugin_cadwellio.m $plugin_version"
+          if [ "$tag_version" != "$plugin_version" ]; then
+            echo "tag version and eegplugin_cadwellio.m vers differ" >&2; exit 1
+          fi
+          echo "version=$plugin_version" >> "$GITHUB_OUTPUT"
+
+      - name: Build the plugin zip
+        run: |
+          sudo apt-get install -y -q zip >/dev/null
+          uses/EEGLAB/make_zip.sh
+          unzip -l "uses/EEGLAB/dist/cadwellio${{ steps.ver.outputs.version }}.zip"
+
+      - name: Release notes
+        run: |
+          v="${{ steps.ver.outputs.version }}"
+          {
+            echo "EEGLAB import plugin for Cadwell Arc EEG (CadLink study exports), version $v."
+            echo
+            echo "Pure MATLAB/Octave: no toolbox, MEX, Java or Python needed."
+            echo
+            echo "Install: unzip \`cadwellio$v.zip\` into \`<eeglab>/plugins/\` and restart EEGLAB;"
+            echo "the importer appears under *File > Import data > Using EEGLAB functions and plugins*."
+            echo
+            echo "Documentation: \`uses/EEGLAB/README.md\` of this repository at tag \`$GITHUB_REF_NAME\`."
+            echo "The \"Source code\" archives below are the whole repository, added by GitHub; the plugin is the zip above."
+          } > notes.md
+
+      - name: Publish the release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: cadwellio ${{ steps.ver.outputs.version }}
+          body_path: notes.md
+          files: uses/EEGLAB/dist/cadwellio${{ steps.ver.outputs.version }}.zip

@@ -32,6 +32,18 @@ annotations sit early by up to 0.35 s per hour. `--event-timing stamp`
 reproduces the vendor's placement and is the default in `--mode vendor`
 (REQ021, `docs/research/cadwell-file-format.md`, "Two clocks").
 
+## Releases
+
+The repository holds more than one product, and each is released on its
+own through GitHub releases with a product-specific tag prefix. A release
+carries only that product's asset (GitHub adds "Source code" archives of the
+whole repository to every release, which can be ignored).
+
+| Product | Tag | Asset | Workflow |
+|---|---|---|---|
+| EEGLAB plugin `cadwellio` | `cadwellio-v<version>` (version = `vers` in `eegplugin_cadwellio.m`) | `cadwellio<version>.zip` | `.github/workflows/release-cadwellio.yml` |
+| Python converter `cwelleegread` | `cwelleegread-v<version>` (planned; version = `__version__`) | wheel / sdist | not yet |
+
 ## Repository layout
 
 | Path | What |

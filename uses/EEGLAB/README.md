@@ -120,6 +120,24 @@ cd uses/EEGLAB
 The version in the folder name and the `vers` string returned by
 `eegplugin_cadwellio` must match; `make_zip.sh` reads it from there.
 
+## Releasing
+
+The plugin is released on its own, independently of the Python converter:
+pushing a tag `cadwellio-v<version>` runs
+`.github/workflows/release-cadwellio.yml`, which checks that the tag
+matches `vers`, builds the zip and publishes a GitHub release named
+`cadwellio <version>` with the zip as its only asset. The asset URL is
+stable and is what the EEGLAB plugin manager can point at:
+
+```bash
+# after bumping vers in cadwellio/eegplugin_cadwellio.m and committing
+git tag cadwellio-v0.2.0 && git push origin cadwellio-v0.2.0
+# -> https://github.com/janbrogger/CwellEEGRead/releases/download/cadwellio-v0.2.0/cadwellio0.2.0.zip
+```
+
+GitHub always adds "Source code" archives of the whole repository to every
+release; they can be ignored, the plugin is the zip asset.
+
 ## Files
 
 | File | Purpose |
