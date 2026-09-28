@@ -620,3 +620,4 @@ zapline-plus	1.2.1	Zapline-plus (Klug and Kloosterman, 2022) is a wrapper for Za
 27,2026-09-28,11:25:11,"In the file metadata.json from the native export, we have timestamps that are high integer numbers. Investigate if we can get more precise event timings from that."
 28,2026-09-28,11:35:16,"So if we already have microsecond timestamps, why are the events not accurate?"
 29,2026-09-28,11:44:47,The word.
+30,2026-09-28,12:39:58,"Merge this work to the main branch, and work in the main branch from now on."

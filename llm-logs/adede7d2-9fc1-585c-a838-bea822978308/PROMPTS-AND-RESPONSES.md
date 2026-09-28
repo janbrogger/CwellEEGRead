@@ -2,10 +2,10 @@
 # Session `adede7d2-9fc1-585c-a838-bea822978308`
 
 - Started (UTC): 2026-09-15T07:29:43.798Z  
-- Last event (UTC): 2026-09-28T12:08:17.891Z (span 316 h 38 min)  
-- User: jan@brogger.no; source: claude-code-remote; branch: `claude/zen-lovelace-vq1to3`  
+- Last event (UTC): 2026-09-28T12:41:21.381Z (span 317 h 11 min)  
+- User: jan@brogger.no; source: claude-code-remote; branch: `main`  
 - Models: claude-fable-5-1; Claude Code 2.1.283  
-- Prompts: 29; transcript: transcript.jsonl (13.7 MB)
+- Prompts: 30; transcript: transcript.jsonl (13.8 MB)
 
 This file is derived from the transcript for readers without an LLM. Prompts are verbatim; responses are the assistant's text messages (tool calls and their output are only summarised - see the JSONL for those).
 
@@ -1822,4 +1822,33 @@ Done and pushed. Events are now placed on the amplifier's sample clock by defaul
 **Verification.** The new Python test converts exports 2 and 3 both ways and checks that the tick-minus-stamp difference of every flash equals the frames' own clock drift within 1 ms, that the occipital flash response peaks before 150 ms with ticks and after 170 ms with stamps, and that vendor mode still uses stamps. The Octave self-test gained a matching check, with a tolerance widened by the measured frame-span irregularity on the Apollo export where sub-frame placement is inherently uncertain by about 3 ms. The full suite passes: 37 tests, including the Octave self-test and the EEGLAB import test.
 
 One practical note: the command classifier in this environment was failing for several minutes mid-task, which is why the run took longer than the work itself.
+
+
+## Prompt 30 - 2026-09-28 12:39:58 UTC
+
+```text
+Merge this work to the main branch, and work in the main branch from now on.
+```
+
+_Tools used in this turn: Bash ×2_
+
+### Response 30
+
+**[12:40 UTC]**
+
+I'll check the default branch's state relative to the work branch first, then merge and push.
+
+**[12:40 UTC]**
+
+Main has nothing the work branch lacks, so this is a clean fast-forward. Merging, pushing main, and switching the working tree to main.
+
+**[12:41 UTC]**
+
+Merged and pushed. `main` now holds the entire session's work, and the working tree is on `main`.
+
+- The merge was a fast-forward: main had no commits of its own, so its history is exactly the 72 commits of the work branch, ending in the sample-clock event placement and the latest session-log commit.
+- `origin/main` is updated and the local branch tracks it. The working tree is clean.
+- The work branch `claude/zen-lovelace-vq1to3` still exists on the remote at the same commit. I left it in place in case anything references it. Say so if you want it deleted.
+
+From here on I commit and push to `main` directly, including the automatic session-log commits.
 
