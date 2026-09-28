@@ -4,10 +4,10 @@ header: |
   Downstream use scaffolds present
 level: 13.0
 links:
-- REQ016: JnWic6hBzZbul8jB9nL5jCTTvCZwiMbQuruYqDotnW8=
+- REQ016: lmgdzfwReBB4Kzrf7BETYxuSuAr-ZDnkeNwnNadqG0c=
 normative: true
 ref: ''
-reviewed: 8tXNaQE-QppZX1sQWnj68mmXqR9jTXyjIaLa4rOEv6k=
+reviewed: oAwChiGLr1p9jTu7qBr3FUixjggFrVz0MsJxiJLh2xo=
 text: |
   Check that `uses/Morgoth`, `uses/SCOREAI` and `uses/EEGLAB` exist, each with
   a README that states status and prerequisites, and that each provided
@@ -19,5 +19,11 @@ text: |
   MATLAB/Octave reader `cadwell_sqlite_native.m`) must yield the same index,
   labels, events, gaps and samples as the Python reader, the native SQLite
   reader's canonical dump of every table of every file must equal the dump
-  written by Python's sqlite3 byte for byte, and export 1 must equal the
-  vendor's text export within 0.05 µV.
+  written by Python's sqlite3 byte for byte, for a recording with a pause
+  the padded and concatenated reads must agree (zeros at the pause, pause
+  position and length, event onsets after the pause shifted by its length),
+  and export 1 must equal the vendor's text export within 0.05 µV. The
+  importer's dataset must pass EEGLAB's `eeg_checkset` and a
+  `pop_saveset`/`pop_loadset` round trip with EEGLAB's functions on the
+  Octave path; with `'padgaps','off'` exactly one `boundary` event per
+  pause must be present, with duration equal to the removed samples.

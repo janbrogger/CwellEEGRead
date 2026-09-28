@@ -238,6 +238,14 @@ EDF files and collect its JSON output) and `uses/EEGLAB` (an EEGLAB reader
 plugin that can be packaged as a zip file). Each sub-folder shall have a
 README stating its status and prerequisites.
 
+The EEGLAB plugin shall represent recording pauses (REQ019) as events:
+when the pause is padded with zeros, an event of type `Recording gap`
+with the pause length as duration at the start of the padding; when the
+segments are concatenated, a standard EEGLAB `boundary` event with the
+number of removed samples as duration at the join, with the latencies of
+all later events reduced by the pause length. The pauses shall also be
+listed in `EEG.etc.cadwell.gaps` in both modes.
+
 *Parent links: NEED006*
 
 *Child links: TST013*

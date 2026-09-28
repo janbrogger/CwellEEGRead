@@ -156,8 +156,14 @@ the read through every available SQLite backend (always the pure
 MATLAB/Octave reader `cadwell_sqlite_native.m`) must yield the same index,
 labels, events, gaps and samples as the Python reader, the native SQLite
 reader's canonical dump of every table of every file must equal the dump
-written by Python's sqlite3 byte for byte, and export 1 must equal the
-vendor's text export within 0.05 µV.
+written by Python's sqlite3 byte for byte, for a recording with a pause
+the padded and concatenated reads must agree (zeros at the pause, pause
+position and length, event onsets after the pause shifted by its length),
+and export 1 must equal the vendor's text export within 0.05 µV. The
+importer's dataset must pass EEGLAB's `eeg_checkset` and a
+`pop_saveset`/`pop_loadset` round trip with EEGLAB's functions on the
+Octave path; with `'padgaps','off'` exactly one `boundary` event per
+pause must be present, with duration equal to the removed samples.
 
 *Parent links: REQ016*
 

@@ -13,6 +13,8 @@ function res = cadwell_selftest(refDir, backends)
 %   D  native SQLite reader: every table of every file, dumped in the same
 %      canonical serialization as tools/make_matlab_reference.py, must equal
 %      tables.bin byte for byte
+%   E  exports with a recording pause: padded and concatenated reads agree
+%      (data, pause position and length, event onsets shifted by the pause)
 % and C: export 1 through each backend vs the vendor's text export.
 % Prints one line per check and returns a struct with ok (logical) and the
 % individual results. Public domain (Unlicense).
@@ -58,6 +60,15 @@ function res = cadwell_selftest(refDir, backends)
                 res = check(res, sprintf('%s read via ''%s'' failed: %s', subs(s).name, backends{b}, err.message), false);
             end
         end
+        % ---- E: recording pauses (exports whose index skips frame numbers)
+        if ~isempty(meta.gaps)
+            try
+                res = check(res, sprintf('%s recording pause: padded and concatenated reads consistent', subs(s).name), ...
+                            check_gaps(meta.index_path));
+            catch err
+                res = check(res, sprintf('%s recording pause check failed: %s', subs(s).name, err.message), false);
+            end
+        end
         % ---- D: native SQLite reader, every table of every file, byte for byte
         tb = fullfile(d, 'tables.bin');
         if exist(tb, 'file')
@@ -86,6 +97,31 @@ function res = cadwell_selftest(refDir, backends)
         end
     end
     if res.ok, fprintf('cadwell_selftest: ALL OK\n'); else fprintf('cadwell_selftest: FAILURES\n'); end
+end
+
+function ok = check_gaps(indexPath)
+    a = cadwell_read(indexPath, 'PadGaps', true); b = cadwell_read(indexPath, 'PadGaps', false);
+    ok = numel(a.gaps) == numel(b.gaps) && numel(a.gaps) >= 1 && all([a.gaps.padded]) && ~any([b.gaps.padded]);
+    removed = 0;
+    for g = 1:numel(a.gaps)
+        ns = a.gaps(g).seconds * a.srate;
+        ok = ok && a.gaps(g).seconds == b.gaps(g).seconds && a.gaps(g).startSec == b.gaps(g).startSec ...
+             && b.gaps(g).startSample == a.gaps(g).startSample - removed ...
+             && all(all(a.data(:, a.gaps(g).startSample + (0:ns - 1)) == 0));          % the pause is zeros when padded
+        removed = removed + ns;
+    end
+    ok = ok && size(b.data, 2) == size(a.data, 2) - removed;
+    keep = true(1, size(a.data, 2));                                                    % dropping the pauses gives the concatenated data
+    for g = 1:numel(a.gaps), keep(a.gaps(g).startSample + (0:a.gaps(g).seconds * a.srate - 1)) = false; end
+    ok = ok && isequal(a.data(:, keep), b.data);
+    for k = 1:numel(a.events)                                                           % onsets: unchanged before, shifted after
+        o = a.events(k).onsetSec; shift = 0; inside = false;
+        for g = 1:numel(a.gaps)
+            if o >= a.gaps(g).startSec + a.gaps(g).seconds, shift = shift + a.gaps(g).seconds;
+            elseif o > a.gaps(g).startSec, inside = true; end
+        end
+        ok = ok && a.events(k).onsetSecOrigin == o && (inside || abs(b.events(k).onsetSec - (o - shift)) < 1e-9);
+    end
 end
 
 function res = check(res, msg, ok)

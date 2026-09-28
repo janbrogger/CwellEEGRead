@@ -1,33 +1,66 @@
 # uses/EEGLAB - EEGLAB import plugin for Cadwell EEG (and FieldTrip notes)
 
-**Status:** scaffold. The plugin skeleton follows the EEGLAB plugin
-conventions (`eegplugin_<name>.m` registering a menu item, `pop_<name>.m`
-doing the work and returning a history command). `pop_cadwell` imports the
-**EDF produced by CwellEEGRead** (via the BIOSIG or File-IO plugin) and
-only inspects the SQLite outer structure of a `.ezdata` file; the direct
-reader is a stub that errors with a clear message. The `.ezdata` format is
-now decoded in Python (`cwelleegread/ezdata.py`); the plan for the native
-MATLAB/Octave reader, shared between this plugin and a FieldTrip
-`cadwell_ezdata.m`, is in
-`docs/research/eeglab-fieldtrip-cadwell-reader.md`. It may later move to
-its own GitHub repository.
+**Status:** working, ready to submit to the EEGLAB plugin list. The plugin
+`cadwellio` reads a Cadwell Arc CadLink study export directly with plain
+MATLAB/Octave code (own SQLite file reader, frame decoder ported from
+`cwelleegread/ezdata.py`) and can also load the EDF produced by
+CwellEEGRead through the BIOSIG or File-IO plugin. `pop_cadwell` returns a
+dataset whose samples equal the Python reader's bit for bit and the
+vendor's text export within 0.05 µV (`cadwellio/cadwell_selftest.m`,
+run by `tests/test_octave_port.py` under GNU Octave).
+
+What has been verified, and where:
+
+| Check | How |
+|---|---|
+| decoder, index, events, samples, every SQLite table | `cadwell_selftest` against Python reference dumps, all three public exports |
+| dataset structure accepted by EEGLAB | `pop_cadwell` run under Octave 8.4 with EEGLAB's own `functions/` (git `develop`) and dipfit on the path: `eeg_checkset` passes, `pop_saveset`/`pop_loadset` round trip keeps samples and events (`tests/test_eeglab_import.py`, runs when `EEGLAB_DIR` points at an EEGLAB checkout) |
+| recording pauses | export 3 (10 s pause): padded read has zeros and a `Recording gap` event at the pause; concatenated read is 5000 samples shorter with a `boundary` event and the later events moved up (self-test check E) |
+| the EEGLAB GUI menu item | **not yet**: no MATLAB or EEGLAB GUI in the development container; `eegplugin_cadwellio.m` follows the documented template (`sccn.github.io` tutorials/contribute/design_plugin.md) |
+
+**Recording pauses.** Cadwell numbers frames by the second since the record
+origin, so a pause (the vendor's *Stop Recording* / *Start Recording*)
+leaves missing frame numbers, confirmed by a `GapInfo` row. With
+`'padgaps','on'` (default) the pause is filled with zeros so latencies stay
+aligned with wall-clock time and an event of type `Recording gap` with the
+pause length in `duration` marks it. With `'padgaps','off'` the segments are
+concatenated, the pause becomes a standard EEGLAB `boundary` event
+(latency at the join minus 0.5, `duration` = samples removed, as
+`eeg_eegrej` writes them, so filtering and epoching respect the
+discontinuity) and the latencies of all later events move up by the pause
+length; the vendor's own events stamped inside the pause land on the join.
+Both modes list the pauses in `EEG.etc.cadwell.gaps` (`startSample`,
+`seconds`, `startSec` since the first frame, `padded`). The same rule
+applies in the Python converter (REQ019: zeros plus an EDF+ annotation).
+
+**Submitting to the EEGLAB plugin list.** EEGLAB's plugin manager fetches a
+zip whose root (or single top-level folder) holds `eegplugin_cadwellio.m`;
+the folder name and the `vers` string returned by `eegplugin_cadwellio`
+must match (`cadwellio0.2.0`). Steps:
+
+1. `./make_zip.sh` -> `dist/cadwellio0.2.0.zip` (pure MATLAB/Octave; no jar).
+2. Test once in a real MATLAB + EEGLAB: unzip into `<eeglab>/plugins/`,
+   start EEGLAB, check that *File > Import data > From Cadwell* appears and
+   imports a public test export, and that the history command it writes
+   replays. This is the one step the container cannot do.
+3. Submit with the upload form http://sccn.ucsd.edu/eeglab/plugin_uploader/upload_form.php
+   (name `cadwellio`, version `0.2.0`, the zip, a one-paragraph description,
+   the GitHub URL, licence Unlicense) or, as recently recommended, open an
+   issue on https://github.com/sccn/eeglab with the zip attached. Later
+   versions go through http://sccn.ucsd.edu/eeglab/plugin_uploader/version_update.php.
 
 **Prerequisites**
 
-- MATLAB R2020b or newer with EEGLAB 2021 or newer.
-- For the current `.ezdata` table listing only: Database Toolbox
-  (`sqlite`) **or** the free `mksqlite` MEX (https://github.com/a-ma72/mksqlite)
-  **or** MATLAB's Python interface; `cadwell_sqlite_info` uses whichever
-  is available. The planned native reader needs none of these (see the
-  scoping report).
-- For the EDF path: the EEGLAB BIOSIG plugin (`pop_biosig`) or File-IO
+- MATLAB R2016b or newer, or GNU Octave 6 or newer, with EEGLAB 2021 or newer.
+  The direct `.ezdataindex` reader needs no toolbox, MEX, Java or Python.
+- For the EDF path only: the EEGLAB BIOSIG plugin (`pop_biosig`) or File-IO
   plugin (`pop_fileio`), installed through the EEGLAB plugin manager.
 
 **Files**
 
 | File | Purpose |
 |---|---|
-| `cadwellio/eegplugin_cadwellio.m` | plugin entry point: adds *File > Import data > From Cadwell (.ezdataindex / converted EDF)* |
+| `cadwellio/eegplugin_cadwellio.m` | plugin entry point (version `cadwellio0.2.0`): adds *File > Import data > From Cadwell (.ezdataindex / converted EDF)* |
 | `cadwellio/pop_cadwell.m` | importer; GUI when called without arguments, returns `[EEG, com]` |
 | `cadwellio/cadwell_read.m`, `cadwell_read_index.m`, `cadwell_read_events.m`, `cadwell_decode_frame.m` | the native reader (port of `cwelleegread/ezdata.py`) |
 | `cadwellio/cadwell_sqlite_native.m`, `cadwell_tcol.m` | pure MATLAB/Octave reader of the SQLite 3 file format (default backend), column helper |
@@ -40,7 +73,7 @@ its own GitHub repository.
 **Build and install**
 
 ```bash
-./make_zip.sh            # -> dist/cadwellio0.1.0.zip (pure MATLAB/Octave; --with-jdbc bundles the optional driver)
+./make_zip.sh            # -> dist/cadwellio0.2.0.zip (pure MATLAB/Octave; --with-jdbc bundles the optional driver)
 # then: unzip into <eeglab>/plugins/ and restart EEGLAB, or submit it
 # through the sccn/eeglab issue template "New plugin or plugin update"
 # (the old web upload form is closed)

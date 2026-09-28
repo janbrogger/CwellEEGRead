@@ -2,10 +2,10 @@
 # Session `adede7d2-9fc1-585c-a838-bea822978308`
 
 - Started (UTC): 2026-09-15T07:29:43.798Z  
-- Last event (UTC): 2026-09-28T09:16:33.429Z (span 313 h 46 min)  
+- Last event (UTC): 2026-09-28T10:08:06.094Z (span 314 h 38 min)  
 - User: jan@brogger.no; source: claude-code-remote; branch: `claude/zen-lovelace-vq1to3`  
 - Models: claude-fable-5-1; Claude Code 2.1.283  
-- Prompts: 20; transcript: transcript.jsonl (10.6 MB)
+- Prompts: 21; transcript: transcript.jsonl (11.2 MB)
 
 This file is derived from the transcript for readers without an LLM. Prompts are verbatim; responses are the assistant's text messages (tool calls and their output are only summarised - see the JSONL for those).
 
@@ -928,4 +928,70 @@ The EEGLAB plugin now reads Cadwell SQLite files with its own MATLAB/Octave code
 - The full pytest suite passes (31 tests, including the Octave port test) and Doorstop validates cleanly.
 
 One observation on speed: reading export 3 takes about 40 seconds in Octave with either backend, so the SQLite layer is not the bottleneck. The frame decoder is, and it could be vectorised later if that matters for EEGLAB users.
+
+
+## Prompt 21 - 2026-09-28 09:42:40 UTC
+
+```text
+Vectorize the frame decoder and compare reading speeds
+```
+
+_Tools used in this turn: Bash ×32, Write ×1, ToolSearch ×1_
+
+### Response 21
+
+**[09:42 UTC]**
+
+I'll profile the current decoder first, then vectorise the hot paths and time both versions on the three exports.
+
+**[09:46 UTC]**
+
+The baseline timing is running in the background. Meanwhile I'm writing the vectorised decoder and the faster frame assembly into the scratchpad so the baseline run keeps using the old files.
+
+**[09:49 UTC]**
+
+Baseline recorded (export 3 took 57 s native this run, machine load varies). Now installing the new versions and timing them.
+
+**[09:53 UTC]**
+
+Fixing an orientation bug in the new decoder (row versus column vectors), then re-timing.
+
+**[09:58 UTC]**
+
+The self-test is running in the background. Meanwhile I'm trimming interpreter overhead in the native SQLite reader: inline one-byte varints, vectorised cell pointers, and preallocated row storage.
+
+**[09:59 UTC]**
+
+Self-test passes with the vectorised decoder. Now timing the final code, best of two runs, with the native SQLite reader changes included.
+
+**[10:02 UTC]**
+
+The JDBC comparison contradicts what I wrote in the research note, so I'm correcting that paragraph while pytest finishes.
+
+**[10:08 UTC]**
+
+Done and pushed. Reading a 40-minute recording in Octave went from about a minute to about 9 seconds, and the native SQLite reader is now the fastest backend, not the slowest.
+
+**Timings** (Octave 8.4, native backend, whole export read; the container is noisy so treat these as rough):
+
+| Export | Before | After |
+|---|---|---|
+| 1 (45 s, 250 Hz) | 1.7 s | 0.5 s |
+| 2 (16 min, 500 Hz) | 39 s | 8 s |
+| 3 (40 min, 250 Hz) | 57 s | 9 s |
+
+JDBC after the changes is about the same or slightly slower (10 s on exports 2 and 3), so there is no speed reason to install the jar.
+
+**What was actually slow.** Profiling showed the decoder was only a third of the problem.
+
+- Octave's `containers.Map` re-sorts its keys on every insert, so storing 2414 blobs cost about 15 s. One `ismember` of index keys against data keys replaces it.
+- The per-channel assembly, 38 500 indexed row assignments, cost 9 s. The decoder now returns each frame as a samples-by-channels matrix that is placed with one assignment into a preallocated output, which also removes a second 155 MB copy from concatenation.
+- The decoder's channel loop cost 5 s. Block headers are gathered with one index matrix. Payloads are gathered per group of channels sharing delta type and length, since the compressor picks int8 or int16 per channel, so a frame is typically two typecast-plus-cumsum operations.
+- The native SQLite reader took 2.7 s per 2414-row table, now 1.6 s: inlined one-byte varints, all record-header serial types decoded in one vectorised expression, an ASCII fast path around `native2unicode`, page cell pointers read together, geometric row-store growth. Fetching the same table through JDBC from Octave takes about 4 s because of one Java call per value.
+
+The remaining 9 s on export 3 is roughly 3.5 s SQLite, 3 s decoding, 1.5 s allocating the output matrix, and 1 s bookkeeping.
+
+**Verification.** The Octave self-test passes on all checks, including the byte-exact comparison of every table with Python's sqlite3, and pytest reports 31 passed. The profile, the table above and the JDBC comparison are recorded in the research note, and the plugin README mentions the load time.
+
+One caveat: two bugs surfaced during the rewrite (row/column orientation, and bytes per sample mapped the wrong way for int8 blocks). Both were caught by running the reads, and the self-test then confirmed bit-exact samples, but it shows the value of keeping that byte-exact check in the loop for any further decoder changes.
 

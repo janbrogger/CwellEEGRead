@@ -5,8 +5,10 @@ function rec = cadwell_read(pathIn, varargin)
 %   rec = cadwell_read(path, 'PadGaps', true, 'Backend', 'native', 'Frames', [first last])
 %
 % Options
-%   'PadGaps'  (default true)  missing frame numbers (recording breaks) become
-%                              zeros so that time stays aligned with the events
+%   'PadGaps'  (default true)  missing frame numbers (recording pauses) become
+%                              zeros so that time stays aligned with wall-clock
+%                              time; false concatenates the segments and shifts
+%                              the event onsets after each pause accordingly
 %   'Backend'  (default 'native', pure MATLAB/Octave)  SQLite backend, see cadwell_sqlite
 %   'Frames'   (default all)   restrict to frame numbers first..last
 %
@@ -16,8 +18,13 @@ function rec = cadwell_read(pathIn, varargin)
 %   srate       nominal sampling rate
 %   labels      1xN cell, 'EEG Fp1-Cz' ... (inferred from the headbox table)
 %   ampInputs   1xN amplifier input numbers (data row order)
-%   events      struct array from cadwell_read_events (onsetSec relative to data start)
-%   gaps        struct array: startSample (1-based), seconds
+%   events      struct array from cadwell_read_events; onsetSec is relative to
+%               the data start and consistent with 'PadGaps' (onsetSecOrigin
+%               keeps the wall-clock onset relative to the first frame)
+%   gaps        struct array, one per recording pause (missing frame numbers):
+%               startSample (1-based sample in data where the pause starts, or
+%               where the segments were joined), seconds, startSec (wall-clock
+%               seconds after the first frame), padded (true/false)
 %   samplesPerFrame, frameNumbers
 %   startDatenum, startIso   data start (UTC) = first frame time + clock correction
 %   recordGuid, patientGuid, headbox (struct), unitUv, index (the full index struct)
@@ -63,28 +70,44 @@ function rec = cadwell_read(pathIn, varargin)
         m = zeros(size(fr.matrix, 1), nch); m(:, j(j > 0)) = fr.matrix(:, j > 0);
         mats{i} = m; spf(i) = size(m, 1);
     end
-    padded = struct('startSample', {}, 'seconds', {});
+    gaps = struct('startSample', {}, 'seconds', {}, 'startSec', {}, 'padded', {});
     gapSamples = 0;
     if opt.PadGaps && nf > 1, gapSamples = sum(max(diff(nums) - 1, 0)) * rate; end
     rec.data = zeros(nch, sum(spf) + gapSamples);
     cursor = 0;
     for i = 1:nf
-        if opt.PadGaps && i > 1 && nums(i) > nums(i - 1) + 1
+        if i > 1 && nums(i) > nums(i - 1) + 1                        % recording pause: frame numbers are seconds
             missing = nums(i) - nums(i - 1) - 1;
-            padded(end+1) = struct('startSample', cursor + 1, 'seconds', missing);
-            cursor = cursor + missing * rate;                       % already zero
+            gaps(end+1) = struct('startSample', cursor + 1, 'seconds', missing, ...
+                                 'startSec', nums(i - 1) + 1 - nums(1), 'padded', logical(opt.PadGaps));
+            if opt.PadGaps, cursor = cursor + missing * rate; end   % already zero
         end
         rec.data(:, cursor + (1:spf(i))) = mats{i}' * unit;
         cursor = cursor + spf(i);
     end
     rec.srate = rate; rec.ampInputs = amp; rec.unitUv = unit;
     [rec.labels, rec.headbox] = cadwell_layout(amp, idx.ampType);
-    rec.samplesPerFrame = spf; rec.frameNumbers = nums; rec.gaps = padded;
+    rec.samplesPerFrame = spf; rec.frameNumbers = nums; rec.gaps = gaps;
     rec.startDatenum = frames(1).datenum + idx.clockCorrectionSec / 86400;
     rec.startIso = datestr(rec.startDatenum, 'yyyy-mm-ddTHH:MM:SS.FFF');
     rec.recordGuid = idx.recordGuid; rec.patientGuid = idx.patientGuid; rec.index = idx;
     stem = regexprep(indexFile, '\.ezdataindex$', '');
     rec.events = cadwell_read_events([stem '.ezevents'], frames(1).sec, opt.Backend);
+    for k = 1:numel(rec.events), rec.events(k).onsetSecOrigin = rec.events(k).onsetSec; end
+    if ~opt.PadGaps
+        % concatenated segments: an event after a pause moves earlier by the
+        % pause length; an event stamped inside a pause lands on the join
+        for g = numel(gaps):-1:1
+            for k = 1:numel(rec.events)
+                o = rec.events(k).onsetSecOrigin;
+                if o >= gaps(g).startSec + gaps(g).seconds
+                    rec.events(k).onsetSec = rec.events(k).onsetSec - gaps(g).seconds;
+                elseif o > gaps(g).startSec
+                    rec.events(k).onsetSec = rec.events(k).onsetSec - (o - gaps(g).startSec);
+                end
+            end
+        end
+    end
 end
 
 function f = locate_index(p)

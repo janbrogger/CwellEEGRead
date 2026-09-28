@@ -1,5 +1,6 @@
 % pop_cadwell() - import a Cadwell Arc recording (CadLink study export) into
-%                 EEGLAB, natively (no Python), or an EDF converted by CwellEEGRead.
+%                 EEGLAB with plain MATLAB/Octave code, or an EDF converted by
+%                 CwellEEGRead.
 %
 % Usage:
 %   >> [EEG, com] = pop_cadwell;                        % GUI: choose an .ezdataindex or .edf
@@ -9,18 +10,30 @@
 % Optional inputs:
 %   'importevent' - 'on'|'off' (default 'on'): events -> EEG.event (deleted events and
 %                    amplifier bookkeeping types are skipped, as in the vendor's EDF export)
-%   'padgaps'     - 'on'|'off' (default 'on'): recording breaks become zeros, keeping
-%                    event latencies aligned with wall-clock time
-%   'backend'     - SQLite backend name, see cadwell_sqlite (default: auto)
+%   'padgaps'     - 'on'|'off' (default 'on'). Recording pauses (the vendor's
+%                    "Stop Recording" / "Start Recording") leave holes in the
+%                    frame numbering. 'on': the holes become zeros, so latencies
+%                    stay aligned with wall-clock time, and each pause is an
+%                    event of type 'Recording gap' with its duration in samples.
+%                    'off': the segments are concatenated, each pause becomes a
+%                    standard EEGLAB 'boundary' event (duration = samples
+%                    removed, as eeg_eegrej writes them) and the latencies of
+%                    later events move up accordingly. Both list the pauses in
+%                    EEG.etc.cadwell.gaps.
+%   'backend'     - SQLite backend name, see cadwell_sqlite (default 'native':
+%                    the pure MATLAB/Octave reader; nothing to install)
 %
-% Requires one SQLite backend: mksqlite, the Database Toolbox / Octave sqlite
-% package, the sqlite-jdbc jar in cadwellio/lib (cadwell_get_jdbc), or Python in MATLAB.
-% Data are referential to the recording reference (Cz); see the CwellEEGRead
+% Channel labels are the electrode names of the headbox table (Fp1 ... O2,
+% E1/Pg1, 1A ...); each channel's recording reference is in
+% EEG.chanlocs(k).ref (Cz for the EEG inputs) and EEG.ref is 'Cz'. Data are
+% microvolts referential to that reference; see the CwellEEGRead
 % documentation for what that implies.
 %
 % Outputs:
 %   EEG - EEGLAB dataset structure
 %   com - command string for the EEGLAB history
+%
+% Public domain (Unlicense). https://github.com/janbrogger/CwellEEGRead
 
 function [EEG, com] = pop_cadwell(filename, varargin)
     EEG = []; com = '';
@@ -39,31 +52,21 @@ function [EEG, com] = pop_cadwell(filename, varargin)
         else error('pop_cadwell:noEdfReader', 'Install the BIOSIG or File-IO plugin to read EDF.');
         end
     else
-        rec = cadwell_read(filename, 'PadGaps', strcmpi(opts.padgaps, 'on'), 'Backend', opts.backend);
+        padgaps = strcmpi(opts.padgaps, 'on');
+        rec = cadwell_read(filename, 'PadGaps', padgaps, 'Backend', opts.backend);
         EEG = eeg_emptyset();
         EEG.data = single(rec.data); EEG.srate = rec.srate;
         EEG.nbchan = size(EEG.data, 1); EEG.pnts = size(EEG.data, 2); EEG.trials = 1;
         EEG.xmin = 0; EEG.xmax = (EEG.pnts - 1) / EEG.srate;
-        EEG.chanlocs = struct('labels', rec.labels);
+        EEG.chanlocs = channel_locs(rec);
         EEG.ref = 'Cz';
         EEG.etc.cadwell = rmfield(rec, {'data', 'events'});
+        EEG.etc.cadwell.edfLabels = rec.labels;                    % 'EEG Fp1-Cz' style, as the EDF export names them
+        EEG.event = [];
         if strcmpi(opts.importevent, 'on')
-            skip = {'AmpConfigurationData', 'LiveAmpConfigurationData', 'ReviewedDataEvent', 'ContinuousImpedanceEvent', 'BaselineImpedanceEvent'};
-            ev = rec.events; n = 0; EEG.event = [];
-            for i = 1:numel(ev)
-                if ev(i).deleted || any(strcmp(ev(i).type, skip)) || strcmp(ev(i).text, 'Photic Stim'), continue; end
-                lat = round(ev(i).onsetSec * EEG.srate) + 1;
-                if lat < 1 || lat > EEG.pnts, continue; end
-                n = n + 1;
-                EEG.event(n).type = ev(i).text; EEG.event(n).latency = lat;
-                EEG.event(n).duration = max(0, round(ev(i).durationSec * EEG.srate));
-                EEG.event(n).cadwelltype = ev(i).type;
-            end
-            for g = 1:numel(rec.gaps)
-                n = n + 1; EEG.event(n).type = sprintf('Recording gap %g s', rec.gaps(g).seconds);
-                EEG.event(n).latency = rec.gaps(g).startSample; EEG.event(n).duration = rec.gaps(g).seconds * EEG.srate;
-                EEG.event(n).cadwelltype = 'gap';
-            end
+            EEG.event = event_table(rec, EEG.srate, EEG.pnts, padgaps);
+        elseif ~padgaps
+            EEG.event = gap_events(rec, EEG.srate, padgaps);        % boundaries are needed even without the annotations
         end
         name = rec.recordGuid;
     end
@@ -72,4 +75,51 @@ function [EEG, com] = pop_cadwell(filename, varargin)
     EEG = eeg_checkset(EEG, 'eventconsistency');
     EEG = eeg_checkset(EEG, 'makeur');
     com = sprintf('EEG = pop_cadwell(''%s'', ''importevent'', ''%s'', ''padgaps'', ''%s'');', filename, opts.importevent, opts.padgaps);
+end
+
+function chanlocs = channel_locs(rec)
+    % electrode names as labels (so that channel location lookup works), the
+    % per-channel recording reference in .ref
+    n = numel(rec.ampInputs);
+    chanlocs = struct('labels', cell(1, n), 'ref', cell(1, n));
+    for k = 1:n
+        a = rec.ampInputs(k);
+        if a >= 1 && a <= numel(rec.headbox.names)
+            chanlocs(k).labels = rec.headbox.names{a}; chanlocs(k).ref = rec.headbox.refs{a};
+        else
+            chanlocs(k).labels = sprintf('ch%d', a); chanlocs(k).ref = 'Cz';
+        end
+    end
+end
+
+function events = event_table(rec, srate, pnts, padgaps)
+    skip = {'AmpConfigurationData', 'LiveAmpConfigurationData', 'ReviewedDataEvent', 'ContinuousImpedanceEvent', 'BaselineImpedanceEvent'};
+    ev = rec.events; n = 0; events = [];
+    for i = 1:numel(ev)
+        if ev(i).deleted || any(strcmp(ev(i).type, skip)) || strcmp(ev(i).text, 'Photic Stim'), continue; end
+        lat = round(ev(i).onsetSec * srate) + 1;
+        if lat < 1 || lat > pnts, continue; end
+        n = n + 1;
+        events(n).type = ev(i).text; events(n).latency = lat;
+        events(n).duration = max(0, round(ev(i).durationSec * srate));
+        events(n).cadwelltype = ev(i).type;
+    end
+    g = gap_events(rec, srate, padgaps);
+    if isempty(events), events = g; elseif ~isempty(g), events(n + 1:n + numel(g)) = g; end
+end
+
+function events = gap_events(rec, srate, padgaps)
+    % one event per recording pause; the type follows the EEGLAB convention
+    % for the representation chosen ('boundary' = samples were removed here)
+    events = [];
+    for g = 1:numel(rec.gaps)
+        k = numel(events) + 1;
+        if padgaps
+            events(k).type = 'Recording gap'; events(k).latency = rec.gaps(g).startSample;
+        else
+            events(k).type = 'boundary'; events(k).latency = rec.gaps(g).startSample - 0.5;
+        end
+        events(k).duration = rec.gaps(g).seconds * srate;
+        events(k).cadwelltype = sprintf('Recording pause %g s at %g s', rec.gaps(g).seconds, rec.gaps(g).startSec);
+    end
 end

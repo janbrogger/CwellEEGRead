@@ -7,7 +7,7 @@ links:
 - NEED006: m0kjqwxo_577eQbRuqQo5nqZfb5bgs_ek76_j-0WXYo=
 normative: true
 ref: ''
-reviewed: ktRmJv4CmvQ9cUQa_BMlhetqbzaVeG61f3BLk_NKDMQ=
+reviewed: 2bakwVrYzAzQ9EEzgIucvlGzA9Qxxclf54u5cnYA2gg=
 text: |
   The repository shall contain a `uses/` folder with one sub-folder per
   downstream use: `uses/Morgoth` (scripts to check out, install and run the
@@ -16,3 +16,11 @@ text: |
   EDF files and collect its JSON output) and `uses/EEGLAB` (an EEGLAB reader
   plugin that can be packaged as a zip file). Each sub-folder shall have a
   README stating its status and prerequisites.
+
+  The EEGLAB plugin shall represent recording pauses (REQ019) as events:
+  when the pause is padded with zeros, an event of type `Recording gap`
+  with the pause length as duration at the start of the padding; when the
+  segments are concatenated, a standard EEGLAB `boundary` event with the
+  number of removed samples as duration at the join, with the latencies of
+  all later events reduced by the pause length. The pauses shall also be
+  listed in `EEG.etc.cadwell.gaps` in both modes.

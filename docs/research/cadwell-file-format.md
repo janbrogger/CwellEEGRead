@@ -537,7 +537,7 @@ matters):
 |---|---|---|
 | export 1 (32 ch, 45 s at 250 Hz), native / JDBC | 1.7 s / 4.5 s | 0.5 s / 0.5 s |
 | export 2 (32 ch, 16 min at 500 Hz), native / JDBC | 39 s / 33 s | 8 s / 10 s |
-| export 3 (32 ch, 40 min at 250 Hz), native / JDBC | 57 s / 49 s | 9 s / 10 s |
+| export 3 (32 ch, 20 min at 500 Hz, one 10 s pause), native / JDBC | 57 s / 49 s | 9 s / 10 s |
 
 What was slow, in order of cost, and what changed:
 
@@ -566,7 +566,7 @@ What was slow, in order of cost, and what changed:
    so the pure-MATLAB reader is both dependency-free and the quickest
    of the backends tried here.
 
-The remaining ~9 s for export 3 split roughly into 3.5 s SQLite (native), 3 s
+The remaining ~9 s for export 3 (20 min, 608 500 samples x 32 channels) split roughly into 3.5 s SQLite (native), 3 s
 frame decoding, 1.5 s allocating the 155 MB output (slow in this container)
 and 1 s events and index bookkeeping. Two portability lessons: `Class.forName` cannot see jars added
 with `javaaddpath`, so the JDBC driver is instantiated with `javaObject`; and
