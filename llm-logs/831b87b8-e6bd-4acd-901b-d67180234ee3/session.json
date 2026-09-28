@@ -1,0 +1,29 @@
+{
+  "session_id": "831b87b8-e6bd-4acd-901b-d67180234ee3",
+  "start_utc": "2026-09-28T06:31:51.815Z",
+  "last_event_utc": "2026-09-28T06:42:46.180Z",
+  "span": "10 min",
+  "prompts": 1,
+  "models": [
+    "claude-fable-5-1"
+  ],
+  "tool_use_counts": {
+    "WebFetch": 13,
+    "Bash": 12,
+    "WebSearch": 10,
+    "Read": 9,
+    "Agent": 5,
+    "Grep": 3,
+    "Glob": 2,
+    "ToolSearch": 1
+  },
+  "claude_code_version": "2.1.283",
+  "git_branch": "claude/zen-lovelace-vq1to3",
+  "user": "jan@brogger.no",
+  "source": "claude-code-remote",
+  "topic": "untagged",
+  "transcript_files": [
+    "transcript.jsonl"
+  ],
+  "transcript_bytes": 1024535
+}
