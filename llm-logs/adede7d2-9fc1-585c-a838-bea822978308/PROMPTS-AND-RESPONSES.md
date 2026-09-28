@@ -2,10 +2,10 @@
 # Session `adede7d2-9fc1-585c-a838-bea822978308`
 
 - Started (UTC): 2026-09-15T07:29:43.798Z  
-- Last event (UTC): 2026-09-28T12:48:28.973Z (span 317 h 18 min)  
+- Last event (UTC): 2026-09-28T12:54:02.124Z (span 317 h 24 min)  
 - User: jan@brogger.no; source: claude-code-remote; branch: `main`  
 - Models: claude-fable-5-1; Claude Code 2.1.283  
-- Prompts: 31; transcript: transcript.jsonl (13.9 MB)
+- Prompts: 32; transcript: transcript.jsonl (14.0 MB)
 
 This file is derived from the transcript for readers without an LLM. Prompts are verbatim; responses are the assistant's text messages (tool calls and their output are only summarised - see the JSONL for those).
 
@@ -1880,4 +1880,33 @@ Done and pushed to `main`.
 - The plugin's own README inside the zip now points at the research note instead of the repository README for those measurements.
 
 The commit is on `main` together with the session-log commit, and the working tree is clean.
+
+
+## Prompt 32 - 2026-09-28 12:49:56 UTC
+
+```text
+Make padgaps default off.
+```
+
+_Tools used in this turn: Bash ×3_
+
+### Response 32
+
+**[12:50 UTC]**
+
+I'll flip the default in the importer and the reader, and update the help text, READMEs and the test that assumed padding on.
+
+**[12:53 UTC]**
+
+Both Octave tests pass with the new default. Now removing the two sections from the EEGLAB README as asked, then committing everything together.
+
+**[12:54 UTC]**
+
+Both changes are committed and pushed to `main`.
+
+**padgaps now defaults to off.** `pop_cadwell` and `cadwell_read` concatenate the segments around a recording pause by default and write a standard EEGLAB `boundary` event per pause, with later events moved up. Zero filling with a `Recording gap` event remains available with `'padgaps','on'`. Help texts and both READMEs say so, and the example in the usage block now shows the opt-in form.
+
+One consequence needed care: the self-test's tick-versus-stamp comparison read with the default, which would now compare concatenated tick onsets against unshifted stamp onsets. It reads padded explicitly. The EEGLAB import test likewise asks for padding where it checks the padded case. Both Octave tests pass with the new default.
+
+**README trimmed.** The "Submitting to the EEGLAB plugin list" and "FieldTrip" sections are gone. The remaining sections are Requirements, Install, Use, What you get, Verification, Building the zip and Files. The submission material still exists in the plugin-list survey under `docs/research`, so nothing is lost.
 
