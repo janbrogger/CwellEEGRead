@@ -520,6 +520,13 @@ that matter for such a reader: Cadwell databases use text encoding 2
 (no integer beyond 2^53 in the public exports; the reader keeps the stored
 storage class per value in `t.kinds`).
 
+The frame-numbering pauses versus the vendor's `Stop/Start Recording`
+events: the stored data end 0.5-2 s before the Stop event and resume
+about 1 s after the Start event on every public export (table in
+`uses/EEGLAB/README.md`, "Where the vendor's Stop/Start Recording events
+sit relative to the data"); the vendor's EDF export places the events
+identically inside its zero padding.
+
 Under GNU Octave 8.4 the port equals the Python decoder bit for bit on the
 first 20 frames of all three public exports, reproduces the index, labels,
 events and gaps through both the native and the JDBC backend, dumps every

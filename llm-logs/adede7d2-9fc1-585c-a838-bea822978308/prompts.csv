@@ -134,3 +134,4 @@ Summary:
 If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: /root/.claude/projects/-home-user-CwellEEGRead/adede7d2-9fc1-585c-a838-bea822978308.jsonl
 Continue the conversation from where it left off without asking the user any further questions. Resume directly — do not acknowledge the summary, do not recap what was happening, do not preface with ""I'll continue"" or similar. Pick up the last task as if the break never happened."
 21,2026-09-28,09:42:40,Vectorize the frame decoder and compare reading speeds
+22,2026-09-28,10:12:24,So do we have an EEGLAB plugin we can send to their repo? What about pauses in recordings - they should be noted as events.

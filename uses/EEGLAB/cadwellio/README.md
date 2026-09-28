@@ -64,7 +64,13 @@ event of type 'Recording gap' with the pause length as duration marks it.
 'boundary' event (duration = samples removed, as eeg_eegrej writes them) and
 the latencies of later events move up by the pause length; events the
 vendor stamped inside the pause land on the join. EEG.etc.cadwell.gaps
-lists the pauses in both modes.
+lists the pauses in both modes. Note that the vendor's 'Stop Recording'
+and 'Start Recording' events do not mark the data edges: the stored data
+end 0.5-2 s before the stop event and begin about 1 s after the start
+event (the partial and sometimes one whole frame around a button press are
+never stored; the vendor's own EDF export places the events the same way).
+Use the pause events, which come from the frame numbering, to locate the
+edges; details and measurements in uses/EEGLAB/README.md of the repository.
 
 Validated under GNU Octave 8.4 with EEGLAB's own functions (eeg_checkset,
 pop_saveset/pop_loadset round trip) on the public test exports; not yet

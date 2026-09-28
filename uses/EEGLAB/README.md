@@ -33,6 +33,52 @@ Both modes list the pauses in `EEG.etc.cadwell.gaps` (`startSample`,
 `seconds`, `startSec` since the first frame, `padded`). The same rule
 applies in the Python converter (REQ019: zeros plus an EDF+ annotation).
 
+**Where the vendor's Stop/Start Recording events sit relative to the data.**
+The pause markers of the plugin come from the frame numbering, not from
+the vendor's `RecordingOnOff` events, because the two do not coincide. The
+events are stamped when the button was pressed; the stored data start and
+end on whole seconds of the amplifier clock, and some data around each
+press is never stored. Measured on the three public exports (frame *k*
+holds amplifier-clock second *k*; the event offsets are the events'
+`StartOffset` ticks on the same clock):
+
+| Export | Event | Event offset | Nearest stored sample | Data missing |
+|---|---|---|---|---|
+| 1 (frames 0–44) | Start Recording | −0.008 s | frame 0 starts at 0 s | 0.008 s |
+| 1 | Stop Recording | 46.06 s | frame 44 ends at 45 s | 1.06 s before the stop |
+| 2 (frames 1–961) | Start Recording | −0.001 s | frame 1 starts at 1 s | 1.00 s after the start |
+| 2 | Stop Recording | 962.52 s | frame 961 ends at 962 s | 0.52 s before the stop |
+| 3 (frames 1–327, 338–1217) | Start Recording | −0.001 s | frame 1 starts at 1 s | 1.00 s after the start |
+| 3, pause | Stop Recording | 329.97 s | frame 327 ends at 328 s | 1.97 s before the stop |
+| 3, pause | Start Recording | 337.19 s | frame 338 starts at 338 s | 0.81 s after the start |
+| 3 | Stop Recording | 1218.90 s | frame 1217 ends at 1218 s | 0.90 s before the stop |
+
+So in every case the data begin at the first whole amplifier-clock second
+after Start Recording (the partial second is dropped; in exports 2 and 3
+the whole of second 0 is missing, apparently because the frame in progress
+when the button was pressed is discarded together with the partial one) and
+end at a whole second between 0.5 and 2 s before Stop Recording (the
+partial last second, plus in some cases one complete frame, is discarded).
+The vendor's own EDF export shows exactly the same placement: in export 3
+its zero-filled run covers record seconds 327–337 while its *Stop Recording*
+annotation is 1.94 s into the zeros and *Start Recording* 0.84 s before
+the data resume (the *Impedance* event of 7.06 s lies inside the pause).
+Consequences for users:
+
+- Do not use the `Stop Recording` / `Start Recording` events to find where
+  the data stop and resume; use the `Recording gap` / `boundary` events
+  (or `EEG.etc.cadwell.gaps`), which are placed from the frame numbers and
+  agree with the vendor's `GapInfo` rows to the millisecond.
+- With `'padgaps','on'` the vendor's Stop and Start events lie *inside* the
+  zero-filled pause, as in the vendor's EDF. With `'padgaps','off'` they
+  are moved onto the join, together with anything else stamped during the
+  pause (for export 3: Stop Recording, Impedance, Start Recording, all at
+  the boundary latency).
+- Up to about 2 s of EEG before each stop and 1 s after each start are not
+  in the export at all, so an event stamped in that window (a button press
+  right before stopping) has no data under it. The Python converter reports
+  the same figures (`inspect --json`, `gaps` and `events`).
+
 **Submitting to the EEGLAB plugin list.** EEGLAB's plugin manager fetches a
 zip whose root (or single top-level folder) holds `eegplugin_cadwellio.m`;
 the folder name and the `vers` string returned by `eegplugin_cadwellio`
