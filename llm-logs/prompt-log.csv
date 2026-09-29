@@ -680,3 +680,4 @@ Drag and drop the ZIP file of your plugin directly into this issue.
 * TST007, TST011 and TST012 have no automated tests, and read-back is checked with pyedflib only, not MNE as TST001 mentions."
 2026-09-29,08:26:32,jan@brogger.no,4f8951a5-bd29-5446-9df5-040fb4ec277a,"1. Amend REQ007 and keep data in git. 2. Make the prefilter field into ""HP: unknown (0.16 Hz?)"". 3. Unknown schema: refuse by default. 4. Write EDF+D as default if there are gaps in the data. 5. When done, push to master."
 2026-09-29,09:19:58,jan@brogger.no,4f8951a5-bd29-5446-9df5-040fb4ec277a,Revise DES013 so it is up to date.
+2026-09-29,09:58:11,jan@brogger.no,cf13040e-bd76-59ca-a29e-acac61c6b3ca,We submitted an EEGLAB plugin to here: https://github.com/sccn/eeglab/issues/971 But did we create a GUI for it? Will it work automatically in GUI mode?
