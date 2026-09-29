@@ -20,7 +20,8 @@ def git(*args):
 
 
 def test_venv_and_caches_are_ignored():
-    for p in (".venv", ".venv/bin/python", ".cache", "testdata/private/x.edf", "cwelleegread.egg-info"):
+    # paths inside the directories: "dir/" patterns match a bare name only if it exists as a directory
+    for p in (".venv/bin/python", ".cache/eeglab-src/x", "testdata/private/x.edf", "cwelleegread.egg-info/PKG-INFO"):
         assert git("check-ignore", "-q", p).returncode == 0, f"{p} is not gitignored"
 
 
