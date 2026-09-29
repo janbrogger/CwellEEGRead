@@ -194,7 +194,9 @@ def main(out_dir):
             s.shoot(win, out_dir / "4-eegplot-10s.png")
             print([line for line in (work / "octave.log").read_text().splitlines() if "EEGPLOT_READY" in line][0])
         except Exception:
-            subprocess.run(["import", "-window", "root", str(out_dir / "failure-screen.png")], env=env)
+            failure = Path(tempfile.gettempdir()) / "eeglab-screenshots-failure.png"   # not into out_dir
+            subprocess.run(["import", "-window", "root", str(failure)], env=env)
+            print("screen at the failure:", failure, file=sys.stderr)
             logf.seek(0)
             print("".join(l for l in logf.read().splitlines(True) if not l.startswith("warning"))[-3000:], file=sys.stderr)
             raise
