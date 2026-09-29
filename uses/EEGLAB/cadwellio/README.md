@@ -1,7 +1,9 @@
 cadwellio - EEGLAB import plugin for Cadwell Arc EEG (pure MATLAB/Octave)
 ==========================================================================
 
-Adds File > Import data > "From Cadwell (.ezdataindex / converted EDF)".
+Adds File > Import data > "From Cadwell (.ezdataindex / converted EDF)":
+a file dialog, then a dialog for the import options (events, recording
+pauses, event timing), then EEGLAB's usual dataset naming dialog.
 Reads a Cadwell Arc CadLink study export directly, with nothing but plain
 MATLAB/Octave code: the SQLite index, waveform and event databases are
 parsed by a small reader of the SQLite 3 file format (cadwell_sqlite_native.m)
@@ -11,7 +13,7 @@ Java or Python is needed.
 
 Files
   eegplugin_cadwellio.m     EEGLAB plugin entry point (menu item)
-  pop_cadwell.m             importer: [EEG, com] = pop_cadwell(path, ...)
+  pop_cadwell.m             importer: [EEG, com] = pop_cadwell(path, ...); dialogs without arguments
   cadwell_read.m            top-level reader -> struct (data in microvolts, labels, events, gaps)
   cadwell_read_index.m      .ezdataindex: channel table, frame index, gaps, clock correction
   cadwell_read_events.m     .ezevents
@@ -22,6 +24,7 @@ Files
   cadwell_get_jdbc.m        downloads the optional sqlite-jdbc driver into lib/ (cross-check only)
   cadwell_layout.m          channel labels per headbox (Apollo, Essentia)
   cadwell_selftest.m        verification against reference data (see below)
+  octave/                   GNU Octave stand-ins for EEGLAB's interface (octave/README.txt)
 
 SQLite backends (cadwell_sqlite('backends') lists the available ones)
   native     default, always available: cadwell_sqlite_native.m reads whole
@@ -84,8 +87,12 @@ Use the pause events, which come from the frame numbering, to locate the
 edges; measurements in docs/research/cadwell-file-format.md of the repository.
 
 Validated under GNU Octave 8.4 with EEGLAB's own functions (eeg_checkset,
-pop_saveset/pop_loadset round trip) on the public test exports; not yet
-exercised in the MATLAB GUI.
+pop_saveset/pop_loadset round trip) on the public test exports, and through
+EEGLAB's menu and dialogs under Octave; not yet exercised in MATLAB.
+
+GNU Octave: EEGLAB's main window needs octave/ on the path before EEGLAB
+starts (e.g. addpath('<eeglab>/plugins/cadwellio0.3.0/octave') in
+~/.octaverc), see octave/README.txt.
 
 Verification
   cadwell_selftest(refDir) checks, per public test export, that the decoder

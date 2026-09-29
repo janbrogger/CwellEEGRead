@@ -7,19 +7,22 @@ the compressed EEG frames, so no toolbox, MEX file, Java or Python is
 needed. It can also load an EDF written by the Python converter in this
 repository through the BIOSIG or File-IO plugin.
 
-Version 0.2.0. Public domain (Unlicense). Part of
+Version 0.3.0. Public domain (Unlicense). Part of
 [CwellEEGRead](https://github.com/janbrogger/CwellEEGRead), whose Python
 converter uses the same decoding rules and against which this plugin is
 tested.
 
-Status: working and released (GitHub release `cadwellio-v0.2.0`); verified
-under GNU Octave with EEGLAB's own functions, not yet exercised in the MATLAB
-GUI; submission to the EEGLAB plugin list pending. Prerequisites are listed
+Status: working; 0.2.0 released (GitHub release `cadwellio-v0.2.0`) and
+submitted to the EEGLAB plugin list (sccn/eeglab issue 971); 0.3.0 (import
+options dialog, GNU Octave stand-ins) not yet released. Verified under GNU
+Octave with EEGLAB's own functions and through EEGLAB's own menu and
+dialogs; not yet exercised in MATLAB. Prerequisites are listed
 under *Requirements* below.
 
 ## Requirements
 
-- MATLAB R2016b or newer, or GNU Octave 6 or newer.
+- MATLAB R2016b or newer, or GNU Octave 6 or newer (for EEGLAB's
+  graphical interface under Octave see *GNU Octave* below).
 - EEGLAB 2021 or newer.
 - For EDF files only: the BIOSIG (`pop_biosig`) or File-IO (`pop_fileio`)
   plugin from the EEGLAB plugin manager.
@@ -29,15 +32,22 @@ under *Requirements* below.
 From the EEGLAB plugin manager (*File > Manage EEGLAB extensions*) once
 the plugin is listed there, or manually:
 
-1. Build or download `cadwellio0.2.0.zip` (see *Building the zip* below).
-2. Unzip it into `<eeglab>/plugins/`, giving `<eeglab>/plugins/cadwellio0.2.0/`.
+1. Build or download `cadwellio0.3.0.zip` (see *Building the zip* below).
+2. Unzip it into `<eeglab>/plugins/`, giving `<eeglab>/plugins/cadwellio0.3.0/`.
 3. Restart EEGLAB. *File > Import data > Using EEGLAB functions and plugins*
    now has *From Cadwell (.ezdataindex / converted EDF)*.
 
 ## Use
 
 From the menu: pick the `.ezdataindex` file inside `CadLink/Data/` of the
-export (or a converted `.edf`). From the command line:
+export (or a converted `.edf`), then choose the import options in the
+dialog that follows: *Import events*, *Recording pauses* (join the segments
+with a `boundary` event, or fill with zeros) and *Event timing* (amplifier
+sample clock, or wall-clock stamps); for an EDF only *Import events*. The
+defaults are those of the table below. EEGLAB then asks for the dataset
+name as after any import, and the history records the full `pop_cadwell`
+call with the options chosen. From the command line (no dialogs when a path
+is given):
 
 ```matlab
 EEG = pop_cadwell('D:\exports\study1');                 % export folder, CadLink/Data folder or .ezdataindex
@@ -111,14 +121,42 @@ the vendor's text export within 0.05 uV. `tests/test_octave_port.py` runs
 it under GNU Octave; `tests/test_eeglab_import.py` runs `pop_cadwell` with
 EEGLAB's own functions on the Octave path (`eeg_checkset`, a
 `pop_saveset`/`pop_loadset` round trip, one `boundary` event per pause)
-when `EEGLAB_DIR` names an EEGLAB checkout. Not yet exercised: the menu
-item in the MATLAB GUI itself.
+when `EEGLAB_DIR` names an EEGLAB checkout. `tests/test_eeglab_gui.py`
+starts EEGLAB's graphical interface under Octave on a virtual display
+(xvfb) with the plugin in `plugins/`, chooses the menu item and answers
+EEGLAB's real dialogs (only the system file dialog is replaced): the
+options chosen must reach the dataset and its history, EEGLAB's naming
+dialog must follow, and Cancel must create no dataset. Not yet exercised:
+the plugin in MATLAB.
+
+## GNU Octave
+
+EEGLAB's graphical interface has two problems under GNU Octave (8.4, EEGLAB
+of September 2026) that have nothing to do with this plugin; the folder
+`cadwellio/octave/` holds stand-ins for both:
+
+- The main window does not open: *'vers' undefined* in `eeglab>eeg_mainfig`.
+  `eeglab.m` (since August 2025) reads a variable it only sets when
+  `computer()` starts with GLN, MAC or PCW, which Octave's never does.
+  `octave/vers.m` answers in its place. It has to be on the path before
+  EEGLAB starts, for instance in `~/.octaverc`:
+  `addpath('<eeglab>/plugins/cadwellio0.3.0/octave')`.
+  The fix belongs in EEGLAB (define `vers` before that `if`).
+- The dataset from any import is not stored: *'contains' undefined* in
+  `eeglab_new`. Octave has no `contains`; `octave/contains.m` provides it,
+  and the plugin puts the folder on the path by itself under Octave when
+  `contains` is missing.
+
+On Debian/Ubuntu Octave also needs the package `fonts-freefont-otf` to draw
+any EEGLAB window (*ft_text_renderer: invalid bounding box* otherwise).
+Neither stand-in is used under MATLAB: EEGLAB adds only the plugin's own
+folder to the path, not its sub-folders.
 
 ## Building the zip
 
 ```bash
 cd uses/EEGLAB
-./make_zip.sh                 # -> dist/cadwellio0.2.0.zip
+./make_zip.sh                 # -> dist/cadwellio0.3.0.zip
 ./make_zip.sh --with-jdbc     # also bundles the optional sqlite-jdbc driver
 ```
 
@@ -136,8 +174,8 @@ stable and is what the EEGLAB plugin manager can point at:
 
 ```bash
 # after bumping vers in cadwellio/eegplugin_cadwellio.m and committing
-git tag cadwellio-v0.2.0 && git push origin cadwellio-v0.2.0
-# -> https://github.com/janbrogger/CwellEEGRead/releases/download/cadwellio-v0.2.0/cadwellio0.2.0.zip
+git tag cadwellio-v0.3.0 && git push origin cadwellio-v0.3.0
+# -> https://github.com/janbrogger/CwellEEGRead/releases/download/cadwellio-v0.3.0/cadwellio0.3.0.zip
 ```
 
 The same workflow also runs when a branch `release/cadwellio-v<version>`
@@ -154,7 +192,8 @@ release; they can be ignored, the plugin is the zip asset.
 | File | Purpose |
 |---|---|
 | `cadwellio/eegplugin_cadwellio.m` | plugin entry point: menu item and version string |
-| `cadwellio/pop_cadwell.m` | importer; file dialog when called without arguments, returns `[EEG, com]` |
+| `cadwellio/pop_cadwell.m` | importer; file dialog and options dialog when called without arguments, returns `[EEG, com]` |
+| `cadwellio/octave/` | GNU Octave stand-ins for EEGLAB's interface (`vers.m`, `contains.m`, `README.txt`) |
 | `cadwellio/cadwell_read.m` | reader: data, labels, events, pauses, frame table |
 | `cadwellio/cadwell_read_index.m`, `cadwell_read_events.m` | the `.ezdataindex` and `.ezevents` tables |
 | `cadwellio/cadwell_decode_frame.m` | one EEG frame blob to samples (vectorised) |

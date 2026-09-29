@@ -21,6 +21,7 @@
  * 19 Recording gaps and discontinuities (REQ019)
  * 20 Sample clock and resampling policy (REQ020)
     * 20.1 Event placement on the sample clock (REQ021)
+    * 20.2 EEGLAB plugin import dialog (REQ022)
 
 # 1.0 Input: Cadwell EEG recordings from around 2020 onward _(REQ001)_ {#REQ001}
 
@@ -356,4 +357,26 @@ EEGLAB plugin shall offer the same choice with the same default.
 *Parent links: NEED002, NEED003*
 
 *Child links: DES021*
+
+## 20.2 EEGLAB plugin import dialog _(REQ022)_ {#REQ022}
+
+Chosen from EEGLAB's menu, the EEGLAB plugin shall, after the file dialog,
+show a dialog for its import options: whether to import events, how to
+represent recording pauses (concatenated with `boundary` events, or padded
+with zeros, REQ016) and the event placement (sample clock or wall-clock
+stamps, REQ021), with the command-line defaults preselected; for an EDF
+file only the event choice. The options chosen shall reach the dataset and
+be recorded in the EEGLAB history as a complete `pop_cadwell` call. After
+the import, EEGLAB's standard dataset naming dialog (`pop_newset`) shall
+follow as for any other importer. Cancel in the options dialog shall create
+no dataset. Called with a path, the importer shall show no dialog.
+
+Under GNU Octave, the plugin shall supply what EEGLAB's graphical interface
+needs from Octave and Octave lacks, as far as this can be done without
+changing EEGLAB: stand-ins that are never on the path under MATLAB, and
+documented steps for what the plugin cannot do by itself.
+
+*Parent links: NEED006*
+
+*Child links: DES022*
 

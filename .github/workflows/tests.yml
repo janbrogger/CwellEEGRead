@@ -6,7 +6,9 @@
 #          This is the automated form of TST011 (setup on a fresh clone).
 # octave:  GNU Octave plus sparse EEGLAB and dipfit checkouts (as the
 #          SessionStart hook does), then the plugin self-test and the EEGLAB
-#          import test (TST013).
+#          import test (TST013), and the plugin driven through EEGLAB's menu
+#          on a virtual display (xvfb; fonts-freefont-otf for Octave's text
+#          rendering) (TST017).
 name: tests
 
 on:
@@ -66,12 +68,12 @@ jobs:
       - name: GNU Octave, EEGLAB functions and dipfit
         run: |
           sudo apt-get update -q
-          sudo apt-get install -y -q --no-install-recommends octave zip unzip
+          sudo apt-get install -y -q --no-install-recommends octave zip unzip xvfb xauth fonts-freefont-otf
           git clone -q --depth 1 --filter=blob:none --sparse https://github.com/sccn/eeglab.git .cache/eeglab-src
           git -C .cache/eeglab-src sparse-checkout set functions
           git clone -q --depth 1 https://github.com/sccn/dipfit.git .cache/dipfit
           echo "EEGLAB_DIR=$PWD/.cache/eeglab-src" >> "$GITHUB_ENV"
           echo "DIPFIT_DIR=$PWD/.cache/dipfit" >> "$GITHUB_ENV"
 
-      - name: Octave port and EEGLAB import tests
-        run: .venv/bin/pytest -ra tests/test_octave_port.py tests/test_eeglab_import.py
+      - name: Octave port, EEGLAB import and EEGLAB menu tests
+        run: .venv/bin/pytest -ra tests/test_octave_port.py tests/test_eeglab_import.py tests/test_eeglab_gui.py

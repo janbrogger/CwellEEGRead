@@ -59,7 +59,7 @@ the intended downstream analyses: scripts to check out and run the Morgoth
 foundation model, a wrapper to call a SCORE-AI command-line program on the
 converted files, and an EEGLAB (and possibly FieldTrip) reader plugin.
 
-*Child links: REQ006, REQ016*
+*Child links: REQ006, REQ016, REQ022*
 
 # 7.0 Open-source licensing that permits reuse of prior work _(NEED007)_ {#NEED007}
 

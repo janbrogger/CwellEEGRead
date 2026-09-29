@@ -51,3 +51,27 @@ Zip: https://github.com/janbrogger/CwellEEGRead/releases/download/cadwellio-v0.2
 Later versions: same template with *Current version* and *New version*
 filled in, after pushing a `release/cadwellio-v<version>` branch (or a
 `cadwellio-v<version>` tag) so the workflow publishes the new zip.
+
+## 0.3.0 (not yet released)
+
+After releasing (`release/cadwellio-v0.3.0` branch or `cadwellio-v0.3.0`
+tag), text for a follow-up on sccn/eeglab issue 971 or a new update issue:
+
+**Plugin name:** cadwellio
+
+**Current version:** 0.2.0
+
+**New or revised version:** 0.3.0
+
+**Description of the update:** *File > Import data > From Cadwell* now
+shows an import options dialog after the file dialog (events on/off,
+recording pauses as `boundary` events or zero padding, event timing on the
+amplifier sample clock or by wall-clock stamp), with the options recorded
+in the history; EEGLAB's naming dialog follows as usual. Under GNU Octave
+the plugin supplies `contains()` (used by `eeglab_new`), and ships a
+stand-in for the unset `vers` variable that keeps EEGLAB's main window from
+opening under Octave (`eeglab>eeg_mainfig`; to be added to the path in
+`~/.octaverc`). The menu and dialogs are tested through EEGLAB's own
+interface under Octave on a virtual display.
+
+Zip: https://github.com/janbrogger/CwellEEGRead/releases/download/cadwellio-v0.3.0/cadwellio0.3.0.zip

@@ -3,9 +3,14 @@
 %                 CwellEEGRead.
 %
 % Usage:
-%   >> [EEG, com] = pop_cadwell;                        % GUI: choose an .ezdataindex or .edf
+%   >> [EEG, com] = pop_cadwell;                        % GUI: choose an .ezdataindex or .edf,
+%                                                       % then the import options
 %   >> [EEG, com] = pop_cadwell(path);                  % export folder / CadLink/Data folder / .ezdataindex / .edf
 %   >> [EEG, com] = pop_cadwell(path, 'key', val, ...)
+%
+% Called without arguments (the EEGLAB menu), a file dialog is followed by a
+% dialog for 'importevent', 'padgaps' and 'eventtiming' (only 'importevent'
+% for an EDF file); Cancel in either returns EEG = [] and com = ''.
 %
 % Optional inputs:
 %   'importevent' - 'on'|'off' (default 'on'): events -> EEG.event (deleted events and
@@ -48,6 +53,10 @@ function [EEG, com] = pop_cadwell(filename, varargin)
                             '*.edf;*.EDF', 'EDF converted by CwellEEGRead (*.edf)'; '*.*', 'All files'}, 'Import Cadwell EEG');
         if isequal(f, 0), return; end
         filename = fullfile(p, f);
+        if isempty(varargin)
+            varargin = options_dialog(filename);
+            if isempty(varargin), return; end                     % Cancel
+        end
     end
     opts = struct('importevent', 'on', 'padgaps', 'off', 'backend', '', 'eventtiming', 'ticks');
     for k = 1:2:numel(varargin), opts.(lower(varargin{k})) = varargin{k+1}; end
@@ -82,6 +91,35 @@ function [EEG, com] = pop_cadwell(filename, varargin)
     EEG = eeg_checkset(EEG, 'makeur');
     com = sprintf('EEG = pop_cadwell(''%s'', ''importevent'', ''%s'', ''padgaps'', ''%s'', ''eventtiming'', ''%s'');', ...
                   filename, opts.importevent, opts.padgaps, opts.eventtiming);
+end
+
+function args = options_dialog(filename)
+    % the import options as key/value pairs, or {} when the user cancels
+    [~, name, ext] = fileparts(filename);
+    iscadwell = ~strcmpi(ext, '.edf');
+    uilist = { { 'style' 'text' 'string' 'File' } { 'style' 'text' 'string' [name ext] } ...
+               { 'style' 'checkbox' 'string' 'Import events' 'value' 1 'tag' 'importevent' } };
+    geometry = { [1 3] [1] };
+    if iscadwell
+        uilist = [ uilist, ...
+            { { 'style' 'text' 'string' 'Recording pauses' } ...
+              { 'style' 'popupmenu' 'value' 1 'tag' 'padgaps' 'string' ...
+                'Join the segments, mark each pause with a boundary event|Fill each pause with zeros (keeps wall-clock latencies)' } ...
+              { 'style' 'text' 'string' 'Event timing' } ...
+              { 'style' 'popupmenu' 'value' 1 'tag' 'eventtiming' 'string' ...
+                'Amplifier sample clock (recommended)|Wall-clock stamps (as the vendor''s EDF export)' } } ];
+        geometry = [ geometry, { [1 3] [1 3] } ];
+    end
+    [res, ~, ~, out] = inputgui('geometry', geometry, 'uilist', uilist, ...
+        'helpcom', 'pophelp(''pop_cadwell'');', 'title', 'Import Cadwell EEG -- pop_cadwell()');
+    args = {};
+    if isempty(res), return; end
+    onoff = { 'off' 'on' };
+    args = { 'importevent', onoff{out.importevent + 1} };
+    if iscadwell
+        timing = { 'ticks' 'stamp' };
+        args = [ args, { 'padgaps', onoff{out.padgaps}, 'eventtiming', timing{out.eventtiming} } ];
+    end
 end
 
 function chanlocs = channel_locs(rec)

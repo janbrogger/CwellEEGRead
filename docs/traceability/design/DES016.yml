@@ -7,7 +7,7 @@ links:
 - REQ016: lmgdzfwReBB4Kzrf7BETYxuSuAr-ZDnkeNwnNadqG0c=
 normative: true
 ref: ''
-reviewed: Vi3rMvueVVjB0I1_IBAn9mMSB9GQKgosNLRr1VyCyjk=
+reviewed: nmQAViTrGvSK8XQKp_Mks0kVKH1Mp9n_NRA9XnaLaIg=
 text: |
   **Implements** REQ016 - `uses/` shall hold one sub-folder per downstream use (Morgoth, SCORE-AI, EEGLAB), each with a README giving its status and prerequisites. The EEGLAB plugin can be packaged as a zip, shows a recording pause as a `Recording gap` event (padded) or a `boundary` event (concatenated, with later events moved earlier by the pause), and lists pauses in `EEG.etc.cadwell.gaps`.
 
@@ -24,9 +24,9 @@ text: |
   - `check_edf()` uses pyedflib to check the input: all 19 10-20 electrodes (with T7/T8/P7/P8 aliases); a warning for no ECG channel or less than 15 minutes; units in µV.
   - It writes JSON with the input's SHA-256, the check results, normalised probabilities, the raw output and provenance. Options: `--check-only`, `--dry-run`, `--batch`.
 
-  *EEGLAB plugin `cadwellio` 0.2.0 (`uses/EEGLAB/cadwellio/`).* Plain MATLAB/Octave. The main pieces:
+  *EEGLAB plugin `cadwellio` 0.3.0 (`uses/EEGLAB/cadwellio/`).* Plain MATLAB/Octave. The main pieces:
 
-  - *Entry point.* `eegplugin_cadwellio.m` returns `vers = 'cadwellio0.2.0'` and adds *From Cadwell (.ezdataindex / converted EDF)* to the *Import data* menu.
+  - *Entry point.* `eegplugin_cadwellio.m` returns `vers = 'cadwellio0.3.0'` and adds *From Cadwell (.ezdataindex / converted EDF)* to the *Import data* menu; the import options dialog and the GNU Octave stand-ins are DES022.
   - *Native SQLite reader.* `cadwell_sqlite_native.m` reads the whole file into memory and checks the header magic, page size and text encoding (Cadwell files use UTF-16LE). It walks each table's b-tree depth first with an explicit stack (interior pages type 5, leaf pages type 13), which yields rows in rowid order.
     - It follows overflow chains using the file-format formulas (X, M, K).
     - It decodes records by serial type, with a vectorised decoder for varint headers.
@@ -59,12 +59,12 @@ text: |
     - E: padded against concatenated reads.
     - F: tick onsets against stamp onsets plus the frame drift.
     - C: export 1 against the vendor text export. The code allows 0.06 µV, while TST013 says 0.05.
-  - *Zip.* `uses/EEGLAB/make_zip.sh` reads the version from `vers` and copies `*.m`, `README.md` and `LICENSE` into `dist/cadwellio<ver>/`, then zips it with the folder at the root. `--with-jdbc` also adds the jar. `dist/` is gitignored.
+  - *Zip.* `uses/EEGLAB/make_zip.sh` reads the version from `vers` and copies `*.m`, `README.md`, `LICENSE` and `octave/` into `dist/cadwellio<ver>/`, then zips it with the folder at the root. `--with-jdbc` also adds the jar. `dist/` is gitignored.
   - *Release.* `.github/workflows/release-cadwellio.yml` runs on a `cadwellio-v*` tag, on a `release/cadwellio-v*` branch or by manual dispatch. It checks that the tag version equals `vers`, builds the zip and publishes it as the only asset with `softprops/action-gh-release@v2`. It does not run the self-test. The tag `cadwellio-v0.2.0` exists.
 
   Not done yet:
-  - The MATLAB GUI has not been exercised.
-  - The plugin has not been submitted to the EEGLAB plugin list (`SUBMISSION.md`).
+  - The plugin has not been run in MATLAB (its menu and dialogs are exercised under Octave, TST017).
+  - 0.2.0 is submitted to the EEGLAB plugin list (sccn/eeglab issue 971, `SUBMISSION.md`); 0.3.0 is not released yet.
   - The FieldTrip reader exists only in research notes.
   - `uses/EEGLAB/README.md` no longer contains the words "status" or "prerequisite" (its section is headed "Requirements"), so the README check fails for EEGLAB.
 

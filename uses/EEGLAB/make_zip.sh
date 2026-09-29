@@ -8,6 +8,7 @@ VERSION=$(sed -n "s/.*vers = 'cadwellio\([0-9.]*\)'.*/\1/p" cadwellio/eegplugin_
 NAME="cadwellio$VERSION"
 rm -rf "dist/$NAME" && mkdir -p "dist/$NAME"
 cp cadwellio/*.m cadwellio/README.md cadwellio/LICENSE "dist/$NAME/"
+mkdir -p "dist/$NAME/octave" && cp cadwellio/octave/*.m cadwellio/octave/README.txt "dist/$NAME/octave/"
 # The plugin reads SQLite natively (cadwell_sqlite_native.m); the optional
 # JDBC cross-check backend is only bundled on request: ./make_zip.sh --with-jdbc
 if [ "${1:-}" = "--with-jdbc" ] && ls cadwellio/lib/sqlite-jdbc*.jar >/dev/null 2>&1; then

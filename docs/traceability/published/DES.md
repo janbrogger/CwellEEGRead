@@ -21,6 +21,7 @@
  * 19 Recording gaps and discontinuities (DES019)
  * 20 Sample clock and resampling policy (DES020)
  * 21 Event placement on the sample clock (DES021)
+ * 22 EEGLAB plugin import dialog (DES022)
 
 # 1.0 Input: Cadwell EEG recordings from around 2020 onward _(DES001)_ {#DES001}
 
@@ -385,9 +386,9 @@ Not yet designed: scrubbing all free-text types, shifting the start date, and CL
 - `check_edf()` uses pyedflib to check the input: all 19 10-20 electrodes (with T7/T8/P7/P8 aliases); a warning for no ECG channel or less than 15 minutes; units in µV.
 - It writes JSON with the input's SHA-256, the check results, normalised probabilities, the raw output and provenance. Options: `--check-only`, `--dry-run`, `--batch`.
 
-*EEGLAB plugin `cadwellio` 0.2.0 (`uses/EEGLAB/cadwellio/`).* Plain MATLAB/Octave. The main pieces:
+*EEGLAB plugin `cadwellio` 0.3.0 (`uses/EEGLAB/cadwellio/`).* Plain MATLAB/Octave. The main pieces:
 
-- *Entry point.* `eegplugin_cadwellio.m` returns `vers = 'cadwellio0.2.0'` and adds *From Cadwell (.ezdataindex / converted EDF)* to the *Import data* menu.
+- *Entry point.* `eegplugin_cadwellio.m` returns `vers = 'cadwellio0.3.0'` and adds *From Cadwell (.ezdataindex / converted EDF)* to the *Import data* menu; the import options dialog and the GNU Octave stand-ins are DES022.
 - *Native SQLite reader.* `cadwell_sqlite_native.m` reads the whole file into memory and checks the header magic, page size and text encoding (Cadwell files use UTF-16LE). It walks each table's b-tree depth first with an explicit stack (interior pages type 5, leaf pages type 13), which yields rows in rowid order.
   - It follows overflow chains using the file-format formulas (X, M, K).
   - It decodes records by serial type, with a vectorised decoder for varint headers.
@@ -420,12 +421,12 @@ Not yet designed: scrubbing all free-text types, shifting the start date, and CL
   - E: padded against concatenated reads.
   - F: tick onsets against stamp onsets plus the frame drift.
   - C: export 1 against the vendor text export. The code allows 0.06 µV, while TST013 says 0.05.
-- *Zip.* `uses/EEGLAB/make_zip.sh` reads the version from `vers` and copies `*.m`, `README.md` and `LICENSE` into `dist/cadwellio<ver>/`, then zips it with the folder at the root. `--with-jdbc` also adds the jar. `dist/` is gitignored.
+- *Zip.* `uses/EEGLAB/make_zip.sh` reads the version from `vers` and copies `*.m`, `README.md`, `LICENSE` and `octave/` into `dist/cadwellio<ver>/`, then zips it with the folder at the root. `--with-jdbc` also adds the jar. `dist/` is gitignored.
 - *Release.* `.github/workflows/release-cadwellio.yml` runs on a `cadwellio-v*` tag, on a `release/cadwellio-v*` branch or by manual dispatch. It checks that the tag version equals `vers`, builds the zip and publishes it as the only asset with `softprops/action-gh-release@v2`. It does not run the self-test. The tag `cadwellio-v0.2.0` exists.
 
 Not done yet:
-- The MATLAB GUI has not been exercised.
-- The plugin has not been submitted to the EEGLAB plugin list (`SUBMISSION.md`).
+- The plugin has not been run in MATLAB (its menu and dialogs are exercised under Octave, TST017).
+- 0.2.0 is submitted to the EEGLAB plugin list (sccn/eeglab issue 971, `SUBMISSION.md`); 0.3.0 is not released yet.
 - The FieldTrip reader exists only in research notes.
 - `uses/EEGLAB/README.md` no longer contains the words "status" or "prerequisite" (its section is headed "Requirements"), so the README check fails for EEGLAB.
 
@@ -537,4 +538,21 @@ Not done yet:
 *Parent links: REQ021*
 
 *Child links: TST016*
+
+# 22 EEGLAB plugin import dialog _(DES022)_ {#DES022}
+
+**Implements** REQ022 - from EEGLAB's menu, a dialog for the import options (events, recording pauses, event timing; events only for EDF) after the file dialog, defaults preselected, options in the dataset and the history, EEGLAB's naming dialog afterwards, Cancel creates nothing, no dialog when a path is given; GNU Octave stand-ins for what EEGLAB's interface needs.
+
+**Design.** `uses/EEGLAB/cadwellio/pop_cadwell.m`: without a path it calls `uigetfile`, then, when no options were passed, the local `options_dialog(filename)`. That builds an EEGLAB `inputgui` titled *Import Cadwell EEG -- pop_cadwell()* with a checkbox tagged `importevent` (on) and, unless the file is an `.edf`, two popup menus tagged `padgaps` (*Join the segments, mark each pause with a boundary event* first, as `'padgaps','off'`) and `eventtiming` (*Amplifier sample clock (recommended)* first, as `'ticks'`), and a Help button (`pophelp('pop_cadwell')`). The values are read from `inputgui`'s tag structure and turned into the key/value pairs of the command line, so the rest of `pop_cadwell` and its history string are shared with scripted use. Cancel (empty result) returns `EEG = []`, `com = ''`, which EEGLAB's `eeglab_new` treats as no new dataset. The plugin's menu callback is unchanged (`[EEG LASTCOM] = pop_cadwell;` followed by EEGLAB's `catchstrs.new_and_hist`), so EEGLAB itself runs `pop_newset` and its naming dialog. Version `cadwellio0.3.0`.
+
+*GNU Octave.* Two faults, found by driving EEGLAB's interface under Octave 8.4 (EEGLAB of September 2026), neither in the plugin:
+- `eeglab>eeg_mainfig` reads a variable `vers` that it only sets when `computer()` starts with GLN, MAC or PCW (added to `eeglab.m` in August 2025); Octave's `computer()` never does, so the main window does not open. `cadwellio/octave/vers.m`, a function returning `version()`, is found in its place, since Octave resolves an unset name to a function at run time. It must be on the path before EEGLAB starts (the plugin loads after the main window), so the READMEs tell Octave users to add the folder in `~/.octaverc`. The fix belongs in EEGLAB.
+- `eeglab_new`, run after every import from the menu, calls `contains`, which Octave lacks. `cadwellio/octave/contains.m` implements it for character vectors and cell arrays (patterns as text or cell array, `'IgnoreCase'`); `eegplugin_cadwellio` adds `octave/` to the path under Octave only when no `contains` exists.
+- EEGLAB adds only the plugin's own folder to the path, not sub-folders, so neither stand-in is used under MATLAB. `make_zip.sh` ships `octave/`. Debian/Ubuntu Octave also needs `fonts-freefont-otf` to draw text (documented, installed in CI and by the SessionStart hook).
+
+**Verified by** TST017 - `tests/test_eeglab_gui.py`.
+
+*Parent links: REQ022*
+
+*Child links: TST017*
 

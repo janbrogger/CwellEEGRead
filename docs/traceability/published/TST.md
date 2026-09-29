@@ -16,6 +16,7 @@
  * 14 Supported-version coverage (TST014)
  * 15 Gap handling (TST015)
  * 16 Event timing on the sample clock (TST016)
+ * 17 Import through the EEGLAB menu (TST017)
 
 # 1.0 EDF structural validity _(TST001)_ {#TST001}
 
@@ -251,4 +252,28 @@ ticks and stamp differ by the drift the frames show at each event
 Implemented in tests/test_event_timing.py and cadwell_selftest check F.
 
 *Parent links: DES005, DES021*
+
+# 17 Import through the EEGLAB menu _(TST017)_ {#TST017}
+
+Start EEGLAB's graphical interface under GNU Octave on a virtual display
+(xvfb) from a private EEGLAB tree with the plugin copied into `plugins/`,
+with `octave/vers.m` on the path beforehand as documented. Replace only the
+system file dialog (`uigetfile`, returning public export 3) and wrap
+EEGLAB's `inputgui` so that each dialog is drawn by the real `inputgui`
+('plot' mode), answered by widget tag and read back with 'getresult'.
+Pass if: the plugin is loaded, *From Cadwell (.ezdataindex / converted
+EDF)* is present under *Using EEGLAB functions and plugins* and enabled
+before any dataset exists; under an Octave without `contains` the plugin
+has put its stand-in on the path; choosing the item shows the options
+dialog, with two choices in each popup menu, and then EEGLAB's naming
+dialog; with *Fill each pause with zeros* and *Wall-clock stamps* chosen
+and a name typed, exactly one dataset is stored under that name, with one
+`Recording gap` event of 10 s and no `boundary` event, stamp event timing,
+and a history containing the `pop_cadwell` call with `'padgaps', 'on'` and
+`'eventtiming', 'stamp'`; no EEGLAB error is raised; and choosing the item
+again and pressing Cancel in the options dialog stores no further dataset.
+Skipped when Octave, xvfb, EEGLAB or the export is missing, or Octave cannot
+draw text on the virtual display.
+
+*Parent links: DES022*
 
