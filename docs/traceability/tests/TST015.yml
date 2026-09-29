@@ -5,19 +5,20 @@ header: |
 level: 15.0
 links:
 - DES008: llYdA52VLZBmbVNP10FRiFe_bgyGGhzdXpbgAK5RQ7I=
-- DES019: BjfkMs5zfB6ace4toJAo2H1lFCFhkJP3HIVzGUaHOrk=
+- DES019: hHxkUF4qBWkAF536AbNT-eSMX4rkt085fYytk1z27Uw=
 normative: true
 ref: ''
-reviewed: gc2oG3ArCDqFX9GpXxwA9RW3jyfqlI1Npv_UzUEgWps=
+reviewed: vihrILCeR9Z5Q7p75M3P8PhzRAdkfQ1l_LsX5iJBnWk=
 text: |
   Using a test recording that contains at least one acquisition gap
-  (cadwell-export3: 10 s), convert in raw mode with `--gaps pad`. Pass if the
-  number of EDF records equals the frame-number span, the padded seconds read
-  back as digital zero at exactly the missing frame numbers, the samples on
-  both sides of the gap are unchanged, the gap annotation and the vendor's
-  Stop/Start Recording events appear at the correct offsets, and the
-  conversion report lists the gap. Convert it again with the default. Pass if
-  the file is EDF+D, the record onsets skip exactly the gap seconds, the
-  samples equal the padded file's without the gap records, and the gap and
-  Stop/Start Recording annotations are present. Implemented in
-  tests/test_export3_gap.py and tests/test_edf_formats.py.
+  (cadwell-export3: 10 s), convert in raw mode with the default gap handling.
+  Pass if the file is EDF+C, the number of EDF records equals the
+  frame-number span, the padded seconds read back as digital zero at exactly
+  the missing frame numbers, the samples on both sides of the gap are
+  unchanged, the gap annotation and the vendor's Stop/Start Recording events
+  appear at the correct offsets, and the conversion report lists the gap.
+  Convert it again with `--gaps discontinuous`. Pass if the file is EDF+D,
+  the record onsets skip exactly the gap seconds, the samples equal the
+  padded file's without the gap records, and the gap and Stop/Start Recording
+  annotations are present. Implemented in tests/test_export3_gap.py and
+  tests/test_edf_formats.py.

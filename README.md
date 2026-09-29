@@ -39,14 +39,14 @@ given (a warning then goes into the report).
 |---|---|---|
 | 2.5 | Arc (version not recorded, 2025); Arc 3.2.1097 (2026) | cadwell-export1 (Apollo, 250 Hz); cadwell-export2, -3, -3-withfilter (Essentia, 500 Hz) |
 
-**Recording gaps.** In raw mode (the default) a recording with gaps is
-written as **EDF+D**: the gap seconds are left out and each data record
-carries its true onset, with a `Recording gap N s` annotation. EDFbrowser
+**Recording gaps.** A gap (recording stopped and restarted) is written as
+the vendor does: zeros inside a continuous EDF+C, with a `Recording gap N s
+(padded with zeros)` annotation, which every EDF reader handles.
+`--gaps discontinuous` (raw mode) writes **EDF+D** instead: the gap
+seconds are left out and each data record carries its true onset. EDFbrowser
 reads EDF+D correctly, but EDFlib/pyedflib refuses it and MNE-Python (1.13)
-reads it as if it were continuous, silently shifting everything after a
-gap earlier by the gap length. For those tools use `--gaps pad`, which
-writes EDF+C with the gap filled with zeros, as the vendor does (always in
-`--mode vendor`).
+reads it as if it were continuous, silently shifting everything after a gap
+earlier by the gap length.
 
 **Filters.** The converter applies no filter in raw mode. In `--mode
 vendor` on Essentia recordings (or with `--highpass on`) it applies the

@@ -135,9 +135,10 @@ def add_convert_options(c):
     c.add_argument("--event-timing", choices=["auto", "ticks", "stamp"], default="auto",
                    help="place annotations on the sample clock (ticks, accurate) or by wall-clock stamp as the vendor does "
                         "(stamp, early by the clock drift, ~0.35 s/h on Essentia); auto = ticks in raw mode, stamp in vendor mode")
-    c.add_argument("--gaps", choices=["auto", "pad", "discontinuous"], default="auto",
-                   help="recording gaps: discontinuous = EDF+D without the gap seconds (raw mode only); pad = zeros in a "
-                        "continuous EDF+C as the vendor does; auto = discontinuous in raw mode if there are gaps, else pad")
+    c.add_argument("--gaps", choices=["pad", "discontinuous"], default="pad",
+                   help="recording gaps: pad = zeros in a continuous EDF+C as the vendor does (default); discontinuous = "
+                        "EDF+D without the gap seconds (raw mode only; EDFbrowser reads it, pyedflib/EDFlib refuses it, "
+                        "MNE-Python reads it as if continuous)")
     c.add_argument("--format", choices=["auto", "edf+", "edf"], default="auto",
                    help="auto = plain EDF when nothing needs EDF+ (no annotations, no gaps left out, start on a whole "
                         "second), else EDF+; edf+ = always EDF+; edf = plain EDF (annotations dropped, start truncated)")

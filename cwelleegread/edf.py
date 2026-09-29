@@ -190,23 +190,24 @@ def convert(rec: CadwellRecording, out_path: str, *, mode: str = "raw", labels: 
             timezone: str | None = None, anonymize: bool = False, patient: dict | None = None,
             unit_uv: float = UNIT_UV, report_path: str | None = None, all_events: bool = False,
             highpass: str = "auto", start_at: str = "first-frame", restart_filter_at_gaps: bool = True,
-            event_timing: str = "auto", gaps: str = "auto", edf_format: str = "auto",
+            event_timing: str = "auto", gaps: str = "pad", edf_format: str = "auto",
             allow_unsupported: bool = False) -> dict:
     """highpass: 'auto' (vendor mode: on for Essentia, off for Apollo), 'on', 'off'.
     start_at: 'first-frame' (data start = first stored frame) or 'record-origin' (tick 0,
     leading missing frames padded with zeros, as the vendor does when the export range
     starts at the recording start).
-    gaps: 'pad' (zeros inside a continuous EDF+C, as the vendor does), 'discontinuous'
-    (EDF+D without the gap seconds; raw mode only) or 'auto' (discontinuous in raw mode
-    when the recording has gaps, pad otherwise).
+    gaps: 'pad' (default: zeros inside a continuous EDF+C, as the vendor does; read
+    correctly by every EDF reader) or 'discontinuous' (EDF+D without the gap seconds;
+    raw mode only; EDFlib/pyedflib refuses such files and MNE-Python reads them as
+    contiguous, so it is opt-in).
     edf_format: 'auto' (plain EDF when nothing needs EDF+: no annotations, no EDF+D and a
     start on a whole second; EDF+ otherwise), 'edf+' or 'edf' (plain EDF: annotations
     dropped and the start truncated to the whole second, both with a warning).
     allow_unsupported: convert even if the storage schema version is not supported."""
     if mode not in ("raw", "vendor"):
         raise ValueError("mode must be 'raw' or 'vendor'")
-    if gaps not in ("auto", "pad", "discontinuous"):
-        raise ValueError("gaps must be 'auto', 'pad' or 'discontinuous'")
+    if gaps not in ("pad", "discontinuous"):
+        raise ValueError("gaps must be 'pad' or 'discontinuous'")
     if edf_format not in ("auto", "edf", "edf+"):
         raise ValueError("edf_format must be 'auto', 'edf' or 'edf+'")
     if gaps == "discontinuous" and mode == "vendor":
@@ -299,9 +300,7 @@ def convert(rec: CadwellRecording, out_path: str, *, mode: str = "raw", labels: 
             ann.append((onset, dur if dur > 0 else -1, e.text))
     # recording gaps (not the leading padding of --start-at record-origin)
     rec_gaps = gaps_padded[1:] if lead else list(gaps_padded)
-    gap_policy = gaps
-    if gap_policy == "auto":
-        gap_policy = "discontinuous" if (mode == "raw" and rec_gaps and edf_format != "edf") else "pad"
+    gap_policy = gaps if rec_gaps else "pad"      # EDF+D only when there is a gap to leave out
     keep = np.ones(seconds, dtype=bool)          # records written
     edge_zero_samples = 0
     if gap_policy == "discontinuous":

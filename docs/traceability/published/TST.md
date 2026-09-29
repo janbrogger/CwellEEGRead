@@ -214,16 +214,17 @@ the refusal of other versions is tested under TST006.
 # 15 Gap handling _(TST015)_ {#TST015}
 
 Using a test recording that contains at least one acquisition gap
-(cadwell-export3: 10 s), convert in raw mode with `--gaps pad`. Pass if the
-number of EDF records equals the frame-number span, the padded seconds read
-back as digital zero at exactly the missing frame numbers, the samples on
-both sides of the gap are unchanged, the gap annotation and the vendor's
-Stop/Start Recording events appear at the correct offsets, and the
-conversion report lists the gap. Convert it again with the default. Pass if
-the file is EDF+D, the record onsets skip exactly the gap seconds, the
-samples equal the padded file's without the gap records, and the gap and
-Stop/Start Recording annotations are present. Implemented in
-tests/test_export3_gap.py and tests/test_edf_formats.py.
+(cadwell-export3: 10 s), convert in raw mode with the default gap handling.
+Pass if the file is EDF+C, the number of EDF records equals the
+frame-number span, the padded seconds read back as digital zero at exactly
+the missing frame numbers, the samples on both sides of the gap are
+unchanged, the gap annotation and the vendor's Stop/Start Recording events
+appear at the correct offsets, and the conversion report lists the gap.
+Convert it again with `--gaps discontinuous`. Pass if the file is EDF+D,
+the record onsets skip exactly the gap seconds, the samples equal the
+padded file's without the gap records, and the gap and Stop/Start Recording
+annotations are present. Implemented in tests/test_export3_gap.py and
+tests/test_edf_formats.py.
 
 *Parent links: DES008, DES019*
 

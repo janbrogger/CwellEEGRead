@@ -7,19 +7,20 @@ links:
 - NEED003: RvD-6a6d_WOKUUx5CuBdfvRWBP3ZpbmhlSuyqq55XL4=
 normative: true
 ref: ''
-reviewed: Zdc9pSQxE6qGdW6KAYlr1roPKd2-alkwo5tkcycHKMk=
+reviewed: biS3ertsJPuLLCccjgKzkzOFFkKfjM4R4xsPfbybjZ0=
 text: |
   Cadwell recordings can contain gaps (recording stopped and restarted); the
   index then lacks the frame numbers of the gap and holds a GapInfo row. The
   program shall detect gaps from the frame numbering and represent them in
-  the EDF output. By default a recording with gaps shall be written as a
+  the EDF output, by default as the vendor's own export does: a continuous
+  EDF+C file in which the missing seconds are written as digital zero at the
+  frame boundaries so that the time axis and every annotation stay aligned
+  with wall-clock time, plus an annotation "Recording gap N s (padded with
+  zeros)" at the gap start. This default is chosen because common EDF readers
+  (EDFlib/pyedflib, MNE-Python) do not handle discontinuous files correctly.
+  As an option outside the vendor-compatible mode, the program shall write a
   discontinuous EDF+D file whose data records carry their true onsets, so
-  that the gap seconds are left out rather than filled with invented data,
-  with an annotation "Recording gap N s" at the gap start. As an option, and
-  always in the vendor-compatible mode, the program shall instead write what
-  the vendor's own export does: a continuous EDF+C file in which the missing
-  seconds are written as digital zero at the frame boundaries so that the time
-  axis and every annotation stay aligned with wall-clock time, plus an
-  annotation "Recording gap N s (padded with zeros)". The gaps shall be listed
-  in the conversion report, and the equivalence tests shall compare segment
-  by segment so that gap handling differences are explicit rather than hidden.
+  that the gap seconds are left out, with an annotation "Recording gap N s".
+  The gaps shall be listed in the conversion report, and the equivalence tests
+  shall compare segment by segment so that gap handling differences are
+  explicit rather than hidden.

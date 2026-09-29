@@ -1,5 +1,5 @@
 """EDF variants and header fields (REQ002 / DES002 / TST001, REQ019 / DES019 / TST015):
-EDF+D for recordings with gaps, plain EDF when nothing needs EDF+, the prefilter
+EDF+D for recordings with gaps on request, plain EDF when nothing needs EDF+, the prefilter
 field when the vendor high-pass is applied, and read-back by MNE-Python as the
 second independent reader."""
 import datetime as dt
@@ -52,18 +52,18 @@ def read_raw_edf(path):
 def e3_pad_and_d(tmp_path_factory):
     d = tmp_path_factory.mktemp("e3")
     rec = open_recording(str(E3))
-    rep_d = convert(rec, str(d / "auto.edf"), mode="raw")                 # default: gaps='auto'
-    rep_p = convert(rec, str(d / "pad.edf"), mode="raw", gaps="pad")
+    rep_d = convert(rec, str(d / "disc.edf"), mode="raw", gaps="discontinuous")
+    rep_p = convert(rec, str(d / "pad.edf"), mode="raw")                  # default: gaps='pad'
     return d, rep_d, rep_p
 
 
 @needs_e3
-def test_gaps_give_edf_plus_d_by_default_in_raw_mode(e3_pad_and_d):
+def test_gaps_padded_by_default_and_edf_plus_d_on_request(e3_pad_and_d):
     d, rep_d, rep_p = e3_pad_and_d
     assert rep_d["edf_type"] == "EDF+D" and rep_d["gaps_policy"] == "discontinuous"
     assert rep_p["edf_type"] == "EDF+C" and rep_p["gaps_policy"] == "pad"
     assert rep_d["records_written"] == 1207 and rep_d["records_omitted_in_gaps"] == 10
-    reserved, _, sig_d, onsets, ann = read_raw_edf(d / "auto.edf")
+    reserved, _, sig_d, onsets, ann = read_raw_edf(d / "disc.edf")
     reserved_p, _, sig_p, onsets_p, _ = read_raw_edf(d / "pad.edf")
     assert reserved == "EDF+D" and reserved_p == "EDF+C" and len(onsets_p) == 1217
     subsec = onsets_p[0]
@@ -95,6 +95,12 @@ def test_edf_plus_d_rules(tmp_path):
     rec = open_recording(str(E3))
     with pytest.raises(ValueError):
         convert(rec, str(tmp_path / "v.edf"), mode="vendor", gaps="discontinuous")
+
+
+@needs_e1
+def test_discontinuous_without_gaps_stays_continuous(tmp_path):
+    rep = convert(open_recording(str(E1)), str(tmp_path / "e1.edf"), mode="raw", gaps="discontinuous")
+    assert rep["edf_type"] == "EDF+C" and rep["gaps_policy"] == "pad" and rep["records_omitted_in_gaps"] == 0
 
 
 @needs_e1
