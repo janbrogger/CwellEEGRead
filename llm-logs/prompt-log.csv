@@ -686,3 +686,4 @@ Drag and drop the ZIP file of your plugin directly into this issue.
 2026-09-29,12:16:14,jan@brogger.no,cf13040e-bd76-59ca-a29e-acac61c6b3ca,"Change the import options in the import options dialog to radio buttons, and re-do the screenshots."
 2026-09-29,12:36:56,jan@brogger.no,cf13040e-bd76-59ca-a29e-acac61c6b3ca,"Merge your changes into the main branch, and make a github release."
 2026-09-29,12:56:56,jan@brogger.no,cf13040e-bd76-59ca-a29e-acac61c6b3ca,Yes
+2026-09-29,13:49:05,jan@brogger.no,23802899-074d-50c0-a6e6-286398e4b17f,"Investigate whether we can write a Cadwell format EEG file, with new events added from an external JSON file with clock timestamp and a text event. We would verify the conversion during development by re-converting the file to an EDF file with this tool."

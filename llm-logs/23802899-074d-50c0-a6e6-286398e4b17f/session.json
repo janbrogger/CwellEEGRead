@@ -1,0 +1,23 @@
+{
+  "session_id": "23802899-074d-50c0-a6e6-286398e4b17f",
+  "start_utc": "2026-09-29T13:49:05.441Z",
+  "last_event_utc": "2026-09-29T14:01:51.455Z",
+  "span": "12 min",
+  "prompts": 1,
+  "models": [
+    "claude-opus-5-5"
+  ],
+  "tool_use_counts": {
+    "Bash": 32,
+    "Write": 3
+  },
+  "claude_code_version": "2.1.284",
+  "git_branch": "claude/sweet-pascal-1576ud",
+  "user": "jan@brogger.no",
+  "source": "claude-code-remote",
+  "topic": "untagged",
+  "transcript_files": [
+    "transcript.jsonl"
+  ],
+  "transcript_bytes": 974476
+}

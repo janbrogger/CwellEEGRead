@@ -1,0 +1,2 @@
+n,date,time_utc,prompt_text
+1,2026-09-29,13:49:05,"Investigate whether we can write a Cadwell format EEG file, with new events added from an external JSON file with clock timestamp and a text event. We would verify the conversion during development by re-converting the file to an EDF file with this tool."
