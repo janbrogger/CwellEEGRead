@@ -9,8 +9,8 @@
 %   >> [EEG, com] = pop_cadwell(path, 'key', val, ...)
 %
 % Called without arguments (the EEGLAB menu), a file dialog is followed by a
-% dialog for 'importevent', 'padgaps' and 'eventtiming' (only 'importevent'
-% for an EDF file); Cancel in either returns EEG = [] and com = ''.
+% dialog for 'importevent' (checkbox), 'padgaps' and 'eventtiming' (radio
+% buttons; only 'importevent' for an EDF file); Cancel in either returns EEG = [] and com = ''.
 %
 % Optional inputs:
 %   'importevent' - 'on'|'off' (default 'on'): events -> EEG.event (deleted events and
@@ -101,14 +101,13 @@ function args = options_dialog(filename)
                { 'style' 'checkbox' 'string' 'Import events' 'value' 1 'tag' 'importevent' } };
     geometry = { [1 3] [1] };
     if iscadwell
-        uilist = [ uilist, ...
-            { { 'style' 'text' 'string' 'Recording pauses' } ...
-              { 'style' 'popupmenu' 'value' 1 'tag' 'padgaps' 'string' ...
-                'Join the segments, mark each pause with a boundary event|Fill each pause with zeros (keeps wall-clock latencies)' } ...
-              { 'style' 'text' 'string' 'Event timing' } ...
-              { 'style' 'popupmenu' 'value' 1 'tag' 'eventtiming' 'string' ...
-                'Amplifier sample clock (recommended)|Wall-clock stamps (as the vendor''s EDF export)' } } ];
-        geometry = [ geometry, { [1 3] [1 3] } ];
+        uilist = [ uilist, { { 'style' 'text' 'string' 'Recording pauses' 'fontweight' 'bold' } }, ...
+            radios('padgaps', { 'join', 'Join the segments, mark each pause with a boundary event'; ...
+                                'fill', 'Fill each pause with zeros (keeps wall-clock latencies)' }), ...
+            { { 'style' 'text' 'string' 'Event timing' 'fontweight' 'bold' } }, ...
+            radios('eventtiming', { 'ticks', 'Amplifier sample clock (recommended)'; ...
+                               'stamp', 'Wall-clock stamps (as the vendor''s EDF export)' }) ];
+        geometry = [ geometry, { [1] [0.1 1] [0.1 1] [1] [0.1 1] [0.1 1] } ];
     end
     [res, ~, ~, out] = inputgui('geometry', geometry, 'uilist', uilist, ...
         'helpcom', 'pophelp(''pop_cadwell'');', 'title', 'Import Cadwell EEG -- pop_cadwell()');
@@ -118,7 +117,24 @@ function args = options_dialog(filename)
     args = { 'importevent', onoff{out.importevent + 1} };
     if iscadwell
         timing = { 'ticks' 'stamp' };
-        args = [ args, { 'padgaps', onoff{out.padgaps}, 'eventtiming', timing{out.eventtiming} } ];
+        args = [ args, { 'padgaps', onoff{out.padgaps_fill + 1}, 'eventtiming', timing{out.eventtiming_stamp + 1} } ];
+    end
+end
+
+function uilist = radios(group, choices)
+    % one indented row per choice: radio buttons tagged <group>_<key>, the
+    % first selected; clicking one clears the others of its group
+    % EEGLAB's own colours (supergui colours radio buttons by the style name
+    % 'radio', which no radio button has, so they would stay grey and black)
+    GUIBACKCOLOR = [.8 .8 .8]; GUITEXTCOLOR = [0 0 0];
+    if exist('icadefs', 'file'), icadefs; end
+    tags = strcat(group, '_', choices(:, 1)');
+    clear_all = sprintf('set(findobj(gcbf, ''tag'', ''%s''), ''value'', 0); ', tags{:});
+    uilist = {};
+    for k = 1:numel(tags)
+        uilist = [ uilist, { {} { 'style' 'radiobutton' 'string' choices{k, 2} 'tag' tags{k} ...
+                                  'value' double(k == 1) 'backgroundcolor' GUIBACKCOLOR 'foregroundcolor' GUITEXTCOLOR ...
+                                  'callback' [ clear_all 'set(gcbo, ''value'', 1);' ] } } ];
     end
 end
 

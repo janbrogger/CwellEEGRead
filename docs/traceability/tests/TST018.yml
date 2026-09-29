@@ -5,10 +5,10 @@ header: |
 level: 18.0
 links:
 - DES016: 6MhkLq0Pi_dXjpWOftUm9fX8UWeohb3_5VxyRWmaIL8=
-- DES022: 5T8u8-___l3pGzVXjTkYJ-xgCGlGri6a6nApZESgClY=
+- DES022: 6SJqva_hPYRdR1UAHWmuPRbJplk6jjIPGFyuTw1yWek=
 normative: true
 ref: ''
-reviewed: 9iMbgTFhgq9uv6TmBClWKB2d46QCs9Z7O-CcOyt-aLs=
+reviewed: VdAyBacbWhmE4ljoaLv_Q-hny1Grqh-4pjiNW5oiOxw=
 text: |
   Screenshots with manual verification. Automated part: run
   `tools/eeglab_screenshots.py`, which starts EEGLAB's graphical interface under
@@ -29,8 +29,9 @@ text: |
   there. Pass if:
   - the file dialog shows export 3's `CadLink/Data` folder with its
     `.ezdataindex`;
-  - the options dialog shows that file, *Import events* ticked, the
-    concatenating pause choice and the sample-clock timing as defaults, and
+  - the options dialog shows that file, *Import events* ticked, two radio
+    buttons each under *Recording pauses* and *Event timing* with the
+    concatenating pause choice and the sample-clock timing selected, and
     Help/Cancel/Ok buttons, all readable;
   - EEGLAB's naming dialog follows, with the recording GUID as the name;
   - the EEG page shows the 32 channels in the vendor EDF's order (E1/Pg1 …

@@ -4,10 +4,10 @@ header: |
   Import through the EEGLAB menu
 level: 17.0
 links:
-- DES022: 5T8u8-___l3pGzVXjTkYJ-xgCGlGri6a6nApZESgClY=
+- DES022: 6SJqva_hPYRdR1UAHWmuPRbJplk6jjIPGFyuTw1yWek=
 normative: true
 ref: ''
-reviewed: s7NEh2wYTP6M9FFyTDa3jPlBOfwd4b6obeYqm8g_t2U=
+reviewed: IkdN4GIWp7LkruqKCdtH9rHRLL7KBPOvkkUz1b4oemU=
 text: |
   Start EEGLAB's graphical interface under GNU Octave on a virtual display
   (xvfb) from a private EEGLAB tree with the plugin copied into `plugins/`,
@@ -19,9 +19,12 @@ text: |
   EDF)* is present under *Using EEGLAB functions and plugins* and enabled
   before any dataset exists; under an Octave without `contains` the plugin
   has put its stand-in on the path; choosing the item shows the options
-  dialog, with two choices in each popup menu, and then EEGLAB's naming
-  dialog; with *Fill each pause with zeros* and *Wall-clock stamps* chosen
-  and a name typed, exactly one dataset is stored under that name, with one
+  dialog, with the four radio buttons `padgaps_join`, `padgaps_fill`,
+  `eventtiming_ticks`, `eventtiming_stamp` and the first of each group
+  selected, and then EEGLAB's naming dialog; clicking *Fill each pause with
+  zeros* and *Wall-clock stamps* (the button turns on, then its own
+  callback runs) leaves exactly those two selected; with them and a name
+  typed, exactly one dataset is stored under that name, with one
   `Recording gap` event of 10 s and no `boundary` event, stamp event timing,
   and a history containing the `pop_cadwell` call with `'padgaps', 'on'` and
   `'eventtiming', 'stamp'`; no EEGLAB error is raised; and choosing the item

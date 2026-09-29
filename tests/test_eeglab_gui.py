@@ -68,19 +68,27 @@ function [result, userdat, strhalt, resstruct] = inputgui(varargin)
     inputgui(varargin{:}, 'mode', 'plot');
     fig = setdiff(findobj(0, 'type', 'figure'), old);
     assert(numel(fig) == 1, 'inputgui drew no dialog');
-    popups = findobj(fig, 'style', 'popupmenu'); items = struct();
-    for h = popups(:)', s = get(h, 'string'); if ischar(s), s = strsplit(strjoin(cellstr(s)', '|'), '|'); end; items.(get(h, 'tag')) = numel(s); end
-    GUITEST.popupitems{k} = items;
+    GUITEST.radios{k} = radio_state(fig);               % as drawn: the defaults
     answer = GUITEST.answers{k};
     if ischar(answer) && strcmp(answer, 'cancel'), close(fig); return; end
     for f = fieldnames(answer)'
         h = findobj(fig, 'tag', f{1});
         assert(numel(h) == 1, sprintf('no widget tagged %s in "%s"', f{1}, GUITEST.titles{k}));
-        if strcmp(get(h, 'style'), 'edit'), set(h, 'string', answer.(f{1})); else, set(h, 'value', answer.(f{1})); end
+        if strcmp(get(h, 'style'), 'edit'), set(h, 'string', answer.(f{1}));
+        elseif strcmp(get(h, 'style'), 'radiobutton')    % a click: the button turns on, then its callback runs
+            set(h, 'value', 1);
+            eval(regexprep(get(h, 'callback'), {'gcbf', 'gcbo'}, {'fig', 'h'}));
+        else, set(h, 'value', answer.(f{1})); end
     end
+    GUITEST.radiosafter{k} = radio_state(fig);
     set(findobj(fig, 'tag', 'ok'), 'userdata', 'retuninginputui');
     [result, userdat, strhalt, resstruct] = inputgui('getresult', fig);
     close(fig);
+end
+
+function st = radio_state(fig)
+    st = struct();
+    for h = findobj(fig, 'style', 'radiobutton')', st.(get(h, 'tag')) = get(h, 'value'); end
 end
 """
 
@@ -103,8 +111,8 @@ end
 SCRIPT = r"""
 warning('off', 'all');
 global GUITEST
-GUITEST = struct('file', '{file}', 'titles', {{{{}}}}, 'popupitems', {{{{}}}}, 'errors', {{{{}}}});
-GUITEST.answers = {{ struct('importevent', 1, 'padgaps', 2, 'eventtiming', 2), ...  % options: pad pauses, stamp timing
+GUITEST = struct('file', '{file}', 'titles', {{{{}}}}, 'radios', {{{{}}}}, 'radiosafter', {{{{}}}}, 'errors', {{{{}}}});
+GUITEST.answers = {{ struct('importevent', 1, 'padgaps_fill', 1, 'eventtiming_stamp', 1), ...  % click: pad pauses, stamp timing
                     struct('namenew', 'Cadwell GUI test'), ...                     % EEGLAB's naming dialog
                     'cancel' }};                                                   % options dialog of the second import
 native_contains = exist('contains') > 0;
@@ -123,7 +131,11 @@ eval(get(h, 'callback'));                        % first import: answer both dia
 assert(isempty(GUITEST.errors), 'errors during import');
 assert(numel(GUITEST.titles) == 2 && strcmp(GUITEST.titles{{1}}, '{title}'), 'options dialog not shown first');
 assert(~isempty(strfind(lower(GUITEST.titles{{2}}), 'dataset')), 'EEGLAB naming dialog not shown');
-assert(GUITEST.popupitems{{1}}.padgaps == 2 && GUITEST.popupitems{{1}}.eventtiming == 2, 'popup menus need two choices each');
+r = GUITEST.radios{{1}};                           % defaults as drawn, then after the two clicks
+assert(isequal(sort(fieldnames(r))', sort({{'padgaps_join', 'padgaps_fill', 'eventtiming_ticks', 'eventtiming_stamp'}})), 'four radio buttons expected');
+assert(r.padgaps_join == 1 && r.padgaps_fill == 0 && r.eventtiming_ticks == 1 && r.eventtiming_stamp == 0, 'wrong default radio buttons');
+r = GUITEST.radiosafter{{1}};
+assert(r.padgaps_join == 0 && r.padgaps_fill == 1 && r.eventtiming_ticks == 0 && r.eventtiming_stamp == 1, 'radio buttons of a group not exclusive');
 assert(numel(ALLEEG) == 1 && CURRENTSET == 1, 'dataset not stored');
 assert(strcmp(EEG.setname, 'Cadwell GUI test'), 'name from the naming dialog not applied');
 gap = EEG.event(strcmp({{EEG.event.type}}, 'Recording gap'));

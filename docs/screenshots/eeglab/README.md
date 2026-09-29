@@ -52,9 +52,12 @@ Pass if every item holds. Reference values come from the recording itself
 2. **Options dialog**
    - The file name shown is that `.ezdataindex`.
    - *Import events* is ticked.
-   - *Recording pauses* reads *Join the segments, mark each pause with a
-     boundary event*.
-   - *Event timing* reads *Amplifier sample clock (recommended)*.
+   - Under *Recording pauses* two radio buttons, *Join the segments, mark
+     each pause with a boundary event* (selected) and *Fill each pause with
+     zeros (keeps wall-clock latencies)*.
+   - Under *Event timing* two radio buttons, *Amplifier sample clock
+     (recommended)* (selected) and *Wall-clock stamps (as the vendor's EDF
+     export)*.
    - It has *Help*, *Cancel* and *Ok* buttons.
    - All text can be read.
 3. **Naming dialog**
@@ -87,5 +90,6 @@ Pass if every item holds. Reference values come from the recording itself
 
 | Date | Screenshots from | Verified by | Result | Notes |
 |---|---|---|---|---|
-| 2026-09-29 | this commit (Octave 8.4, EEGLAB Sept 2026) | Claude Code session (pre-check, not the manual verification) | all items hold | cosmetic issues above |
+| 2026-09-29 | popup-menu dialog (commit b9bddd5; Octave 8.4, EEGLAB Sept 2026) | Claude Code session (pre-check, not the manual verification) | all items held | superseded by the radio-button dialog |
+| 2026-09-29 | radio-button dialog (this commit) | Claude Code session (pre-check, not the manual verification) | all items hold | cosmetic issues above |
 | | | *(human reviewer)* | | |

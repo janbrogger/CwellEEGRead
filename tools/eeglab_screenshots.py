@@ -122,7 +122,7 @@ class Screen:
         subprocess.run(["import", "-window", win, str(shot)], env=self.env, check=True)
         img = Image.open(shot).convert("L")
         w, h = img.size
-        top = int(h * 0.6)
+        top = int(h * 0.75)                                     # the button row only
         px = img.load()
         cols = [c for c in range(w) if sum(px[c, r] > 225 for r in range(top, h)) > 10]
         right = cols[-1]

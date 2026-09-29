@@ -266,9 +266,12 @@ Pass if: the plugin is loaded, *From Cadwell (.ezdataindex / converted
 EDF)* is present under *Using EEGLAB functions and plugins* and enabled
 before any dataset exists; under an Octave without `contains` the plugin
 has put its stand-in on the path; choosing the item shows the options
-dialog, with two choices in each popup menu, and then EEGLAB's naming
-dialog; with *Fill each pause with zeros* and *Wall-clock stamps* chosen
-and a name typed, exactly one dataset is stored under that name, with one
+dialog, with the four radio buttons `padgaps_join`, `padgaps_fill`,
+`eventtiming_ticks`, `eventtiming_stamp` and the first of each group
+selected, and then EEGLAB's naming dialog; clicking *Fill each pause with
+zeros* and *Wall-clock stamps* (the button turns on, then its own
+callback runs) leaves exactly those two selected; with them and a name
+typed, exactly one dataset is stored under that name, with one
 `Recording gap` event of 10 s and no `boundary` event, stamp event timing,
 and a history containing the `pop_cadwell` call with `'padgaps', 'on'` and
 `'eventtiming', 'stamp'`; no EEGLAB error is raised; and choosing the item
@@ -299,8 +302,9 @@ Manual part: a reviewer checks the committed screenshots in
 there. Pass if:
 - the file dialog shows export 3's `CadLink/Data` folder with its
   `.ezdataindex`;
-- the options dialog shows that file, *Import events* ticked, the
-  concatenating pause choice and the sample-clock timing as defaults, and
+- the options dialog shows that file, *Import events* ticked, two radio
+  buttons each under *Recording pauses* and *Event timing* with the
+  concatenating pause choice and the sample-clock timing selected, and
   Help/Cancel/Ok buttons, all readable;
 - EEGLAB's naming dialog follows, with the recording GUID as the name;
 - the EEG page shows the 32 channels in the vendor EDF's order (E1/Pg1 …
