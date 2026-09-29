@@ -2,10 +2,10 @@
 # Session `4f8951a5-bd29-5446-9df5-040fb4ec277a`
 
 - Started (UTC): 2026-09-29T08:10:46.328Z  
-- Last event (UTC): 2026-09-29T08:54:28.560Z (span 43 min)  
+- Last event (UTC): 2026-09-29T09:14:48.345Z (span 1 h 4 min)  
 - User: jan@brogger.no; source: claude-code-remote; branch: `claude/serene-davinci-0nlq5s`  
 - Models: claude-opus-5-5; Claude Code 2.1.284  
-- Prompts: 2; transcript: transcript.jsonl (1.9 MB)
+- Prompts: 2; transcript: transcript.jsonl (2.2 MB)
 
 This file is derived from the transcript for readers without an LLM. Prompts are verbatim; responses are the assistant's text messages (tool calls and their output are only summarised - see the JSONL for those).
 
@@ -128,7 +128,7 @@ Once you answer the four decisions at the end of the plan (test data, the prefil
 1. Amend REQ007 and keep data in git. 2. Make the prefilter field into "HP: unknown (0.16 Hz?)". 3. Unknown schema: refuse by default. 4. Write EDF+D as default if there are gaps in the data. 5. When done, push to master.
 ```
 
-_Tools used in this turn: Bash ×66, Write ×4, Read ×1, Edit ×1, AskUserQuestion ×1_
+_Tools used in this turn: Bash ×73, Write ×4, mcp__github__actions_list ×2, Read ×1, Edit ×1, AskUserQuestion ×1, ToolSearch ×1_
 
 ### Response 2
 
@@ -283,4 +283,65 @@ The diff reads correctly. While the suite finishes, a quick CLI smoke test on th
 **[08:54 UTC]**
 
 Everything is done, committed and pushed to `claude/serene-davinci-0nlq5s`, and `main` can fast-forward to it. One thing to confirm before I push to `main`:
+
+**[09:08 UTC]**
+
+The default goes back to zero-padded EDF+C, and EDF+D becomes opt-in with `--gaps discontinuous`. The session was restarted, so first a check on the repo state:
+
+**[09:08 UTC]**
+
+Repo intact. Changing the code default first:
+
+**[09:08 UTC]**
+
+Now the tests: the default must give EDF+C, and EDF+D only on request.
+
+**[09:09 UTC]**
+
+17 passed. Now REQ019, DES002, DES006, DES019, TST015 and the README:
+
+**[09:10 UTC]**
+
+One wording fix: EDF+D was never the default on `main`, so DES019 shouldn't say it "was the default for a while".
+
+**[09:10 UTC]**
+
+TST001 and TST006 changed only in their link hashes (`doorstop clear` after the DES edits). Full suite before committing:
+
+**[09:14 UTC]**
+
+Pushed to `main` as a fast-forward. It's the first run of the new workflow, so I'll check it actually goes green:
+
+**[09:14 UTC]**
+
+The first CI run, on the previous commit, succeeded. Checking that both jobs actually ran:
+
+**[09:14 UTC]**
+
+All six fixes are on `main`, with pad-by-default for gaps as you chose. There's no `master` branch, so I pushed to `main`; it was a fast-forward from the working branch. All 68 tests pass locally (40 before). The new CI workflow was green on the previous commit in all three jobs (Python 3.11, Python 3.12, Octave). Its run on the final `main` commit was still queued when I last checked, so I haven't seen that one finish.
+
+1. **CI:** `.github/workflows/tests.yml` runs on every push and pull request. It runs `./setup.sh` on a fresh clone and the whole test suite on Python 3.11 and 3.12. A second job installs Octave and EEGLAB and runs the plugin tests.
+2. **Command line:**
+   - **Unknown schema refused:** a recording whose storage schema isn't supported (only 2.5 so far) is refused unless you pass `--allow-unsupported`. `inspect` still opens it.
+   - **Batch mode:** `cwelleegread batch <folder> <outdir>` converts every recording below a folder. It keeps going past a failure, writes an optional JSON summary, and exits 1 if anything failed.
+   - **Console command:** `cwelleegread` is now a real command; `setup.sh` installs it.
+   - **Plain EDF:** written when nothing needs EDF+ (no annotations and a start on a whole second). In practice almost every recording still needs EDF+. `--format` lets you force either.
+3. **Recording gaps:** zero-padded EDF+C remains the default. `--gaps discontinuous` writes EDF+D, in raw mode only. The reason for your choice is now in the docs: pyedflib refuses EDF+D files and MNE reads them as continuous, which shifts everything after a gap.
+4. **Prefilter field:** reads `HP: unknown (0.16 Hz?)` whenever the vendor high-pass is applied.
+5. **Test data:** REQ007 now allows recordings without patient data under `testdata/public/`. The manifest lists all four public exports with checksums, schema version and Cadwell version, and the tests verify them. I also updated the patient-data rule in `CLAUDE.md` to match.
+6. **Vendor mode with `--event-timing ticks`:** event onsets now account for the samples the vendor resampling removes. They were up to 32 ms late on export 1.
+7. **New tests:**
+   - reading output back with MNE, the second independent reader (TST001);
+   - anonymisation (TST007);
+   - the development environment (TST011);
+   - a licence check backed by a new register of ported files, `docs/research/ported-files.yml`, currently empty (TST012);
+   - batch mode, unsupported and corrupt input, EDF+D and plain EDF;
+   - a check that the published Doorstop Markdown is up to date.
+
+The Doorstop items (REQ, DES and TST), the published Markdown and PDF, and the README are all updated.
+
+Things you should know:
+- **pyedflib misreads the sub-second start** (`.027665` instead of `.276647`), and MNE drops it entirely. That's their problem, not the file's, but anyone using those libraries gets a slightly wrong start time.
+- **Export 1's Arc software version** was never recorded, so the manifest says "version not recorded".
+- **DES013 is out of date:** it still describes the PDF being built with Chromium and pypdf, but the script now uses WeasyPrint. I didn't change it because it's outside this task.
 
