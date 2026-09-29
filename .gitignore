@@ -25,4 +25,6 @@ Thumbs.db
 testdata/private/
 
 # Doorstop HTML publish output (regenerate: doorstop publish all docs/traceability/published/html)
+# and the PDF built from it by tools/doorstop_pdf.sh
 docs/traceability/published/html/
+docs/traceability/published/*.pdf

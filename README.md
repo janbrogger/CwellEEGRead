@@ -75,6 +75,7 @@ doorstop add REQ                # new requirement (edit the YAML it creates)
 doorstop link TST015 REQ019     # trace a test to a requirement
 doorstop review all             # mark reviewed after editing
 for d in NEED REQ TST; do doorstop publish $d docs/traceability/published/$d.md; done
+tools/doorstop_pdf.sh           # one PDF of NEED, REQ, TST and the traceability matrix (needs Chromium)
 ```
 
 ## Licence
