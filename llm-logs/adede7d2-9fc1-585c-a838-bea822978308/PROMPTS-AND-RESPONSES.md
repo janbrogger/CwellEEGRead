@@ -2,10 +2,10 @@
 # Session `adede7d2-9fc1-585c-a838-bea822978308`
 
 - Started (UTC): 2026-09-15T07:29:43.798Z  
-- Last event (UTC): 2026-09-29T07:01:43.910Z (span 335 h 32 min)  
+- Last event (UTC): 2026-09-29T07:08:23.439Z (span 335 h 38 min)  
 - User: jan@brogger.no; source: claude-code-remote; branch: `main`  
 - Models: claude-fable-5-1; Claude Code 2.1.284  
-- Prompts: 38; transcript: transcript.jsonl (14.9 MB)
+- Prompts: 39; transcript: transcript.jsonl (15.1 MB)
 
 This file is derived from the transcript for readers without an LLM. Prompts are verbatim; responses are the assistant's text messages (tool calls and their output are only summarised - see the JSONL for those).
 
@@ -2166,4 +2166,45 @@ If you want, the new session's first task can be a `session-start-hook` that ins
 **[07:01 UTC]**
 
 The only uncommitted changes were the session log files written by the archive hooks. They are committed as a log-only commit and pushed to `main`, and the working tree is clean.
+
+
+## Prompt 39 - 2026-09-29 07:04:54 UTC
+
+```text
+Make the new session's first task be a session-start-hook that installs Octave and clones EEGLAB so those tests always run on the web.
+```
+
+_Tools used in this turn: Bash ×9, Edit ×5, Write ×2, Skill ×1, SendUserFile ×1_
+
+### Response 39
+
+**[07:05 UTC]**
+
+Now validating: run the hook as the web session would (Octave is already installed here, so this exercises the idempotent path plus the EEGLAB clones), then one test with the exported variables.
+
+**[07:06 UTC]**
+
+The hook validates end to end: 4 tests passed with the exported variables. Committing it, and in parallel checking what is available for rendering the Doorstop publication to PDF.
+
+**[07:08 UTC]**
+
+Both done and pushed to `main`.
+
+**Doorstop PDF.** Doorstop only publishes text, Markdown and HTML, so I added `tools/doorstop_pdf.sh`: it publishes the tree as HTML, prints the index, NEED, REQ, TST and the traceability matrix with the headless Chromium that the web container ships, and merges them with pypdf into `docs/traceability/published/CwellEEGRead-traceability.pdf`, 21 pages. The PDF is attached above for download. The file itself is gitignored as a generated artifact; the script and a line in the README's requirements section are committed, so it can be regenerated any time with `tools/doorstop_pdf.sh`.
+
+**Session-start hook.** Summary of the changes:
+
+- `.claude/hooks/session-start.sh`, web-only (it exits at once unless `CLAUDE_CODE_REMOTE` is set): runs `./setup.sh` for the venv, installs GNU Octave plus zip and unzip with apt when missing, makes sparse checkouts of EEGLAB's `functions/` and the dipfit plugin under the gitignored `.cache/`, and exports `EEGLAB_DIR` and `DIPFIT_DIR` for the session through `CLAUDE_ENV_FILE`. All steps are idempotent.
+- `.claude/settings.json`: registered as a second `SessionStart` command after the existing log-archive hook, with a 10-minute timeout.
+- `.gitignore`: `.cache/` and the published PDF.
+
+Validation results:
+
+1. ✅ Session hook execution: run with `CLAUDE_CODE_REMOTE=true`; it completed in 14 s here (Octave was already present, the two clones were fresh) and wrote both exports to the env file.
+2. ✅ Linter execution: this repository configures no linter, so `py_compile` over the package and tests and `bash -n` over the hook served as the syntax check; both clean.
+3. ✅ Test execution: with the hook's exported variables, `tests/test_eeglab_import.py` and `tests/test_metadata_json.py` ran, 4 passed in 24 s. The Octave-dependent tests will therefore run in a fresh web container instead of skipping.
+
+Hook execution mode: synchronous. The session starts only once the hook has finished, which guarantees the venv, Octave and the EEGLAB checkouts exist before I run anything, at the cost of a slower start on a fresh container, about two minutes for the apt install and clones, seconds when the container state is cached. It can be switched to async for a faster start if you prefer that trade-off.
+
+The hook is on `main`, the repository's default branch, so every new web session picks it up from now on.
 
