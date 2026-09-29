@@ -31,7 +31,7 @@
   "git_branch": "main",
   "user": "jan@brogger.no",
   "source": "claude-code-remote",
-  "topic": "untagged",
+  "topic": "Repo setup; Cadwell .ezdata format and decoder; EDF converter with vendor-equivalence tests; EEGLAB plugin cadwellio (native SQLite reader, pauses, event timing, release 0.2.0)",
   "transcript_files": [
     "transcript.jsonl"
   ],

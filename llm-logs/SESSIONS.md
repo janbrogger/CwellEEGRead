@@ -5,12 +5,12 @@ Every Claude Code session run in this repository is archived here: one folder pe
 
 | Started (UTC) | Topic | Session id | Prompts | Span | Branch | Transcript |
 |---|---|---|---|---|---|---|
-| 2026-09-15 07:29 | untagged | [`adede7d2…`](adede7d2-9fc1-585c-a838-bea822978308/PROMPTS-AND-RESPONSES.md) | 36 | 318 h 15 min | `main` | 14.7 MB |
-| 2026-09-28 06:31 | untagged | [`831b87b8…`](831b87b8-e6bd-4acd-901b-d67180234ee3/PROMPTS-AND-RESPONSES.md) | 2 | 49 min | `claude/zen-lovelace-vq1to3` | 2.6 MB |
+| 2026-09-15 07:29 | Repo setup; Cadwell .ezdata format and decoder; EDF converter with vendor-equivalence tests; EEGLAB plugin cadwellio (native SQLite reader, pauses, event timing, release 0.2.0) | [`adede7d2…`](adede7d2-9fc1-585c-a838-bea822978308/PROMPTS-AND-RESPONSES.md) | 36 | 318 h 15 min | `main` | 14.7 MB |
+| 2026-09-28 06:31 | EEGLAB plugin scoping (2 prompts; work continued in session adede7d2) | [`831b87b8…`](831b87b8-e6bd-4acd-901b-d67180234ee3/PROMPTS-AND-RESPONSES.md) | 2 | 49 min | `claude/zen-lovelace-vq1to3` | 2.6 MB |
 
 ## 2026-09-15 - `adede7d2-9fc1-585c-a838-bea822978308`
 
-Topic: untagged. Models: claude-fable-5-1. Tools: Bash ×394, WebFetch ×64, Edit ×38, Read ×26, WebSearch ×18, Write ×13, Agent ×10, ToolSearch ×9.
+Topic: Repo setup; Cadwell .ezdata format and decoder; EDF converter with vendor-equivalence tests; EEGLAB plugin cadwellio (native SQLite reader, pauses, event timing, release 0.2.0). Models: claude-fable-5-1. Tools: Bash ×394, WebFetch ×64, Edit ×38, Read ×26, WebSearch ×18, Write ×13, Agent ×10, ToolSearch ×9.
 
 1. 07:29 - 1. Checkout my CwellEEGRead repo which is empty except a license file. 2. Help me setup a reproducible research environment in this repo. Investigate the SysRevReproEEG repo which has a template to s…
 2. 07:37 - I think you are in the wrong repo. We only want to *read* the SysRevReproEEG repo, and the work itself should be in the CwellEEGRead repo. Verify.
@@ -51,7 +51,7 @@ Topic: untagged. Models: claude-fable-5-1. Tools: Bash ×394, WebFetch ×64, Edi
 
 ## 2026-09-28 - `831b87b8-e6bd-4acd-901b-d67180234ee3`
 
-Topic: untagged. Models: claude-fable-5-1. Tools: Bash ×31, Edit ×18, WebFetch ×13, Read ×10, WebSearch ×10, Agent ×6, Grep ×3, Glob ×2.
+Topic: EEGLAB plugin scoping (2 prompts; work continued in session adede7d2). Models: claude-fable-5-1. Tools: Bash ×31, Edit ×18, WebFetch ×13, Read ×10, WebSearch ×10, Agent ×6, Grep ×3, Glob ×2.
 
 1. 06:35 - Investigate how to write an EEGLAB plugin that can ingest native Cadwell files into EEGLAB. I wrote code that reads old "Nervus" files for EEGLAB via fieldtrip. This can serve as an example. Fieldtri…
 2. 07:05 - Dispatch an agent to look for SQLITE reading in canonical matlab or eeglab
