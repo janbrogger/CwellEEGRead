@@ -1,0 +1,8 @@
+n,date,time_utc,prompt_text
+1,2026-09-29,08:10:46,"Go through the following list of deficiencies one by one, and propose a plan to fix them: No CI runs pytest; the only workflow builds the plugin zip.
+
+* No supported-version check, no batch mode, no console entry point, EDF+D not offered, plain EDF never written when there are no annotations.
+* The EDF prefilter field stays empty even when the vendor high-pass is applied.
+* `testdata/manifest.json`This session isn’t running, so its files can’t be opened. Send a message to start it again. is empty and its checksum fixtures are unused, while about 300 MB of non-patient data sits committed under `testdata/public/`, contrary to REQ007's wording.
+* Vendor mode with `--event-timing ticks` does not correct onsets for the samples the vendor resampling removes, up to 32 ms late by the end of export 1; the defaults are unaffected.
+* TST007, TST011 and TST012 have no automated tests, and read-back is checked with pyedflib only, not MNE as TST001 mentions."

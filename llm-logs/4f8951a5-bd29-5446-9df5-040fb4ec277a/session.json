@@ -1,0 +1,22 @@
+{
+  "session_id": "4f8951a5-bd29-5446-9df5-040fb4ec277a",
+  "start_utc": "2026-09-29T08:10:46.328Z",
+  "last_event_utc": "2026-09-29T08:12:09.455Z",
+  "span": "1 min",
+  "prompts": 1,
+  "models": [
+    "claude-opus-5-5"
+  ],
+  "tool_use_counts": {
+    "Bash": 8
+  },
+  "claude_code_version": "2.1.284",
+  "git_branch": "claude/serene-davinci-0nlq5s",
+  "user": "jan@brogger.no",
+  "source": "claude-code-remote",
+  "topic": "untagged",
+  "transcript_files": [
+    "transcript.jsonl"
+  ],
+  "transcript_bytes": 478383
+}

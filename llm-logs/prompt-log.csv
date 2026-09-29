@@ -671,3 +671,10 @@ Drag and drop the ZIP file of your plugin directly into this issue.
 2026-09-29,07:04:54,jan@brogger.no,adede7d2-9fc1-585c-a838-bea822978308,Make the new session's first task be a session-start-hook that installs Octave and clones EEGLAB so those tests always run on the web.
 2026-09-29,07:06:37,jan@brogger.no,adede7d2-9fc1-585c-a838-bea822978308,Now run the publish step on doorstop so I can download a doorstop PDF
 2026-09-29,07:12:07,jan@brogger.no,adede7d2-9fc1-585c-a838-bea822978308,"1. I can't seem to find a design stage in the doorstop documents. I see requirements, and tests. But i don't see a design stage. Isn't that a deficiency in the traceability chain? Dispatch opus agents to retrospectively write design documents for each requirements, and link the design documents to the tests instead of requirements to tests. 2. Then make the generated doorstop PDF part of the repo: remove the gitignore, find a way to make a nicer PDF of doorstop (preferably nicer than simply printing from chromium, search online with an agent)."
+2026-09-29,08:10:46,jan@brogger.no,4f8951a5-bd29-5446-9df5-040fb4ec277a,"Go through the following list of deficiencies one by one, and propose a plan to fix them: No CI runs pytest; the only workflow builds the plugin zip.
+
+* No supported-version check, no batch mode, no console entry point, EDF+D not offered, plain EDF never written when there are no annotations.
+* The EDF prefilter field stays empty even when the vendor high-pass is applied.
+* `testdata/manifest.json`This session isn’t running, so its files can’t be opened. Send a message to start it again. is empty and its checksum fixtures are unused, while about 300 MB of non-patient data sits committed under `testdata/public/`, contrary to REQ007's wording.
+* Vendor mode with `--event-timing ticks` does not correct onsets for the samples the vendor resampling removes, up to 32 ms late by the end of export 1; the defaults are unaffected.
+* TST007, TST011 and TST012 have no automated tests, and read-back is checked with pyedflib only, not MNE as TST001 mentions."

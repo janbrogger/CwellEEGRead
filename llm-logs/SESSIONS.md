@@ -7,6 +7,7 @@ Every Claude Code session run in this repository is archived here: one folder pe
 |---|---|---|---|---|---|---|
 | 2026-09-15 07:29 | Repo setup; Cadwell .ezdata format and decoder; EDF converter with vendor-equivalence tests; EEGLAB plugin cadwellio (native SQLite reader, pauses, event timing, release 0.2.0) | [`adede7d2…`](adede7d2-9fc1-585c-a838-bea822978308/PROMPTS-AND-RESPONSES.md) | 39 | 335 h 38 min | `main` | 15.1 MB |
 | 2026-09-28 06:31 | EEGLAB plugin scoping (2 prompts; work continued in session adede7d2) | [`831b87b8…`](831b87b8-e6bd-4acd-901b-d67180234ee3/PROMPTS-AND-RESPONSES.md) | 2 | 49 min | `claude/zen-lovelace-vq1to3` | 2.6 MB |
+| 2026-09-29 08:10 | untagged | [`4f8951a5…`](4f8951a5-bd29-5446-9df5-040fb4ec277a/PROMPTS-AND-RESPONSES.md) | 1 | 1 min | `claude/serene-davinci-0nlq5s` | 0.5 MB |
 
 ## 2026-09-15 - `adede7d2-9fc1-585c-a838-bea822978308`
 
@@ -58,3 +59,9 @@ Topic: EEGLAB plugin scoping (2 prompts; work continued in session adede7d2). Mo
 
 1. 06:35 - Investigate how to write an EEGLAB plugin that can ingest native Cadwell files into EEGLAB. I wrote code that reads old "Nervus" files for EEGLAB via fieldtrip. This can serve as an example. Fieldtri…
 2. 07:05 - Dispatch an agent to look for SQLITE reading in canonical matlab or eeglab
+
+## 2026-09-29 - `4f8951a5-bd29-5446-9df5-040fb4ec277a`
+
+Topic: untagged. Models: claude-opus-5-5. Tools: Bash ×8.
+
+1. 08:10 - Go through the following list of deficiencies one by one, and propose a plan to fix them: No CI runs pytest; the only workflow builds the plugin zip. * No supported-version check, no batch mode, no c…
