@@ -2,10 +2,10 @@
 # Session `cf13040e-bd76-59ca-a29e-acac61c6b3ca`
 
 - Started (UTC): 2026-09-29T09:58:11.339Z  
-- Last event (UTC): 2026-09-29T10:58:47.279Z (span 1 h 0 min)  
+- Last event (UTC): 2026-09-29T11:41:43.548Z (span 1 h 43 min)  
 - User: jan@brogger.no; source: claude-code-remote; branch: `claude/admiring-maxwell-f5w6tr`  
 - Models: claude-opus-5-5; Claude Code 2.1.284  
-- Prompts: 2; transcript: transcript.jsonl (1.4 MB)
+- Prompts: 3; transcript: transcript.jsonl (3.3 MB)
 
 This file is derived from the transcript for readers without an LLM. Prompts are verbatim; responses are the assistant's text messages (tool calls and their output are only summarised - see the JSONL for those).
 
@@ -181,4 +181,81 @@ Neither file is ever used under MATLAB. On Debian/Ubuntu, Octave also needs the 
 - `SUBMISSION.md` has ready-to-paste update text for [sccn/eeglab#971](https://github.com/sccn/eeglab/issues/971), for after you release 0.3.0.
 
 I haven't released 0.3.0 or posted anything to the EEGLAB issue. The plugin is still untested in MATLAB.
+
+
+## Prompt 3 - 2026-09-29 11:01:21 UTC
+
+```text
+Make screenshots in Octave: the import dialog, the options dialog, and a screenshot of the displayed EEG from export 3, first page, 10 seconds. Write this up as a screenshot doorstop test, with a manual verification, and show the screenshots here in this chat.
+```
+
+_Tools used in this turn: Bash ×21, Read ×5, mcp__github__actions_list ×4, Write ×2, mcp__github__get_job_logs ×2, SendUserFile ×1_
+
+### Response 3
+
+**[11:02 UTC]**
+
+I'll write a screenshot driver (`tools/eeglab_screenshots.py`) that runs EEGLAB on a virtual display and operates the real dialogs with xdotool.
+
+**[11:08 UTC]**
+
+Good progress: the file and options dialogs were captured. The OK click missed. Let me look at the screenshots, and check CI meanwhile.
+
+**[11:08 UTC]**
+
+CI ran the new menu test on GitHub and it passed (not skipped). Now fixing the OK click: I'll locate the button from the dialog's own pixels instead of a fixed offset.
+
+**[11:30 UTC]**
+
+All four screenshots were captured. Reviewing them:
+
+**[11:30 UTC]**
+
+All four screenshots are good. Committing them under `docs/screenshots/eeglab/` (export 3 is public test data), then adding the test and the Doorstop item.
+
+**[11:31 UTC]**
+
+Test passes. Now finding the facts a human reviewer should check the EEG screenshot against, using the vendor's own EDF export of the same recording:
+
+**[11:32 UTC]**
+
+Now CI (install the tools, run the test, keep the screenshots as an artifact) and the session hook.
+
+**[11:37 UTC]**
+
+All 70 tests pass. Committing and pushing.
+
+**[11:37 UTC]**
+
+Pushed. I'll check the CI run for the new screenshot step.
+
+**[11:37 UTC]**
+
+The four screenshots are above and committed in `docs/screenshots/eeglab/`, with a checklist for manual verification. A tool now takes them automatically, recorded as a new screenshot test, TST018. All 70 tests pass locally. CI is still running on the push; I'll check whether its new screenshot step works on GitHub.
+
+**How they're made:** `tools/eeglab_screenshots.py` starts EEGLAB under Octave on a virtual display, with the plugin installed as from its zip. It then works the real dialogs like a user would, by typing and clicking:
+1. **File dialog:** it goes to export 3's `CadLink/Data` folder, where the `.ezdataindex` file is listed.
+2. **Options dialog:** it shows the file name and the defaults, and gets *Ok*.
+3. **EEGLAB's naming dialog:** it gets *Ok*.
+4. **EEG display:** the first page, 10 seconds.
+
+**What the EEG screenshot shows:** all 32 channels in the same order as the vendor's EDF (E1/Pg1 … O2, then 1A–7A) and a 0–10 s axis. Cz is flat because it is the recording reference. There is one event, *Øyne lukket* ("eyes closed"), at 4.6 s, which matches the recording. The data is raw and unfiltered, so you can see slow drift at the start.
+
+**The test (TST018):**
+- **Automated part:** `tests/test_eeglab_screenshots.py` runs the same tool and checks that all four images are produced, big enough and not blank. CI now installs the extra tools it needs (xdotool, ImageMagick) and keeps each run's screenshots as a downloadable artifact, `eeglab-screenshots`.
+- **Manual part:** a reviewer checks the committed images against the checklist in `docs/screenshots/eeglab/README.md` and fills in the record table there. I checked every item and all hold. I logged that as a pre-check only; the row for a human reviewer is empty, waiting for you or someone else to sign off.
+
+**Two cosmetic glitches, neither caused by the plugin:**
+- **File dialog:** the *Files of type* box is drawn black. That dialog is Qt's own, and the virtual display has no window manager or theme.
+- **Naming dialog:** under Octave it is laid out too narrow, so the name field shows only the end of the name and the *Edit description* button is cut off.
+
+Both are noted in the checklist so a reviewer doesn't count them as failures.
+
+I also added `pillow` to `requirements-dev.txt`, because the tool uses it to find the *Ok* button, and updated the session start hook and the plugin README. The Doorstop documents and PDF are regenerated.
+
+**[11:41 UTC]**
+
+CI passed on the latest push, including the new screenshot step. The screenshots were produced on GitHub's own machines and saved as the `eeglab-screenshots` artifact on [the run](https://github.com/janbrogger/CwellEEGRead/actions/runs/36562901945), available until 28 December 2026.
+
+The only step left is a human review: someone checks the screenshots against the checklist in `docs/screenshots/eeglab/README.md` and fills in the reviewer row there.
 

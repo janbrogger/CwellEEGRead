@@ -1,3 +1,4 @@
 n,date,time_utc,prompt_text
 1,2026-09-29,09:58:11,We submitted an EEGLAB plugin to here: https://github.com/sccn/eeglab/issues/971 But did we create a GUI for it? Will it work automatically in GUI mode?
 2,2026-09-29,10:43:39,"Add an options dialog, with a test. We need to keep the standard EEGLAB naming dialog. Investigate a workaround for Octave on the Octave-specific issues, and if easy, implement them."
+3,2026-09-29,11:01:21,"Make screenshots in Octave: the import dialog, the options dialog, and a screenshot of the displayed EEG from export 3, first page, 10 seconds. Write this up as a screenshot doorstop test, with a manual verification, and show the screenshots here in this chat."
