@@ -81,7 +81,7 @@ whole repository to every release, which can be ignored).
 | `docs/research/` | Research notes: the Cadwell file format, the BioSig toolbox and licensing, downstream uses. |
 | `llm-logs/` | Archive of every Claude Code session (prompts, responses, full transcripts) and `sessions.csv`. Filled automatically by hooks in `.claude/`. |
 | `cwelleegread/` | the Python package: `ezdata.py` reads a CadLink export (index, frames, events, supported schema versions); `layout.py` amplifier-input labels; `edf.py` conversion policies; `edfwrite.py` EDF / EDF+C / EDF+D writer; `__main__.py` CLI (`convert`, `batch`, `inspect`). `pyproject.toml` makes it installable with the `cwelleegread` command. |
-| `tools/` | `cadwell_inspect.py`: stdlib inventory of a CadLink export. |
+| `tools/` | `cadwell_inspect.py`: stdlib inventory of a CadLink export. `cadwell_add_events.py`: research prototype that adds text events from a JSON file to a copy of an export (`docs/research/writing-events.md`). |
 | `tests/` | pytest suite, incl. `test_ezdata_public.py` (decoder vs vendor text/EDF export). Private-data tests skip until the recordings are present. Run on every push by `.github/workflows/tests.yml`. |
 | `testdata/` | `manifest.json` (every test recording with checksums, schema and Cadwell version), `public/` (non-patient recordings, committed), `private/` (clinical recordings, gitignored). |
 | `uses/` | Downstream-use scaffolds: `Morgoth/`, `SCOREAI/`, `EEGLAB/`. |
