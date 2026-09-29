@@ -685,3 +685,4 @@ Drag and drop the ZIP file of your plugin directly into this issue.
 2026-09-29,11:01:21,jan@brogger.no,cf13040e-bd76-59ca-a29e-acac61c6b3ca,"Make screenshots in Octave: the import dialog, the options dialog, and a screenshot of the displayed EEG from export 3, first page, 10 seconds. Write this up as a screenshot doorstop test, with a manual verification, and show the screenshots here in this chat."
 2026-09-29,12:16:14,jan@brogger.no,cf13040e-bd76-59ca-a29e-acac61c6b3ca,"Change the import options in the import options dialog to radio buttons, and re-do the screenshots."
 2026-09-29,12:36:56,jan@brogger.no,cf13040e-bd76-59ca-a29e-acac61c6b3ca,"Merge your changes into the main branch, and make a github release."
+2026-09-29,12:56:56,jan@brogger.no,cf13040e-bd76-59ca-a29e-acac61c6b3ca,Yes
