@@ -667,3 +667,4 @@ Drag and drop the ZIP file of your plugin directly into this issue.
 
 **Note:** The previous submission page has been closed due to security concerns."
 2026-09-29,06:58:31,jan@brogger.no,adede7d2-9fc1-585c-a838-bea822978308,Delete the release/cadwellio-v0.2.0 branch. Then update the human-readable [llm-logs](https://github.com/janbrogger/CwellEEGRead/tree/main/llm-logs)/SESSIONS.md so it reflects the current prompt status.
+2026-09-29,07:00:56,jan@brogger.no,adede7d2-9fc1-585c-a838-bea822978308,"OK, so how do I make a new session then?"

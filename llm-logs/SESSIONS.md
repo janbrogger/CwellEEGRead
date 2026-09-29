@@ -5,12 +5,12 @@ Every Claude Code session run in this repository is archived here: one folder pe
 
 | Started (UTC) | Topic | Session id | Prompts | Span | Branch | Transcript |
 |---|---|---|---|---|---|---|
-| 2026-09-15 07:29 | Repo setup; Cadwell .ezdata format and decoder; EDF converter with vendor-equivalence tests; EEGLAB plugin cadwellio (native SQLite reader, pauses, event timing, release 0.2.0) | [`adede7d2…`](adede7d2-9fc1-585c-a838-bea822978308/PROMPTS-AND-RESPONSES.md) | 36 | 318 h 15 min | `main` | 14.7 MB |
+| 2026-09-15 07:29 | Repo setup; Cadwell .ezdata format and decoder; EDF converter with vendor-equivalence tests; EEGLAB plugin cadwellio (native SQLite reader, pauses, event timing, release 0.2.0) | [`adede7d2…`](adede7d2-9fc1-585c-a838-bea822978308/PROMPTS-AND-RESPONSES.md) | 38 | 335 h 31 min | `main` | 14.9 MB |
 | 2026-09-28 06:31 | EEGLAB plugin scoping (2 prompts; work continued in session adede7d2) | [`831b87b8…`](831b87b8-e6bd-4acd-901b-d67180234ee3/PROMPTS-AND-RESPONSES.md) | 2 | 49 min | `claude/zen-lovelace-vq1to3` | 2.6 MB |
 
 ## 2026-09-15 - `adede7d2-9fc1-585c-a838-bea822978308`
 
-Topic: Repo setup; Cadwell .ezdata format and decoder; EDF converter with vendor-equivalence tests; EEGLAB plugin cadwellio (native SQLite reader, pauses, event timing, release 0.2.0). Models: claude-fable-5-1. Tools: Bash ×394, WebFetch ×64, Edit ×38, Read ×26, WebSearch ×18, Write ×13, Agent ×10, ToolSearch ×9.
+Topic: Repo setup; Cadwell .ezdata format and decoder; EDF converter with vendor-equivalence tests; EEGLAB plugin cadwellio (native SQLite reader, pauses, event timing, release 0.2.0). Models: claude-fable-5-1. Tools: Bash ×401, WebFetch ×64, Edit ×38, Read ×26, WebSearch ×18, Write ×13, ToolSearch ×10, Agent ×10.
 
 1. 07:29 - 1. Checkout my CwellEEGRead repo which is empty except a license file. 2. Help me setup a reproducible research environment in this repo. Investigate the SysRevReproEEG repo which has a template to s…
 2. 07:37 - I think you are in the wrong repo. We only want to *read* the SysRevReproEEG repo, and the work itself should be in the CwellEEGRead repo. Verify.
@@ -48,6 +48,8 @@ Topic: Repo setup; Cadwell .ezdata format and decoder; EDF converter with vendor
 34. 13:34 - Tag cadwellio-v0.2.0 and push it, then check the release
 35. 13:42 - Repo is public, go ahead
 36. 13:44 - Write me text in markdown boxes for the new issue template on EEGLAB: ## Plugin submission Please provide the following information: **Plugin name:** **Current version:** **New or revised version:**…
+37. 06:58 - Delete the release/cadwellio-v0.2.0 branch. Then update the human-readable [llm-logs](https://github.com/janbrogger/CwellEEGRead/tree/main/llm-logs)/SESSIONS.md so it reflects the current prompt stat…
+38. 07:00 - OK, so how do I make a new session then?
 
 ## 2026-09-28 - `831b87b8-e6bd-4acd-901b-d67180234ee3`
 

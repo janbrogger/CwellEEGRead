@@ -2,10 +2,10 @@
 # Session `adede7d2-9fc1-585c-a838-bea822978308`
 
 - Started (UTC): 2026-09-15T07:29:43.798Z  
-- Last event (UTC): 2026-09-28T13:45:08.194Z (span 318 h 15 min)  
+- Last event (UTC): 2026-09-29T07:01:29.654Z (span 335 h 31 min)  
 - User: jan@brogger.no; source: claude-code-remote; branch: `main`  
-- Models: claude-fable-5-1; Claude Code 2.1.283  
-- Prompts: 36; transcript: transcript.jsonl (14.7 MB)
+- Models: claude-fable-5-1; Claude Code 2.1.284  
+- Prompts: 38; transcript: transcript.jsonl (14.9 MB)
 
 This file is derived from the transcript for readers without an LLM. Prompts are verbatim; responses are the assistant's text messages (tool calls and their output are only summarised - see the JSONL for those).
 
@@ -2113,4 +2113,53 @@ Two notes for posting. Attach the zip by dragging `cadwellio0.2.0.zip` from the 
 **[13:45 UTC]**
 
 The only uncommitted changes were the session log files written by the archive hooks. They are committed as a log-only commit and pushed to `main`, and the working tree is clean.
+
+
+## Prompt 37 - 2026-09-29 06:58:31 UTC
+
+```text
+Delete the release/cadwellio-v0.2.0 branch. Then update the human-readable [llm-logs](https://github.com/janbrogger/CwellEEGRead/tree/main/llm-logs)/SESSIONS.md so it reflects the current prompt status.
+```
+
+_Tools used in this turn: Bash ×6, ToolSearch ×1_
+
+### Response 37
+
+**[07:00 UTC]**
+
+The session index is updated and pushed. The branch deletion I could not do from here.
+
+**Branch.** Every form of `git push --delete` for `release/cadwellio-v0.2.0` is refused by this environment's git proxy with the same "remote end hung up" it gives for tag pushes, and the GitHub tools available to this session can create branches but not delete them. The branch still exists on GitHub. Deleting it is one click on the repository's Branches page, or `git push origin --delete release/cadwellio-v0.2.0` from any normal checkout. Nothing depends on it: the tag and the release are independent of the branch.
+
+**Session index.** `llm-logs/SESSIONS.md` was in fact already current: the hooks rebuild it at the end of every turn, and it listed all 36 prompts of this session up to the issue-text request. What it lacked was meaning in the Topic column, which read "untagged" for both sessions. I filled the topic column of `sessions.csv`, the one field the repository conventions allow to be hand-edited, and rebuilt the index with the archive tool:
+
+- 2026-09-15 session `adede7d2…`, 36 prompts: repo setup; Cadwell .ezdata format and decoder; EDF converter with vendor-equivalence tests; EEGLAB plugin cadwellio with the native SQLite reader, pause handling, event timing and release 0.2.0.
+- 2026-09-28 session `831b87b8…`, 2 prompts: EEGLAB plugin scoping, continued in the first session.
+
+The prompt you just sent becomes entry 37 when the Stop hook archives this turn, as with every turn. The commit is on `main` and the working tree is clean.
+
+
+## Prompt 38 - 2026-09-29 07:00:56 UTC
+
+```text
+OK, so how do I make a new session then?
+```
+
+_Tools used in this turn: Bash ×1_
+
+### Response 38
+
+**[07:01 UTC]**
+
+Start one from the Claude Code web app: at claude.ai/code choose *New session* (or the `+` in the sidebar), pick the `CwellEEGRead` repository, keep the same cloud environment, and set the branch to `main`. Nothing else is needed. The `SessionStart` hook in `.claude/settings.json` registers the new session automatically: a new folder under `llm-logs/` named by the new session id, a new row in `sessions.csv`, and from then on every prompt and the transcript are archived and committed by the hooks, exactly as in this session. This session is at 36 prompts and a 14.7 MB transcript and has already been compacted once, so a fresh one is the right call.
+
+**What carries over.** Everything the next session needs is in the repository: `CLAUDE.md` with the working conventions, the Doorstop tree, the research notes, the READMEs, the tests, and the `llm-logs` index that summarises what was done. The first thing I would do in a new session is read `CLAUDE.md`, the top-level README and `llm-logs/SESSIONS.md`.
+
+**What does not carry over, and one thing to fix before it matters.** The container is discarded, so anything installed by hand here is gone:
+
+- GNU Octave 8.4 was installed in this container with apt during the session. It is not in `setup.sh` or the environment's setup script, so in a fresh container the Octave-based tests (`test_octave_port.py`, `test_eeglab_import.py`) will silently skip rather than run. Add `apt-get install -y octave` to the environment's setup script (Edit the environment in the cloud environment menu), or ask the new session to do it first.
+- The EEGLAB checkout and dipfit used by `test_eeglab_import.py` lived in the scratchpad. That test skips unless `EEGLAB_DIR` points at a checkout; cloning `sccn/eeglab` and `sccn/dipfit` again takes a minute if you want it to run.
+- The reference dumps for the Octave self-test are regenerated by the test itself, so nothing to do there.
+
+If you want, the new session's first task can be a `session-start-hook` that installs Octave and clones EEGLAB so those tests always run on the web.
 
