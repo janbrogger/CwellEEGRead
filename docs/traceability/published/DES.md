@@ -437,7 +437,7 @@ Not done yet:
 
 *Parent links: REQ016*
 
-*Child links: TST013*
+*Child links: TST013, TST018*
 
 # 17 Reproducible development environment _(DES017)_ {#DES017}
 
@@ -550,9 +550,9 @@ Not done yet:
 - `eeglab_new`, run after every import from the menu, calls `contains`, which Octave lacks. `cadwellio/octave/contains.m` implements it for character vectors and cell arrays (patterns as text or cell array, `'IgnoreCase'`); `eegplugin_cadwellio` adds `octave/` to the path under Octave only when no `contains` exists.
 - EEGLAB adds only the plugin's own folder to the path, not sub-folders, so neither stand-in is used under MATLAB. `make_zip.sh` ships `octave/`. Debian/Ubuntu Octave also needs `fonts-freefont-otf` to draw text (documented, installed in CI and by the SessionStart hook).
 
-**Verified by** TST017 - `tests/test_eeglab_gui.py`.
+**Verified by** TST017 - `tests/test_eeglab_gui.py`; TST018 - screenshots of the dialogs and of the imported EEG (`tools/eeglab_screenshots.py`, `tests/test_eeglab_screenshots.py`), checked by hand against `docs/screenshots/eeglab/README.md`.
 
 *Parent links: REQ022*
 
-*Child links: TST017*
+*Child links: TST017, TST018*
 

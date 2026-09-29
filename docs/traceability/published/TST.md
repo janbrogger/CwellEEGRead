@@ -17,6 +17,7 @@
  * 15 Gap handling (TST015)
  * 16 Event timing on the sample clock (TST016)
  * 17 Import through the EEGLAB menu (TST017)
+ * 18 EEGLAB plugin screenshots, manually verified (TST018)
 
 # 1.0 EDF structural validity _(TST001)_ {#TST001}
 
@@ -276,4 +277,38 @@ Skipped when Octave, xvfb, EEGLAB or the export is missing, or Octave cannot
 draw text on the virtual display.
 
 *Parent links: DES022*
+
+# 18 EEGLAB plugin screenshots, manually verified _(TST018)_ {#TST018}
+
+Screenshots with manual verification. Automated part: run
+`tools/eeglab_screenshots.py`, which starts EEGLAB's graphical interface under
+GNU Octave on a virtual display (Xvfb) with the plugin installed in
+`plugins/` as from its zip. It chooses *From Cadwell* in the menu and works
+the real dialogs from outside with xdotool: it types public export 3's
+`CadLink/Data` folder and `.ezdataindex` into the file dialog, and presses
+*Ok* in the options dialog and in EEGLAB's naming dialog, keeping the
+defaults. It then shows the dataset with `pop_eegplot`, first page, 10 s
+window. Pass if four screenshots are written (the file dialog, the options
+dialog, the naming dialog and the EEG), each at least the expected size and
+not blank (`tests/test_eeglab_screenshots.py`; CI keeps them as the
+artifact `eeglab-screenshots`).
+
+Manual part: a reviewer checks the committed screenshots in
+`docs/screenshots/eeglab/` against the checklist in
+`docs/screenshots/eeglab/README.md` and records date, reviewer and result
+there. Pass if:
+- the file dialog shows export 3's `CadLink/Data` folder with its
+  `.ezdataindex`;
+- the options dialog shows that file, *Import events* ticked, the
+  concatenating pause choice and the sample-clock timing as defaults, and
+  Help/Cancel/Ok buttons, all readable;
+- EEGLAB's naming dialog follows, with the recording GUID as the name;
+- the EEG page shows the 32 channels in the vendor EDF's order (E1/Pg1 …
+  O2, 1A … 7A), a 0-10 s axis, Cz flat (the recording reference), one
+  *Øyne lukket* event at 4.6 s, and plausible EEG without import
+  artefacts (steps, clipping, zero blocks, repeated segments).
+
+Repeat the manual part whenever the plugin's dialogs or data path change.
+
+*Parent links: DES016, DES022*
 

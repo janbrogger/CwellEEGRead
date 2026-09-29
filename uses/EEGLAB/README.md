@@ -41,7 +41,7 @@ the plugin is listed there, or manually:
 
 From the menu: pick the `.ezdataindex` file inside `CadLink/Data/` of the
 export (or a converted `.edf`), then choose the import options in the
-dialog that follows: *Import events*, *Recording pauses* (join the segments
+dialog that follows (screenshot: `docs/screenshots/eeglab/2-options-dialog.png`): *Import events*, *Recording pauses* (join the segments
 with a `boundary` event, or fill with zeros) and *Event timing* (amplifier
 sample clock, or wall-clock stamps); for an EDF only *Import events*. The
 defaults are those of the table below. EEGLAB then asks for the dataset
@@ -126,8 +126,11 @@ starts EEGLAB's graphical interface under Octave on a virtual display
 (xvfb) with the plugin in `plugins/`, chooses the menu item and answers
 EEGLAB's real dialogs (only the system file dialog is replaced): the
 options chosen must reach the dataset and its history, EEGLAB's naming
-dialog must follow, and Cancel must create no dataset. Not yet exercised:
-the plugin in MATLAB.
+dialog must follow, and Cancel must create no dataset.
+`tools/eeglab_screenshots.py` takes screenshots of the file dialog, the
+options dialog, the naming dialog and the imported EEG (export 3, first
+10 s); they are in `docs/screenshots/eeglab/` with a checklist for the
+manual verification (TST018). Not yet exercised: the plugin in MATLAB.
 
 ## GNU Octave
 

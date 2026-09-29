@@ -7,7 +7,8 @@
 #   2. GNU Octave            runs cadwell_selftest and the EEGLAB import test
 #                            (tests/test_octave_port.py, tests/test_eeglab_import.py);
 #                            xvfb and fonts-freefont-otf for the EEGLAB menu
-#                            test (tests/test_eeglab_gui.py)
+#                            test (tests/test_eeglab_gui.py), xdotool and
+#                            imagemagick for tools/eeglab_screenshots.py
 #   3. EEGLAB + dipfit       sparse checkouts under .cache/ (gitignored) so that
 #                            test_eeglab_import.py runs; EEGLAB_DIR and DIPFIT_DIR
 #                            are exported for the session through CLAUDE_ENV_FILE
@@ -44,10 +45,12 @@ fi
 optional=""
 command -v xvfb-run >/dev/null || optional="$optional xvfb xauth"
 [ -f /usr/share/fonts/opentype/freefont/FreeSans.otf ] || optional="$optional fonts-freefont-otf"
+command -v xdotool >/dev/null || optional="$optional xdotool"
+command -v import  >/dev/null || optional="$optional imagemagick"
 if [ -n "$optional" ]; then
     # shellcheck disable=SC2086
     { $SUDO apt-get update -q && DEBIAN_FRONTEND=noninteractive $SUDO apt-get install -y -q --no-install-recommends $optional; } >/dev/null 2>&1 \
-        || echo "session-start: could not install$optional; tests/test_eeglab_gui.py will skip" >&2
+        || echo "session-start: could not install$optional; the EEGLAB menu/screenshot tests will skip" >&2
 fi
 
 # --- 3. EEGLAB functions and the dipfit plugin (for eeg_checkset) --------------

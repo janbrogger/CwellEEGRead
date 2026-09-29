@@ -8,7 +8,8 @@
 #          SessionStart hook does), then the plugin self-test and the EEGLAB
 #          import test (TST013), and the plugin driven through EEGLAB's menu
 #          on a virtual display (xvfb; fonts-freefont-otf for Octave's text
-#          rendering) (TST017).
+#          rendering) (TST017), and the screenshots for TST018 (xdotool,
+#          ImageMagick), kept as the artifact eeglab-screenshots.
 name: tests
 
 on:
@@ -68,7 +69,7 @@ jobs:
       - name: GNU Octave, EEGLAB functions and dipfit
         run: |
           sudo apt-get update -q
-          sudo apt-get install -y -q --no-install-recommends octave zip unzip xvfb xauth fonts-freefont-otf
+          sudo apt-get install -y -q --no-install-recommends octave zip unzip xvfb xauth fonts-freefont-otf xdotool imagemagick
           git clone -q --depth 1 --filter=blob:none --sparse https://github.com/sccn/eeglab.git .cache/eeglab-src
           git -C .cache/eeglab-src sparse-checkout set functions
           git clone -q --depth 1 https://github.com/sccn/dipfit.git .cache/dipfit
@@ -76,4 +77,15 @@ jobs:
           echo "DIPFIT_DIR=$PWD/.cache/dipfit" >> "$GITHUB_ENV"
 
       - name: Octave port, EEGLAB import and EEGLAB menu tests
-        run: .venv/bin/pytest -ra tests/test_octave_port.py tests/test_eeglab_import.py tests/test_eeglab_gui.py
+        run: .venv/bin/pytest -ra tests/test_octave_port.py tests/test_eeglab_import.py tests/test_eeglab_gui.py tests/test_eeglab_screenshots.py
+
+      - name: Screenshots for manual verification (TST018)
+        if: always()
+        run: .venv/bin/python tools/eeglab_screenshots.py screenshots
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eeglab-screenshots
+          path: screenshots/
+          if-no-files-found: warn

@@ -5,3 +5,4 @@ pytest>=8
 pyyaml>=6
 weasyprint==70.0        # tools/doorstop_pdf.py: the committed PDF of the Doorstop tree
 mne>=1.6                # tests: second independent EDF reader (TST001)
+pillow>=10              # tools/eeglab_screenshots.py: finds the OK button in a dialog screenshot (TST018)
