@@ -2,10 +2,10 @@
 # Session `cf13040e-bd76-59ca-a29e-acac61c6b3ca`
 
 - Started (UTC): 2026-09-29T09:58:11.339Z  
-- Last event (UTC): 2026-09-29T11:41:56.961Z (span 1 h 43 min)  
+- Last event (UTC): 2026-09-29T12:31:27.705Z (span 2 h 33 min)  
 - User: jan@brogger.no; source: claude-code-remote; branch: `claude/admiring-maxwell-f5w6tr`  
 - Models: claude-opus-5-5; Claude Code 2.1.284  
-- Prompts: 3; transcript: transcript.jsonl (3.3 MB)
+- Prompts: 4; transcript: transcript.jsonl (5.1 MB)
 
 This file is derived from the transcript for readers without an LLM. Prompts are verbatim; responses are the assistant's text messages (tool calls and their output are only summarised - see the JSONL for those).
 
@@ -262,4 +262,59 @@ The only step left is a human review: someone checks the screenshots against the
 **[11:41 UTC]**
 
 The uncommitted changes were only the automatic session log under `llm-logs/`. I committed and pushed them to `claude/admiring-maxwell-f5w6tr`, and the working tree is now clean.
+
+
+## Prompt 4 - 2026-09-29 12:16:13 UTC
+
+```text
+Change the import options in the import options dialog to radio buttons, and re-do the screenshots.
+```
+
+_Tools used in this turn: Bash ×19, Read ×4, SendUserFile ×1_
+
+### Response 4
+
+**[12:17 UTC]**
+
+Dialog now uses radio groups; updating the GUI test to click the radios (running their real callbacks) and check they're mutually exclusive.
+
+**[12:18 UTC]**
+
+Test catches broken exclusivity. Re-doing the screenshots:
+
+**[12:23 UTC]**
+
+The dialog renders, but the radio rows get a grey background (unlike the checkbox), and that also confused the OK-button finder. Checking how EEGLAB colours checkboxes:
+
+**[12:24 UTC]**
+
+Grey is gone. One small polish: radio labels are black while EEGLAB text is dark blue, so I'll use EEGLAB's text colour too.
+
+**[12:25 UTC]**
+
+The dialog looks right now. Updating the design/test items and the checklist to say radio buttons:
+
+**[12:25 UTC]**
+
+EEG page unchanged, as expected. Finishing TST018 wording, the verification record, and republishing:
+
+**[12:31 UTC]**
+
+A debug image (`failure-screen.png`, from the earlier failed run) slipped into that commit. Removing it, and making the tool write such images outside the repo:
+
+**[12:31 UTC]**
+
+The import options dialog now uses radio buttons, and the screenshots are redone (shown above). All 70 tests pass and everything is pushed.
+
+**Dialog:** under bold *Recording pauses* and *Event timing* headings there are two radio buttons each. The defaults are selected: *Join the segments, mark each pause with a boundary event* and *Amplifier sample clock (recommended)*. Clicking one clears the other in its group.
+
+The buttons first came out with grey bars behind them. EEGLAB's colouring code looks for a widget type spelled `'radio'`, but radio buttons are actually `'radiobutton'`, so they kept the default grey. The plugin now sets EEGLAB's own background and text colours on them, so they match the checkbox.
+
+**Test:** the menu test now clicks *Fill each pause with zeros* and *Wall-clock stamps* as a user would, running each button's own click handling. It checks that the defaults are right, that only one button per group stays selected, and that both choices reach the dataset and the history. I broke the one-selection-per-group logic on purpose and the test caught it.
+
+**Screenshots:** only the options dialog looks different; the file dialog, naming dialog and EEG page are the same as before. The checklist in `docs/screenshots/eeglab/README.md` now describes the radio buttons. The verification record has a new line for this round: I pre-checked it and every item holds. The line for a human reviewer is still empty.
+
+I also updated the Doorstop items (the design item and both test items) and regenerated the published documents and PDF.
+
+A leftover debug image from an earlier failed run had been committed in `docs/screenshots/eeglab/`. I removed it, and the screenshot tool now saves such images to the temp folder instead.
 
