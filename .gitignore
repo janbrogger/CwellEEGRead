@@ -7,6 +7,9 @@ __pycache__/
 build/
 dist/
 
+# Session-start hook cache on Claude Code on the web (EEGLAB and dipfit checkouts)
+.cache/
+
 # Doorstop / editor scratch
 docs/traceability/**/*.bak
 .doorstop-cache/
