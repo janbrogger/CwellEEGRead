@@ -4,10 +4,10 @@ header: |
   Licence compatibility check
 level: 12.0
 links:
-- REQ015: 6jTbNdtR9QCowR6wLgF5UJA-KQMnWAOB9Opkg8K3Ir0=
+- DES015: CCHPaAE1bzAdJK5PxXTO-0ldCgS3qRaXO3CeveDWhIY=
 normative: true
 ref: ''
-reviewed: m5zckwa-gUoRdFMh7Q6PtlHb9c7atHPnHfBpNin4TTc=
+reviewed: pwj_UuJ7AjOWUpETkK1KxwA0oq2jLwbdnaiz9CIX1rM=
 text: |
   Inspect the LICENSE file and the headers of every ported third-party source
   file. Pass if the repository licence permits every ported file's licence

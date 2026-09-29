@@ -1,0 +1,18 @@
+active: true
+derived: false
+header: |
+  Input: Cadwell EEG recordings from around 2020 onward
+level: 1.0
+links:
+- REQ001: yLgnZvR4tW-HIQzn-9tflosdpTwmy8eQip6P75NZ8Ps=
+normative: true
+ref: ''
+reviewed: YsEa70COpx9-rV11WaaUgCa7ngd_xl5PrZb3f6kAEhw=
+text: |
+  **Implements** REQ001 - the program shall read Cadwell Arc CadLink study exports (SQLite `.ezdataindex`, `.ezdata`, `.ezevents`, recordings from about 2020 on) without the encrypted catalogue databases, and the supported software and schema versions shall be documented and each covered by a test recording.
+
+  **Design.** `cwelleegread/ezdata.py: open_recording()` accepts an `.ezdataindex` file or a folder (itself, `native-export/CadLink/Data`, `CadLink/Data` or `Data` below it) and refuses a folder holding more than one record. `CadwellRecording.__init__()` opens the index with the standard `sqlite3` module read-only and immutable (`_ro()`: `file:...?mode=ro&immutable=1`, so nothing is written to the export) and reads `SchemaUpdateLog` (kept as `schema_versions`), `MediaHeader.MediaDescriptor` (patient, record and author GUIDs), `TrackInfo` track 0 (channel records: channel number, amplifier input, rate), `FrameInfo` track 0 (frame number, UTC stamp, `JoinDatabase`, `FrameKey`), `MiscInfo.AMPLAYOUT` (headbox type), `PcTimeSync` and `GapInfo`. `frames()` groups the index rows by `JoinDatabase`, loads every blob of each named `-<n>.ezdata` file keyed by `FrameKey`, and yields frames in index order through `decode_frame()`: magic `0x033149BD`, channel blocks located by the tag `ab792193de4225a2`, start/end ticks at 0x32 when the first block sits at 0x42, delta type 1 (int16) or 2 (int8), samples = first + cumsum(deltas) x scale. A missing data file or frame, a bad magic, an unknown delta type or a channel-count mismatch raises an error instead of yielding data. `events()` reads `Events` from the sibling `.ezevents` (empty list if absent). Only track 0 (EEG) is decoded; auxiliary tracks, `.mediadb` files and `CadLink/Databases/` are never opened. Dependencies are the standard library and numpy. The EEGLAB plugin re-implements the same reader (`uses/EEGLAB/cadwellio/cadwell_read_index.m`, `cadwell_decode_frame.m`, `cadwell_read.m`) on a pure MATLAB/Octave SQLite file reader (`cadwell_sqlite_native.m`). Porting BioSig was rejected: its Cadwell code decodes nothing and is GPL (`docs/research/biosig-cadwell-reader.md`).
+
+  **Limits.** The schema history is recorded (`inspect`, JSON report `schema_versions`) but not checked: there is no list of supported versions and no refusal of unknown ones. The three public recordings (four exports: Apollo 250 Hz; Essentia 500 Hz, Arc 3.2.1097 per the research note) all carry the schema chain 1.0 -> 2.5 and a single `-1.ezdata` file, so other schema versions and multi-file records are untested.
+
+  **Verified by** TST014 - checks that the documented supported-version list is non-empty and that each version has a manifest recording; it is not implemented: no such list exists, `testdata/manifest.json` lists no recordings and no test file carries TST014. The decoder itself is exercised by TST005 (DES009).

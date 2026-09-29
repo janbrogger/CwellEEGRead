@@ -1,0 +1,24 @@
+active: true
+derived: false
+header: |
+  Proven equivalence with the native CSV/text export
+level: 9.0
+links:
+- REQ009: 9PHAlJnYghX3tFXNDsa9_D8OcT08CM4jeqbW2Ptzzq8=
+normative: true
+ref: ''
+reviewed: EpgdMr3tudPR93pXNqD-bkYdg_iwePQaOUopciHL-rg=
+text: |
+  **Implements** REQ009 - an automated test proving that the physical sample values equal the vendor's text export within its precision, channel by channel over the full common range, and that the text export's channel names map one to one onto the EDF labels.
+
+  **Design.** The text export is the raw-fidelity reference because it holds the raw data: viewer filters, montage and sensitivity do not reach it (research note, "What the vendor's exports filter", item 1). Each test parses it itself; there is no shared parser module. Lines starting with `%` (the header) are skipped. Each row is tab-separated: first a 1-second wall-clock stamp, then values in mV with 4 decimals and a decimal comma, converted with `replace(",", ".")` and × 1000 to µV. The row count gives the sample index, not the stamps, because Apollo seconds hold 248-251 samples. Columns follow amplifier-input order, which equals `CadwellRecording.amp_inputs`, the same signal order the EDF writer uses with labels from `cwelleegread/layout.py: default_labels()`.
+
+  Comparison: frames decoded by `cwelleegread/ezdata.py` are multiplied by `UNIT_UV = 0.72998046` µV/unit. The text export omits recording gaps and the last frame, so the decoded frames are concatenated without padding or alignment. For exports 2 and 3-withfilter they start at the frame whose stamp falls in the text's first second (local UTC+2); for export 3 they are frames 1-1216. The arrays must have the same shape. Tolerance: 0.06 µV. That is 0.05 µV (half the 0.1 µV text resolution) plus 0.01 µV for the empirically fitted scale constant; the 250 Hz and 500 Hz exports bound it to overlapping intervals around 0.72998046.
+
+  Coverage: export 1 7755 rows × 32 (the text covers 30 of 46 s); export 2 15500 × 32 (30 s); export 3 and 3-withfilter the whole recording, 603000 × 32 across the break.
+
+  Design decision: the tests compare the decoded samples in memory (`read_signals()`, `frames()`), not values read back from the EDF. EDF quantisation is covered by the round trip (REQ010/DES010), so text = decoded = EDF within resolution holds by transitivity. Comparing the text export with the vendor EDF was rejected because that EDF is filtered and resampled.
+
+  Limits: **the one-to-one name mapping is not tested.** The text header's label line is unreliable (export 1 lists 35 labels for 32 columns). The mapping rests on column order = amplifier input, which the sample equality confirms implicitly because a wrong column would fail at 0.06 µV. The Essentia labels are also checked against the vendor EDF. No test parses the header labels.
+
+  **Verified by** TST005 - `tests/test_ezdata_public.py: test_equivalent_to_text_export` (export 1), `tests/test_vendor_exports_filtering.py: test_text_export_is_raw_even_with_viewer_filters` (exports 2 and 3-withfilter) and `tests/test_export3_gap.py: test_full_text_export_equivalence_at_500hz` (export 3, all 603000 rows).

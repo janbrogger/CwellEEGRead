@@ -1,0 +1,31 @@
+active: true
+derived: false
+header: |
+  Licence compatibility
+level: 15.0
+links:
+- REQ015: 6jTbNdtR9QCowR6wLgF5UJA-KQMnWAOB9Opkg8K3Ir0=
+normative: true
+ref: ''
+reviewed: mXuy8iKYflMxkktLRCFGvHzFDbCOBop_uCOxEnJGuQc=
+text: |
+  **Implements** REQ015 - the repository licence shall be compatible with every third-party source ported into it. If BioSig (GPL-3.0-or-later) code is ported, the repository shall be relicensed under a GPL-compatible licence, and the decision and attribution shall be recorded in `docs/research/` and `LICENSE`.
+
+  **Design.** Nothing is ported, so the conditional part of the requirement has not been triggered. The design keeps it that way and makes the rule explicit.
+
+  - *Current licence.* The Unlicense (public domain), in the root `LICENSE`. `README.md` ("Licence") and `CLAUDE.md` ("Do not copy code from GPL sources (BioSig) into this repo without an explicit relicensing decision recorded in `docs/research/`") state it.
+  - *Decision record.* `docs/research/README.md` ("Licensing decision (REQ015)") keeps the Unlicense and commits to relicensing to GPL-3.0-or-later before any GPL decoder is ported. The decision would be recorded there.
+  - *Analysis behind it.* `docs/research/biosig-cadwell-reader.md` §5 weighs three options:
+    - A: port `sopen_cadwell_read.c` or `sopen_sqlite.c` and relicense. Rejected: the code has no working decoder; every path ends in `B4C_FORMAT_UNSUPPORTED`.
+    - B: clean-room reimplementation. Chosen. Format facts such as magic bytes and table names are cited, and no BioSig code, structure or names are copied.
+    - C: link libbiosig. Rejected: it would make the distributed whole GPL for no gain, since libbiosig cannot read Cadwell files.
+  - *Our own code.* The Python decoder and the EEGLAB plugin are written from the project's own analysis of the test recordings. The pure MATLAB/Octave SQLite reader `uses/EEGLAB/cadwellio/cadwell_sqlite_native.m` cites the SQLite file-format document. `docs/research/eeglab-fieldtrip-cadwell-reader.md` records which layout sources were consulted (MIT-licensed `sml-sqlite` and DC3 `sqlite-dissect`), and that the prototype `tools/sqlite_pure_reader.py` was written from the format description.
+  - *Plugin licence.* The plugin ships its own Unlicense copy, `uses/EEGLAB/cadwellio/LICENSE`, which `uses/EEGLAB/make_zip.sh` puts into the zip. The headers of the main `.m` files say "Public domain (Unlicense)". EEGLAB core is BSD-2 and allows plugins under other licences (research note).
+  - *Third-party components used but not ported.*
+    - Python runtime dependencies (`numpy`, `pyedflib`, `scipy`) are installed packages.
+    - The optional SQLite cross-check backends in `cadwell_sqlite.m` (mksqlite, the Database Toolbox or Octave `sqlite`, `py.sqlite3`) are called only if the user has them.
+    - The Apache-2.0 `sqlite-jdbc` jar is downloaded by `cadwell_get_jdbc.m` into `cadwellio/lib/`, which is gitignored (`lib/*.jar`). `make_zip.sh --with-jdbc` bundles it without adding a separate licence notice. That is a gap, but only in this optional mode.
+    - Morgoth (CC BY-NC 4.0) is cloned by `uses/Morgoth/install.sh` into a gitignored folder and is never redistributed. Its non-commercial term restricts use, not this repository's licence.
+  - *Future.* A FieldTrip contribution would be a GPL-3 copy of our own file, which the Unlicense permits. It is not done.
+
+  **Verified by** TST012 - inspection of `LICENSE` and the header of every ported third-party file. There is no automated test in `tests/`. With no ported file the check currently passes trivially.

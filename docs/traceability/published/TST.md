@@ -26,7 +26,7 @@ and duration, and the samples read back equal the decoded samples within
 the declared resolution. Implemented for the public exports in
 tests/test_convert_public.py (raw and vendor modes).
 
-*Parent links: REQ002, REQ010*
+*Parent links: DES002, DES010*
 
 # 2.0 Header equivalence with native EDF export _(TST002)_ {#TST002}
 
@@ -36,7 +36,7 @@ physical dimensions, physical/digital ranges, start date/time, patient and
 recording identification. Pass if all match exactly, except fields that the
 mapping table documents as intentionally different.
 
-*Parent links: REQ003, REQ004, REQ008*
+*Parent links: DES003, DES004, DES008*
 
 # 3.0 Sample equivalence with native EDF export _(TST003)_ {#TST003}
 
@@ -53,7 +53,7 @@ tests/test_convert_public.py, 11000/11000 samples) and cadwell-export2 and
 608500 samples including a padded gap). Report the maximum and mean
 difference per channel.
 
-*Parent links: REQ003, REQ008, REQ020*
+*Parent links: DES003, DES008, DES020*
 
 # 4.0 Annotation equivalence with native EDF export _(TST004)_ {#TST004}
 
@@ -65,7 +65,7 @@ the individual photic flashes omitted - is reproduced), and, in raw mode,
 the native list is a subset of ours; list every unmatched annotation on
 failure. Implemented for cadwell-export1, 2 and 3-withfilter.
 
-*Parent links: REQ005, REQ008*
+*Parent links: DES005, DES008*
 
 # 5.0 Sample equivalence with native CSV/text export _(TST005)_ {#TST005}
 
@@ -82,7 +82,7 @@ cadwell-export2 (15500 rows) and the whole of cadwell-export3 (603000
 rows, across the break) in tests/test_ezdata_public.py,
 tests/test_export3_gap.py and tests/test_vendor_exports_filtering.py.
 
-*Parent links: REQ009*
+*Parent links: DES009*
 
 # 6.0 Command-line behaviour _(TST006)_ {#TST006}
 
@@ -92,7 +92,7 @@ code 0 and a valid JSON report when requested, and every invalid run
 returns a non-zero exit code, prints a diagnostic and leaves no output
 file behind.
 
-*Parent links: REQ006, REQ018*
+*Parent links: DES006, DES018*
 
 # 7.0 Anonymisation _(TST007)_ {#TST007}
 
@@ -101,7 +101,7 @@ identification fields contain only the supplied or placeholder values, no
 annotation contains the original patient name or identifier, and the signal
 data is identical to a conversion without the option.
 
-*Parent links: REQ014*
+*Parent links: DES014*
 
 # 8.0 Test data manifest and graceful skip _(TST008)_ {#TST008}
 
@@ -110,15 +110,17 @@ matches its recorded SHA-256 checksum, and that when the folder is absent
 all data-dependent tests are reported as skipped with an explanatory
 message rather than failing.
 
-*Parent links: REQ007, REQ011*
+*Parent links: DES007, DES011*
 
 # 9.0 Traceability validation _(TST009)_ {#TST009}
 
 Run `doorstop` on `docs/traceability/`. Pass if it reports no errors, every
-normative REQ item links to at least one NEED item, and every normative REQ
-item is linked from at least one TST item.
+normative REQ item links to at least one NEED item, every normative REQ item
+has a DES item with non-empty design text linking to it, every DES item is
+linked from at least one TST item, and so every requirement is covered by a
+test through its design. Implemented in tests/test_traceability.py.
 
-*Parent links: REQ013*
+*Parent links: DES013*
 
 # 10 LLM log integrity _(TST010)_ {#TST010}
 
@@ -127,7 +129,7 @@ and is listed in `llm-logs/sessions.csv`, that every session in
 `sessions.csv` has a folder, and that `llm-logs/tools/llmlog.py index`
 regenerates the derived files without error.
 
-*Parent links: REQ012*
+*Parent links: DES012*
 
 # 11 Environment setup _(TST011)_ {#TST011}
 
@@ -135,7 +137,7 @@ On a fresh clone run `./setup.sh`. Pass if it completes without error,
 `.venv/bin/doorstop --version` prints the pinned version, and `.venv` is
 ignored by git.
 
-*Parent links: REQ017*
+*Parent links: DES017*
 
 # 12 Licence compatibility check _(TST012)_ {#TST012}
 
@@ -143,7 +145,7 @@ Inspect the LICENSE file and the headers of every ported third-party source
 file. Pass if the repository licence permits every ported file's licence
 and each ported file carries its original copyright and licence notice.
 
-*Parent links: REQ015*
+*Parent links: DES015*
 
 # 13 Downstream use scaffolds present _(TST013)_ {#TST013}
 
@@ -166,7 +168,7 @@ importer's dataset must pass EEGLAB's `eeg_checkset` and a
 Octave path; with `'padgaps','off'` exactly one `boundary` event per
 pause must be present, with duration equal to the removed samples.
 
-*Parent links: REQ016*
+*Parent links: DES016*
 
 # 14 Supported-version coverage _(TST014)_ {#TST014}
 
@@ -174,7 +176,7 @@ Check that the documented list of supported Cadwell software versions is
 non-empty and that every listed version is represented by at least one
 recording in the test data manifest.
 
-*Parent links: REQ001*
+*Parent links: DES001*
 
 # 15 Gap handling _(TST015)_ {#TST015}
 
@@ -186,7 +188,7 @@ sides of the gap are unchanged, the gap annotation and the vendor's
 Stop/Start Recording events appear at the correct offsets, and the
 conversion report lists the gap. Implemented in tests/test_export3_gap.py.
 
-*Parent links: REQ008, REQ019*
+*Parent links: DES008, DES019*
 
 # 16 Event timing on the sample clock _(TST016)_ {#TST016}
 
@@ -207,5 +209,5 @@ the drift the frames show at each event (tolerance 5 ms, widened by the
 stamp jitter on Apollo recordings). Implemented in
 tests/test_event_timing.py and cadwell_selftest check F.
 
-*Parent links: REQ005, REQ021*
+*Parent links: DES005, DES021*
 

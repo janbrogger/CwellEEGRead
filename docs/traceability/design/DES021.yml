@@ -1,0 +1,18 @@
+active: true
+derived: false
+header: |
+  Event placement on the sample clock
+level: 21.0
+links:
+- REQ021: irJEgAefg3DIehfXDkoblzpe4ihfwN1WIytbqq_F75A=
+normative: true
+ref: ''
+reviewed: 6_gCbhjLqBMOEi_ydGnr37td9pNtdNpnGJQbvcC_p-w=
+text: |
+  **Implements** REQ021 - events shall by default be placed on the amplifier sample clock from their tick offsets, with wall-clock-stamp placement available as `--event-timing stamp` and default in vendor mode, the choice stated in the report, and the same option and default in the EEGLAB plugin.
+
+  **Design.** `cwelleegread/edf.py: read_padded()` fills a frame table with one `(start_ticks, end_ticks, first_sample, n_samples)` per stored frame (blob ticks, 100 ns from the record origin; `first_sample` on the padded axis). `event_sample(ticks, frame_table, rate)` finds the frame by bisection on start ticks and returns a fractional sample: inside a frame, linear between its start and end ticks over its n samples (absorbing the 248-251-sample, jittered Apollo frames); in a padded gap, after the last frame or before the first, at the nominal rate from the nearest frame edge. In `convert()`, `event_timing='auto'` (CLI `--event-timing auto|ticks|stamp`) resolves to `ticks` in raw mode and `stamp` in vendor mode. Ticks: onset = `event_sample(StartOffset) / rate` plus leading padded seconds, duration = (EndOffset - StartOffset) / 1e7 s. Stamp: onset = `StartTime` minus the first stored frame's `TimeStamp`, duration = EndTime - StartTime. The EDF start time stays stamp-based (first frame stamp plus the PcTimeSync correction) either way, and the report field `event_timing` states the placement. Rationale (research note, "Two clocks"): samples are on the tick axis by construction; on Essentia the stamp clock falls about 96 ppm behind (0.35 s per hour), so stamp placement is early, as the flash response latency confirms (110-130 ms on ticks, 210-270 ms on stamps). Stamp stays the vendor-mode default so vendor equivalence (TST003, TST004) holds. The EEGLAB plugin: `uses/EEGLAB/cadwellio/cadwell_read.m` takes `'EventTiming'` (`ticks` default, or `stamp`) with a local `event_sample()` mirroring the Python rule, which also puts an instant inside a concatenated pause (`'PadGaps'` off, the plugin default) on the join; stamp placement with concatenated pauses shifts later events by the pause length. `pop_cadwell.m` exposes it as `'eventtiming'` (default `ticks`).
+
+  **Limits.** In vendor mode with `--event-timing ticks` the onsets are raw sample positions over the nominal rate, not corrected for the samples `vendor_resample()` removes (on export 1 up to 8 samples, 32 ms, late at the end). The plugin has no vendor mode, so its `ticks` default matches the converter's raw default.
+
+  **Verified by** TST016 - `tests/test_event_timing.py` converts exports 2 and 3 in raw mode with every event, checks the report field, the auto defaults, that ticks minus stamp onsets equal the frame drift within 1 ms, and that the flash response peaks before 150 ms with ticks and after 170 ms with stamps; `cadwell_selftest.m` check F (run by `tests/test_octave_port.py`) checks the plugin's tick-stamp difference against the frame drift.

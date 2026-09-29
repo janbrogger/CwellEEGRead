@@ -4,11 +4,11 @@ header: |
   Event timing on the sample clock
 level: 16.0
 links:
-- REQ005: 3ljBCHH7I_oEvqVvgR2yxjTsbGA_VW1uniX3zxSsj6A=
-- REQ021: irJEgAefg3DIehfXDkoblzpe4ihfwN1WIytbqq_F75A=
+- DES005: WCI05pb9-ddtCxoPcTAkdbmTQFhAkNk3v5mKXyqx9NU=
+- DES021: TTD6k4SzViGFM7UatMcQpif2W4wxiTTpF8iG66t33RA=
 normative: true
 ref: ''
-reviewed: O1ap_qdbX1X4FAdvyqsjMh73H18VDNvjwzOkVsWIHzc=
+reviewed: f2yr6-mAL5DGJjCNXV1AwslvWOgUbMo7YK9yMvnRoiY=
 text: |
   Using a recording with photic stimulation (cadwell-export2 and 3: 244
   `Photic Stim` flash events each), convert in raw mode with every event

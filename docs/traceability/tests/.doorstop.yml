@@ -1,6 +1,6 @@
 settings:
   digits: '3'
   itemformat: yaml
-  parent: REQ
+  parent: DES
   prefix: TST
   sep: ''

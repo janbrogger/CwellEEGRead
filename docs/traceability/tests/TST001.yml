@@ -4,11 +4,11 @@ header: |
   EDF structural validity
 level: 1.0
 links:
-- REQ002: -jQSDCLRm9FL-H7GgPx0R9PEpjGiBR94gF8DNwWXyOA=
-- REQ010: Dvv2VHiuW9Q32NyjEhkKDYQRHZv_veCXJ6pKvWFfMCo=
+- DES002: sIv6LD6GBvtMUif-tluQG0qMf3OF9Z8Zw147pDAf8q4=
+- DES010: eOyLIShsH2uiHIV2H0cP10Lket-LiIq70tvGvYYQkOA=
 normative: true
 ref: ''
-reviewed: K_Mbnis2-M49sXz-TcQOGZBu0tNsVGDLqhChynGd3O4=
+reviewed: Sv3Ci8q_lX29C-dBQLADnu3K0_mV9_6Ww1hmiqygm9k=
 text: |
   Convert each test recording and open the result with an independent EDF
   reader (pyedflib; MNE-Python when available). Pass if the file is read

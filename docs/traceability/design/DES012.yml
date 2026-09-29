@@ -1,0 +1,36 @@
+active: true
+derived: false
+header: |
+  LLM session provenance
+level: 12.0
+links:
+- REQ012: qxro17ZTYc_Q8ACD-BitAUJtgxuG0UA2YuRC0TumhzU=
+normative: true
+ref: ''
+reviewed: sAvIckV7g1ht7VltDZJ-cQfr_eDl7rmM9Z8fe8kOluU=
+text: |
+  **Implements** REQ012 - every Claude Code session shall be archived into `llm-logs/<session_id>/` automatically (transcript, prompts as CSV, prompts and responses as Markdown) and indexed in `llm-logs/sessions.csv`, with no manual step.
+
+  **Design.** Four Claude Code hooks call one stdlib-only script.
+
+  - *Hooks.* `.claude/settings.json` registers four hooks. `SessionStart` runs `.claude/hooks/llmlog-session-start.sh`, `UserPromptSubmit` runs `llmlog-prompt.sh`, `Stop` (after every assistant turn) runs `llmlog-archive.sh`, and `SessionEnd` runs `llmlog-archive.sh` and then `llmlog-commit.sh`. Each wrapper finds the repository root (`$CLAUDE_PROJECT_DIR` or `git rev-parse`) and `python3`, then `exec`s `llm-logs/tools/llmlog.py <sub-command>`. If either is missing, it exits 0.
+  - *Payload.* `llmlog.py: read_payload()` reads the hook JSON from stdin. If the JSON has no session id it uses `CLAUDE_CODE_SESSION_ID`. If it has no transcript path it uses the default location `~/.claude/projects/<mangled root>/<id>.jsonl`.
+  - *Index.* `cmd_session_start()` and `upsert_session_row()` add or update a row in `sessions.csv`. The row holds the start time, branch, user (`PROMPT_LOG_USER`, `CLAUDE_CODE_USER_EMAIL` or the OS user), source and topic, which starts as `untagged`. The `topic` column is the only field meant to be edited by hand.
+  - *Real-time prompt log.* `cmd_prompt()` appends each human prompt to `llm-logs/prompt-log.csv`. It skips system-injected turns (text starting with `<`, `Caveat:` or `[Request interrupted`). (The docstring says it also writes `prompts.csv`; the code does not.)
+  - *Archive.* `cmd_archive()` copies the transcript to `<session_id>/transcript.jsonl`. A session resumed in a fresh container produces a smaller, compacted transcript. If the archived copy is larger than the incoming transcript, the new copy goes to `transcript.resumed.jsonl` instead, so the larger archive is never overwritten. `write_index()` then regenerates, per session folder (`write_session_files()`, human prompts found by `is_human_prompt()`), `session.json`, `prompts.csv` and `PROMPTS-AND-RESPONSES.md` and back-fills `prompt-log.csv`. It also rewrites `SESSIONS.md`. Finally it runs `git add llm-logs`.
+  - *Commit.* `cmd_commit()` runs `git commit -o llm-logs` with the message `llm-logs: archive session log (automatic)` and pushes to the current branch on `origin`. The commit contains only `llm-logs/`, never other work.
+  - *Never blocking.* `main()` catches every exception, writes `llmlog: ...` to stderr and exits 0, so a logging failure never blocks a session.
+  - *Manual fallback.* `llmlog.py archive --session-id <id> --transcript <path>` archives a session by hand (`CLAUDE.md`, `llm-logs/README.md`). `llmlog.py index` rebuilds every derived file.
+
+  Decisions:
+  - One folder per session, instead of the single log of the `reproducible-llm-template` it was adapted from.
+  - The JSONL transcript is kept as ground truth, and the derived CSV and Markdown files are regenerable. This is because the JSONL format is internal to Claude Code and may change.
+
+  Limits:
+  - Only end-of-turn replies are reliably present in the transcript.
+  - A session that dies without `SessionEnd` leaves its latest copy staged but uncommitted, until a later session commits it.
+  - Redacting patient data or secrets from transcripts is left to the user.
+
+  **Verified by** TST010 - `tests/test_llm_logs.py`:
+  - `test_every_session_folder_is_indexed_and_vice_versa` checks that every folder with a `transcript.jsonl` is listed in `sessions.csv` and holds `session.json`, `prompts.csv` and `PROMPTS-AND-RESPONSES.md`. Despite its name, it does not check that every indexed session has a folder, which TST010 also asks for.
+  - `test_index_regenerates_cleanly` runs `llmlog.py index` and requires exit 0, no `llmlog:` error and a `SESSIONS.md`.

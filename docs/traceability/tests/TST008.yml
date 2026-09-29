@@ -4,11 +4,11 @@ header: |
   Test data manifest and graceful skip
 level: 8.0
 links:
-- REQ007: wPLD7USTOssjsHjoLc9wQO7ETcUcPN3PchmEYtGQUzk=
-- REQ011: 95wcaPJf1AbIMh_A7DoxAFm89GFZY0j8-NaEVNqoOWA=
+- DES007: 8iBzs7rXjtpTCuD6o_m3L17JiDs-UcIQ9fyUAkyyOF4=
+- DES011: M4FFaYa4mSknOhe0KHXjx9RUgxpcd2t-oFesHHt6IYA=
 normative: true
 ref: ''
-reviewed: cy1vQqqlpG4Ab107XDBXYWgbpnMiArjLZXx-s4bvpx0=
+reviewed: fr6n7c6om6-hkCTU0UBukmlQw2J008OlgOShxdOEX1I=
 text: |
   Verify that every file under `testdata/private/` listed in the manifest
   matches its recorded SHA-256 checksum, and that when the folder is absent

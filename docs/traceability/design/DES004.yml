@@ -1,0 +1,21 @@
+active: true
+derived: false
+header: |
+  Recording and patient metadata
+level: 4.0
+links:
+- REQ004: omAiwwcoPG56az_Cyj8fDRnmEkTozyYI4QcdOFmKhH0=
+normative: true
+ref: ''
+reviewed: wVan4spPu6Cz7-lGMr-Ok1D2UHB7Ww8iWyrAAUbAwFU=
+text: |
+  **Implements** REQ004 - the EDF header shall carry the clock-corrected start time (sub-second via EDF+), patient and recording identification, per-channel transducer and prefilter fields, and EDF+ channel labels taken from a documented, overridable amplifier-input table, with inferred labels flagged in the report.
+
+  **Design.**
+
+  - *Start time.* `cwelleegread/ezdata.py: CadwellRecording.__init__` sets `start_time` = time stamp of the first stored track-0 frame + (`PcTime` - `SyncTime`) of the first `PcTimeSync` row, the vendor's rule (+341.4 µs on export 1). `parse_timestamp()` truncates the 100 ns stamps to microseconds. `cwelleegread/edf.py: convert()` converts to the `--timezone` IANA zone (UTC otherwise; no zone is read from the files) and, with `--start-at record-origin`, moves the start back by the padded leading seconds. `cwelleegread/edfwrite.py: write_edf_plus()` writes whole seconds in the header and the sub-second part (6 decimals) as the first TAL of every record, as the vendor does; dates outside 1985-2084 are refused.
+  - *Identification.* Patient field `<code> X X <name>`: code = patient GUID from `MediaHeader.MediaDescriptor`, sex and birth date always `X`, name from `--patient-name` (default `X`). The real name, birth date and sex are not read: they sit in the encrypted `EEGRECORDINFO` blob. Recording field `Startdate dd-MMM-yyyy <record GUID, 8 chars> X CadwellArc CwellEEGRead_<mode>_<zone>`; full GUIDs go to the JSON report. The vendor's technician and equipment strings are not reproduced.
+  - *Channel fields.* Dimension `uV`, transducer `X`, prefilter empty - also when `--highpass` applies the 0.16 Hz vendor filter, so the header does not record that filter.
+  - *Labels.* No labels exist in the readable files, so `cwelleegread/layout.py: parse_amp_layout()` reads the amplifier type (u32 at byte 32 of the `MiscInfo` `AMPLAYOUT` blob) and `headbox_for()` selects a `HEADBOXES` table (5 = Apollo, 1 = Essentia; taken from the vendor exports and checked physiologically). `default_labels()` builds `EEG <name>-<ref>` (Cz, or the table's `refs`); an unknown type falls back to Essentia (`DEFAULT_HEADBOX`). `--labels` (`load_labels_file()`, `amp_input label` lines) overrides entries verbatim; labels are cut to 16 characters. The report always warns that labels are inferred and flags an unknown type. Rejected: the encrypted `EEG.db`; parsing `MontageEvent` trace names is left for later. The EEGLAB plugin uses the same table (`cadwell_layout.m`) and start rule.
+
+  **Verified by** TST002 - header equivalence with the vendor EDF in `tests/test_convert_public.py` (`test_vendor_mode_reproduces_native_edf`: labels, rates, ranges, start to the second; `test_vendor_start_subsecond`: sub-second TAL, export 1) and `tests/test_export3_gap.py: test_labels_and_start_time_match_vendor` (Essentia labels, headbox, start); patient and recording fields are not compared.

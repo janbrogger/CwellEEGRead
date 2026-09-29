@@ -7,9 +7,12 @@ links:
 - NEED004: D6b_Or4VF1oKro2qBKf5hjPudugn6Oftb-fI9O950ic=
 normative: true
 ref: ''
-reviewed: fLBZbR776okpeE1wy11CgJb6khNuKD-oxlVshH-62zE=
+reviewed: GvJBunv9JkxdTf0O4ZQGa_Gt__LdaW5H5gilrTLC_dg=
 text: |
   Requirements shall be managed with Doorstop in `docs/traceability/` as a
-  chain NEED -> REQ -> TST. Every normative requirement shall link to at
-  least one need and shall be covered by at least one test specification, and
-  `doorstop` validation shall pass with no errors before a release.
+  chain NEED -> REQ -> DES -> TST. Every normative requirement shall link to
+  at least one need and shall have a design item (DES) stating how it is
+  implemented; every design item shall be covered by at least one test
+  specification, and `doorstop` validation shall pass with no errors before
+  a release. The published tree (Markdown per document and one PDF of the
+  whole tree with the traceability matrix) shall be kept in the repository.

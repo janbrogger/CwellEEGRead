@@ -4,12 +4,12 @@ header: |
   Sample equivalence with native EDF export
 level: 3.0
 links:
-- REQ003: kVnH7GDib_ckBl6RmquYOxAQgVXXkpRtbp_OWhxCh7E=
-- REQ008: abLUVQoV29OwxIKfVEk1xTZ0eWim7_0c7QqtOFiECo8=
-- REQ020: KmbP-75ydomyQuEsYzMyKNYIDrDMqNrmBWZJ258opUs=
+- DES003: ULhk-VMwY2qmxiiQwmmXUwW4u0CyHW_Q0s9jUsnrIUc=
+- DES008: llYdA52VLZBmbVNP10FRiFe_bgyGGhzdXpbgAK5RQ7I=
+- DES020: U22QmjyODGILeUkbLkWfgVI1qTnW7pXLgx-K0NguZ-8=
 normative: true
 ref: ''
-reviewed: 0sFznvtcdKokGMdksXC4wYV8reIRd0mjy-8UO88DpBk=
+reviewed: oMLmAX2z2r09AOjnpC091ylkRIeTu9pkKYtwDtMuqpg=
 text: |
   For each test recording with an unfiltered vendor text export, prove raw
   fidelity against the text export (TST005). For each recording with a

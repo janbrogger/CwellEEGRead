@@ -1,44 +1,20 @@
 #!/usr/bin/env bash
-# Publish the Doorstop tree (NEED, REQ, TST) and the traceability matrix as
-# one PDF: docs/traceability/published/CwellEEGRead-traceability.pdf.
+# Publish the Doorstop tree (NEED -> REQ -> DES -> TST) as one PDF:
+# docs/traceability/published/CwellEEGRead-traceability.pdf (committed).
 #
-# Doorstop publishes HTML; each page is printed with headless Chromium and the
-# pages are merged with pypdf (in the .venv). Chromium is found in this order:
-# $CHROME, the Playwright browser of Claude Code on the web, chromium /
-# chromium-browser / google-chrome on the PATH.
+# Validates the tree, then renders tools/doorstop_pdf.py with WeasyPrint
+# (installed into .venv by setup.sh from requirements-dev.txt; needs the Pango
+# and HarfBuzz libraries, present on Debian/Ubuntu: libpango-1.0-0
+# libpangoft2-1.0-0 libharfbuzz0b). SOURCE_DATE_EPOCH is set from the last
+# commit that touched docs/traceability so that a rebuild of an unchanged tree
+# is byte-identical (the embedded font subsets carry a time stamp otherwise).
 #
 #   tools/doorstop_pdf.sh            # -> docs/traceability/published/CwellEEGRead-traceability.pdf
 #   tools/doorstop_pdf.sh out.pdf    # other output path
 set -euo pipefail
 cd "$(dirname "$0")/.."
 OUT=${1:-docs/traceability/published/CwellEEGRead-traceability.pdf}
-HTML=docs/traceability/published/html
-CHROME=${CHROME:-}
-for c in /opt/pw-browsers/chromium-*/chrome-linux/chrome chromium chromium-browser google-chrome; do
-    [ -n "$CHROME" ] && break
-    if [ -x "$c" ] || command -v "$c" >/dev/null 2>&1; then CHROME=$c; fi
-done
-[ -n "$CHROME" ] || { echo "no Chromium found; set CHROME=/path/to/chrome" >&2; exit 1; }
-
-rm -rf "$HTML"
-.venv/bin/doorstop publish all "$HTML" >/dev/null
-TMP=$(mktemp -d)
-i=0
-for page in index.html documents/NEED.html documents/REQ.html documents/TST.html traceability.html; do
-    i=$((i + 1))
-    "$CHROME" --headless=new --no-sandbox --disable-gpu --no-pdf-header-footer \
-        --print-to-pdf="$TMP/$i.pdf" "file://$PWD/$HTML/$page" >/dev/null 2>&1
-done
-.venv/bin/python - "$OUT" "$TMP" <<'EOF'
-import sys, glob, os
-from pypdf import PdfWriter
-out, tmp = sys.argv[1], sys.argv[2]
-w = PdfWriter()
-for f in sorted(glob.glob(os.path.join(tmp, "*.pdf")), key=lambda p: int(os.path.basename(p)[:-4])):
-    w.append(f)
-w.add_metadata({"/Title": "CwellEEGRead requirements and traceability (Doorstop)", "/Producer": "doorstop + chromium + pypdf"})
-with open(out, "wb") as fh:
-    w.write(fh)
-print(f"wrote {out}: {len(w.pages)} pages")
-EOF
-rm -rf "$TMP"
+.venv/bin/doorstop >/dev/null
+export SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH:-$(git log -1 --format=%ct -- docs/traceability 2>/dev/null || date +%s)}
+export PYTHONHASHSEED=0
+.venv/bin/python tools/doorstop_pdf.py "$OUT"

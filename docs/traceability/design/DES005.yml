@@ -1,0 +1,22 @@
+active: true
+derived: false
+header: |
+  Events and annotations
+level: 5.0
+links:
+- REQ005: 3ljBCHH7I_oEvqVvgR2yxjTsbGA_VW1uniX3zxSsj6A=
+normative: true
+ref: ''
+reviewed: F8GeDG_1U-JAhEkZcrK8CYqPavzxiDDE7G1G02Xn_Mk=
+text: |
+  **Implements** REQ005 - events in the Cadwell recording shall become EDF+ annotations with onsets accurate to one sample and full text, and unmapped types shall be listed in the report.
+
+  **Design.**
+
+  - *Reading.* `cwelleegread/ezdata.py: CadwellRecording.events()` reads the `Events` table of `<record>.ezevents` (type, text, wall-clock `StartTime`/`EndTime`, tick `StartOffset`/`EndOffset`, `Deleted`, `Priority`) into `Event` objects in time order; no file gives no events.
+  - *Selection.* `cwelleegread/edf.py: convert()` applies the vendor's policy (research note, "What the vendor's exports filter", rule 7): deleted events, the bookkeeping types in `SKIPPED_EVENT_TYPES` (`AmpConfigurationData`, `LiveAmpConfigurationData`, `ReviewedDataEvent`, `ContinuousImpedanceEvent`, `BaselineImpedanceEvent`) and the single flashes in `SKIPPED_EVENT_TEXTS` (`Photic Stim`; `Photic Start N Hz` is kept) are omitted; `--all-events` keeps all but deleted ones. Events outside the written seconds are dropped. Every omitted event is listed in the report's `events_skipped` with a reason. There is no type mapping: the annotation is the event's `Text` verbatim, so no type is unmappable, and the type itself is not written. Impedance-measurement types and flash markers, named in REQ005, are therefore exported only with `--all-events`.
+  - *Onset.* With `--event-timing ticks` (default in raw mode) `event_sample()` maps `StartOffset` through the per-frame tick spans collected by `read_padded()` - linear within a frame, nominal rate across gaps and beyond the ends - so events sit on the sample clock; duration = tick difference. With `stamp` (default in `--mode vendor`) onset = `StartTime` minus the first frame's stamp, reproducing the vendor, early by the clock drift (about 96 ppm, 0.35 s/h on Essentia). One-sample accuracy therefore holds for `ticks` only (REQ021).
+  - *Writing.* `cwelleegread/edfwrite.py: write_edf_plus()` places each annotation in the TAL of its record, adds the sub-second start, writes onsets to 1 µs, replaces `\x14`/`\x00` in texts, writes UTF-8 and sizes the annotation signal to the longest record; a library writer was rejected because it truncates texts. Zero durations are written without a duration.
+  - *Rejected.* `Metadata.json` stamps (no extra precision; local time without zone); stamp placement as default (drift, confirmed by the flash-VEP latency). The EEGLAB plugin (`cadwell_read_events.m`, `pop_cadwell.m: event_table`) uses the same skip list and timing option, keeping the type in `cadwelltype`, but has no `--all-events`.
+
+  **Verified by** TST004 - vendor-mode annotations equal the vendor EDF's to the ms in `tests/test_convert_public.py` (export 1) and `tests/test_vendor_exports_filtering.py` (exports 2, 3-withfilter); the raw-mode subset check is not implemented. TST016 - ticks and stamp onsets of the photic flashes differ by the frame drift and the flash VEP latency confirms the tick axis, in `tests/test_event_timing.py` and `cadwell_selftest.m` check F.

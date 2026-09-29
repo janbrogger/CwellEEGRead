@@ -1,4 +1,4 @@
-"""TST009 - Doorstop traceability validation (covers REQ013)."""
+"""TST009 - Doorstop traceability validation (covers REQ013 through DES013): the chain NEED -> REQ -> DES -> TST is complete."""
 import subprocess
 import sys
 from pathlib import Path
@@ -8,7 +8,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 TRACE = ROOT / "docs" / "traceability"
-DOCS = {"NEED": TRACE / "needs", "REQ": TRACE / "requirements", "TST": TRACE / "tests"}
+DOCS = {"NEED": TRACE / "needs", "REQ": TRACE / "requirements", "DES": TRACE / "design", "TST": TRACE / "tests"}
 
 
 def load(doc):
@@ -42,9 +42,35 @@ def test_every_requirement_links_to_a_need():
         assert parents, f"{uid} has no link to a NEED item"
 
 
-def test_every_requirement_is_covered_by_a_test():
-    reqs, tests = load("REQ"), load("TST")
+def active(items):
+    return {uid: it for uid, it in items.items() if it.get("normative", True) and it.get("active", True)}
+
+
+def test_every_requirement_has_a_design():
+    reqs, designs = active(load("REQ")), load("DES")
+    designed = {l for d in designs.values() for l in links_of(d)}
+    missing = [uid for uid in reqs if uid not in designed]
+    assert not missing, f"requirements without a DES item: {missing}"
+
+
+def test_every_design_links_to_a_requirement_and_has_text():
+    reqs, designs = load("REQ"), active(load("DES"))
+    for uid, item in designs.items():
+        parents = [l for l in links_of(item) if l in reqs]
+        assert parents, f"{uid} has no link to a REQ item"
+        assert (item.get("text") or "").strip(), f"{uid} has no design text"
+
+
+def test_every_design_is_covered_by_a_test():
+    designs, tests = active(load("DES")), load("TST")
     covered = {l for t in tests.values() for l in links_of(t)}
-    missing = [uid for uid, item in reqs.items()
-               if item.get("normative", True) and item.get("active", True) and uid not in covered]
-    assert not missing, f"requirements without a TST item: {missing}"
+    missing = [uid for uid in designs if uid not in covered]
+    assert not missing, f"design items without a TST item: {missing}"
+
+
+def test_every_requirement_is_covered_by_a_test_through_its_design():
+    reqs, designs, tests = active(load("REQ")), load("DES"), load("TST")
+    tested_designs = {l for t in tests.values() for l in links_of(t)}
+    covered = {l for uid, d in designs.items() if uid in tested_designs for l in links_of(d)}
+    missing = [uid for uid in reqs if uid not in covered]
+    assert not missing, f"requirements without a TST item (through DES): {missing}"

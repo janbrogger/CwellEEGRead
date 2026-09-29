@@ -4,11 +4,11 @@ header: |
   Command-line behaviour
 level: 6.0
 links:
-- REQ006: 6S-SXdWXuL0OShDbdbJe9Mu1B6yTg-wq8HI0nfDHDGI=
-- REQ018: wQVgMUUtlC-30X8CeckAhFCCrvHbiaMS85ZmgWIbnIQ=
+- DES006: jj3LCTkIEVpRf_jpH3D42MyHUvocvqEe3dZTDmVWO08=
+- DES018: JSc5w4oWasAUUxuzHKDJUZLS64lN85KLWLHCyFGgmjQ=
 normative: true
 ref: ''
-reviewed: g16tsO6UBlNUFEYoQ8H-uJMLVQ3QXswuGCSlJ3TYNDY=
+reviewed: BeoHldTCUpJsEfh3BIEjo8rEfGMUE78Y-X3eC5QJ91k=
 text: |
   Run the CLI on a valid recording, on a non-existent path, on a corrupt
   file and on an unsupported version. Pass if the valid run returns exit

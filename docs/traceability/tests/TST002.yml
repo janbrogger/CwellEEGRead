@@ -4,12 +4,12 @@ header: |
   Header equivalence with native EDF export
 level: 2.0
 links:
-- REQ003: kVnH7GDib_ckBl6RmquYOxAQgVXXkpRtbp_OWhxCh7E=
-- REQ004: omAiwwcoPG56az_Cyj8fDRnmEkTozyYI4QcdOFmKhH0=
-- REQ008: abLUVQoV29OwxIKfVEk1xTZ0eWim7_0c7QqtOFiECo8=
+- DES003: ULhk-VMwY2qmxiiQwmmXUwW4u0CyHW_Q0s9jUsnrIUc=
+- DES004: y7EDqdFkklalQMZwY2RFo9RwVRqQcQZo8PIRyqZmhmY=
+- DES008: llYdA52VLZBmbVNP10FRiFe_bgyGGhzdXpbgAK5RQ7I=
 normative: true
 ref: ''
-reviewed: buUcYkS2W-PrGn6MoB1DF7XGw__S8SA6cnAXNM5gF7g=
+reviewed: trs7q8OhNgHd1W34YI4SPIicTYWLaI6Hwhdxu4wDhp0=
 text: |
   For each test recording compare our EDF header with the native Cadwell EDF
   export: channel labels (after the documented mapping), sampling rates,

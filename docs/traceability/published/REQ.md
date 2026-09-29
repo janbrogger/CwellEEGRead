@@ -40,7 +40,7 @@ recording.
 
 *Parent links: NEED001*
 
-*Child links: TST014*
+*Child links: DES001*
 
 # 2.0 Output: EDF/EDF+ files _(REQ002)_ {#REQ002}
 
@@ -52,7 +52,7 @@ MNE-Python) without warnings about header validity.
 
 *Parent links: NEED002*
 
-*Child links: TST001*
+*Child links: DES002*
 
 # 3.0 Signal fidelity _(REQ003)_ {#REQ003}
 
@@ -65,7 +65,7 @@ recorded in the EDF header's prefiltering field.
 
 *Parent links: NEED003*
 
-*Child links: TST002, TST003*
+*Child links: DES003*
 
 # 4.0 Recording and patient metadata _(REQ004)_ {#REQ004}
 
@@ -83,7 +83,7 @@ conversion report.
 
 *Parent links: NEED003, NEED005*
 
-*Child links: TST002*
+*Child links: DES004*
 
 # 5.0 Events and annotations _(REQ005)_ {#REQ005}
 
@@ -95,7 +95,7 @@ that cannot be mapped shall be listed in the conversion report.
 
 *Parent links: NEED002, NEED003*
 
-*Child links: TST004, TST016*
+*Child links: DES005*
 
 # 6.0 Command-line interface _(REQ006)_ {#REQ006}
 
@@ -109,7 +109,7 @@ scripts.
 
 *Parent links: NEED001, NEED006*
 
-*Child links: TST006*
+*Child links: DES006*
 
 # 7.0 Test data set supplied out of band _(REQ007)_ {#REQ007}
 
@@ -123,7 +123,7 @@ SHA-256 checksums and the Cadwell software version that produced them.
 
 *Parent links: NEED003, NEED005*
 
-*Child links: TST008*
+*Child links: DES007*
 
 # 8.0 Proven equivalence with the native EDF export _(REQ008)_ {#REQ008}
 
@@ -145,7 +145,7 @@ the test's documentation.
 
 *Parent links: NEED003*
 
-*Child links: TST002, TST003, TST004, TST015*
+*Child links: DES008*
 
 # 9.0 Proven equivalence with the native CSV/text export _(REQ009)_ {#REQ009}
 
@@ -158,7 +158,7 @@ EDF channel labels.
 
 *Parent links: NEED003*
 
-*Child links: TST005*
+*Child links: DES009*
 
 # 10 Round-trip self-consistency _(REQ010)_ {#REQ010}
 
@@ -169,7 +169,7 @@ held in memory before writing.
 
 *Parent links: NEED003*
 
-*Child links: TST001*
+*Child links: DES010*
 
 # 11 Automated test execution _(REQ011)_ {#REQ011}
 
@@ -180,7 +180,7 @@ integration and on machines without access to patient data.
 
 *Parent links: NEED004*
 
-*Child links: TST008*
+*Child links: DES011*
 
 # 12 LLM session provenance _(REQ012)_ {#REQ012}
 
@@ -192,18 +192,21 @@ of prompts and responses is available in the repository.
 
 *Parent links: NEED004*
 
-*Child links: TST010*
+*Child links: DES012*
 
 # 13 Requirements traceability _(REQ013)_ {#REQ013}
 
 Requirements shall be managed with Doorstop in `docs/traceability/` as a
-chain NEED -> REQ -> TST. Every normative requirement shall link to at
-least one need and shall be covered by at least one test specification, and
-`doorstop` validation shall pass with no errors before a release.
+chain NEED -> REQ -> DES -> TST. Every normative requirement shall link to
+at least one need and shall have a design item (DES) stating how it is
+implemented; every design item shall be covered by at least one test
+specification, and `doorstop` validation shall pass with no errors before
+a release. The published tree (Markdown per document and one PDF of the
+whole tree with the traceability matrix) shall be kept in the repository.
 
 *Parent links: NEED004*
 
-*Child links: TST009*
+*Child links: DES013*
 
 # 14 Anonymisation option _(REQ014)_ {#REQ014}
 
@@ -215,7 +218,7 @@ altering the signal data.
 
 *Parent links: NEED005*
 
-*Child links: TST007*
+*Child links: DES014*
 
 # 15 Licence compatibility _(REQ015)_ {#REQ015}
 
@@ -227,7 +230,7 @@ file, including attribution of the original authors.
 
 *Parent links: NEED007*
 
-*Child links: TST012*
+*Child links: DES015*
 
 # 16 Downstream use scaffolds _(REQ016)_ {#REQ016}
 
@@ -249,7 +252,7 @@ listed in `EEG.etc.cadwell.gaps` in both modes.
 
 *Parent links: NEED006*
 
-*Child links: TST013*
+*Child links: DES016*
 
 # 17 Reproducible development environment _(REQ017)_ {#REQ017}
 
@@ -259,7 +262,7 @@ fresh checkout can be brought to a working state with one command.
 
 *Parent links: NEED004*
 
-*Child links: TST011*
+*Child links: DES017*
 
 # 18 Clear failure on unsupported input _(REQ018)_ {#REQ018}
 
@@ -271,7 +274,7 @@ mistaken for a complete conversion.
 
 *Parent links: NEED003*
 
-*Child links: TST006*
+*Child links: DES018*
 
 # 19 Recording gaps and discontinuities _(REQ019)_ {#REQ019}
 
@@ -289,7 +292,7 @@ gap handling differences are explicit rather than hidden.
 
 *Parent links: NEED003*
 
-*Child links: TST015*
+*Child links: DES019*
 
 # 20 Sample clock and resampling policy _(REQ020)_ {#REQ020}
 
@@ -312,7 +315,7 @@ recording-additional field and in the conversion report.
 
 *Parent links: NEED002, NEED003*
 
-*Child links: TST003*
+*Child links: DES020*
 
 ## 20.1 Event placement on the sample clock _(REQ021)_ {#REQ021}
 
@@ -337,5 +340,5 @@ EEGLAB plugin shall offer the same choice with the same default.
 
 *Parent links: NEED002, NEED003*
 
-*Child links: TST016*
+*Child links: DES021*
 

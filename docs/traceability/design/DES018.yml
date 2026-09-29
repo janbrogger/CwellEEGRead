@@ -1,0 +1,21 @@
+active: true
+derived: false
+header: |
+  Clear failure on unsupported input
+level: 18.0
+links:
+- REQ018: wQVgMUUtlC-30X8CeckAhFCCrvHbiaMS85ZmgWIbnIQ=
+normative: true
+ref: ''
+reviewed: ffzg9-pHijCecI5BSWdAX0RAEXtNmql0JvasiUli7o0=
+text: |
+  **Implements** REQ018 - input that cannot be fully converted shall stop the program with a diagnostic naming the problem and a non-zero exit code, without leaving a partial EDF that could pass for complete.
+
+  **Design.**
+
+  - *No partial output.* `cwelleegread/__main__.py: cmd_convert()` refuses an existing output without `--force` (exit 1), opens the recording, and has `cwelleegread/edf.py: convert()` write to `<output>.part`; only after `convert()` returns is the file renamed with `os.replace` (atomic on one file system). On any `Exception` the `.part` file is removed and the exception re-raised. Inside `convert()` all decoding and checks run before `cwelleegread/edfwrite.py: write_edf_plus()` opens the file, and the writer validates every header field before writing. A `.part` file can remain only when the process is killed or interrupted (KeyboardInterrupt is not an `Exception`); its name marks it incomplete. Files are opened read-only (`mode=ro&immutable=1`), so the input is never changed.
+  - *Diagnostics.* `main()` turns `FileNotFoundError`, `KeyError` and `ValueError` into `error: <message>` on stderr and exit 1; any other exception prints its traceback and also returns 1. Conditions detected with a message: no `.ezdataindex`, or several records in one folder (`cwelleegread/ezdata.py: open_recording()`); a missing `.ezdata` file or frame key (`CadwellRecording.frames()`); wrong frame magic (`FRAME_MAGIC` 0x033149BD), no channel blocks, channel-count mismatch, unknown delta type (not 1 or 2) (`decode_frame()`); a recording shorter than one second; an over-long header field or a start outside 1985-2084 (`edfwrite.py`).
+  - *Limits.* There is no explicit version check: `SchemaUpdateLog` is read into `schema_versions` and reported, but not compared with a supported list (only schema 2.5 has been seen), so an unsupported version fails only where its tables or frame layout differ. A corrupt or truncated SQLite file raises `sqlite3.DatabaseError`, which is reported as a traceback rather than a one-line diagnostic. An unknown amplifier type is not an error; it falls back to a label table with a report warning (DES004).
+  - *EEGLAB plugin.* `cadwell_read.m`, `cadwell_read_index.m` and `cadwell_decode_frame.m` raise MATLAB errors with identifiers (`cadwell_read:notFound`, `cadwell_read:missingData`, `cadwell_read:missingFrame`, `cadwell_decode_frame:magic`, `cadwell_decode_frame:deltaType` and others); the plugin writes no file.
+
+  **Verified by** TST006 - `tests/test_convert_public.py: test_cli_behaviour` runs the CLI on a valid export (exit 0, JSON report), on a non-existent path (non-zero exit, `error` on stderr, no output file) and on an existing output without `--force` (non-zero exit); the corrupt-file and unsupported-version cases of TST006 are not implemented yet.

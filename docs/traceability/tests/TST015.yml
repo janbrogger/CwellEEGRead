@@ -4,11 +4,11 @@ header: |
   Gap handling
 level: 15.0
 links:
-- REQ008: abLUVQoV29OwxIKfVEk1xTZ0eWim7_0c7QqtOFiECo8=
-- REQ019: m2bJMEzAdkh_voWQdaUbS8Q4zXJbCsU5iErBn3PnLOc=
+- DES008: llYdA52VLZBmbVNP10FRiFe_bgyGGhzdXpbgAK5RQ7I=
+- DES019: F_3MNS5yv_tcg2qehAyd8PDaBS8i1w1H_aUATn3Ne-w=
 normative: true
 ref: ''
-reviewed: 4jyqfsGIq99SfAM1G-UpnffyXTiofchuzeGxJsRyNKY=
+reviewed: BTd2COS3sG7SERBA1mkEJ9n3atxxYuPT4uGS9XzaIFM=
 text: |
   Using a test recording that contains at least one acquisition gap
   (cadwell-export3: 10 s), convert in raw mode. Pass if the number of EDF

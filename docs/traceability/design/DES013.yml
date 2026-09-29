@@ -1,0 +1,45 @@
+active: true
+derived: false
+header: |
+  Requirements traceability
+level: 13.0
+links:
+- REQ013: FwAyMOtAJWlR78BVdYw86bWUyFLjlDRCY6dESbw3uhU=
+normative: true
+ref: ''
+reviewed: Mi-k2Mjqpj-utWjsSQ9flXVg8VIH-htAuXcJ5IZLMsg=
+text: |
+  **Implements** REQ013 - requirements shall be kept in Doorstop under `docs/traceability/` as a chain NEED -> REQ -> DES -> TST. Every normative REQ shall link to a need and have a design item, and every design item shall be covered by a test. `doorstop` validation shall pass before a release, and the published tree (Markdown per document and one PDF with the traceability matrix) shall be kept in the repository.
+
+  **Design.**
+
+  - *Documents.* Doorstop 3.2 (pinned in `requirements-dev.txt`) manages four documents, each with its own `.doorstop.yml`: `needs/` (`NEED`), `requirements/` (`REQ`, parent `NEED`), `design/` (`DES`, parent `REQ`) and `tests/` (`TST`, parent `DES`). All use `itemformat: yaml`, three digits and no separator. An item file carries:
+    - `header`: the title
+    - `text`
+    - `level`
+    - `links`: parent UID plus fingerprint
+    - `normative`, `active`, `derived`, `ref`
+    - `reviewed`: fingerprint
+  - *DES level.* The DES level was added later: one DES item per REQ, with the same number. TST items were relinked from REQ to DES, so a requirement is covered through its design item. `docs/traceability/README.md` gives the rules and commands.
+  - *Validation.* `.venv/bin/doorstop` checks links, levels and fingerprints and exits non-zero on errors. Doorstop itself only warns about missing text, missing child links, suspect links and unreviewed items, so the coverage rules are enforced by pytest. `setup.sh` runs the validation, and `CLAUDE.md` requires it before every commit.
+  - *No automated release gate.* Nothing runs Doorstop before a release: the only workflow, `.github/workflows/release-cadwellio.yml`, runs neither Doorstop nor pytest. "Before a release" is therefore a convention.
+  - *Change control.* `doorstop review all` records reviews and `doorstop clear all` clears suspect links after a parent changes.
+  - *Published tree.*
+    - `doorstop publish <DOC> docs/traceability/published/<DOC>.md` writes the Markdown copies. At present only `NEED.md`, `REQ.md` and `TST.md` exist; `DES.md` has not been published yet.
+    - `doorstop publish all published/html` writes the HTML, which is gitignored.
+    - `tools/doorstop_pdf.sh` publishes the HTML and prints the index, NEED, REQ, DES and TST documents and the traceability matrix with headless Chromium. Chromium comes from `$CHROME`, the Playwright browser, or `chromium`/`google-chrome` on the PATH. The script merges the pages with `pypdf` into `published/CwellEEGRead-traceability.pdf`.
+  - *Why Doorstop.* Items are plain YAML files next to the code, reviewable in git diffs, and validated by a pinned command-line tool. `docs/research/` records no comparison with other tools.
+
+  Contradictions with REQ013 as it stands:
+  - `.gitignore` still ignores `docs/traceability/published/*.pdf`, so the PDF is not kept in the repository, although `README.md` calls it committed.
+  - `DES.md` is missing.
+
+  **Verified by** TST009 - `tests/test_traceability.py` runs:
+  - `test_doorstop_validates`: Doorstop exits 0 with no errors.
+  - `test_every_requirement_links_to_a_need`
+  - `test_every_requirement_has_a_design`
+  - `test_every_design_links_to_a_requirement_and_has_text`
+  - `test_every_design_is_covered_by_a_test`
+  - `test_every_requirement_is_covered_by_a_test_through_its_design`
+
+  No test checks that the published Markdown and PDF exist or are current.

@@ -1,6 +1,6 @@
 # docs/
 
-- `traceability/` - the Doorstop requirement tree (NEED -> REQ -> TST). Edit
+- `traceability/` - the Doorstop requirement tree (NEED -> REQ -> DES -> TST). Edit
   the YAML items with `doorstop` or a text editor; validate with
   `.venv/bin/doorstop`; readable Markdown copies are regenerated into
   `traceability/published/`.

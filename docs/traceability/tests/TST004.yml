@@ -4,11 +4,11 @@ header: |
   Annotation equivalence with native EDF export
 level: 4.0
 links:
-- REQ005: 3ljBCHH7I_oEvqVvgR2yxjTsbGA_VW1uniX3zxSsj6A=
-- REQ008: abLUVQoV29OwxIKfVEk1xTZ0eWim7_0c7QqtOFiECo8=
+- DES005: WCI05pb9-ddtCxoPcTAkdbmTQFhAkNk3v5mKXyqx9NU=
+- DES008: llYdA52VLZBmbVNP10FRiFe_bgyGGhzdXpbgAK5RQ7I=
 normative: true
 ref: ''
-reviewed: 2LBJOXaikMpR9rPfDCStKkFrHjpvrq8VJuPUFySph4A=
+reviewed: J1sgpKVUa88sNdscqLncnnz-K8nMXZfj2ityFQlkXN0=
 text: |
   For each test recording compare the EDF+ annotation lists (onset, duration,
   text) of our export and the native export. Pass if, in vendor-compatible

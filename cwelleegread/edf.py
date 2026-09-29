@@ -31,6 +31,7 @@ from .edfwrite import write_edf_plus
 SKIPPED_EVENT_TYPES = {"AmpConfigurationData", "LiveAmpConfigurationData", "ReviewedDataEvent",
                        "ContinuousImpedanceEvent", "BaselineImpedanceEvent"}
 SKIPPED_EVENT_TEXTS = {"Photic Stim"}      # the individual flash markers (hundreds); "Photic Start 2Hz" etc. are kept
+ANONYMIZED_EVENT_TYPES = {"Comment", "UserEvent", "Annotation", "PatientEvent"}   # free text typed by people
 
 
 def vendor_resample(data: np.ndarray, per_frame: list[int], rate: int) -> tuple[np.ndarray, list[int], int]:
@@ -228,11 +229,13 @@ def convert(rec: CadwellRecording, out_path: str, *, mode: str = "raw", labels: 
         else:
             onset = (e.start - rec.origin).total_seconds() + lead
             dur = (e.end - e.start).total_seconds()
+        # with --anonymize free text never leaves the recording, not even in the report's skipped list
+        shown = e.type if anonymize and e.type in ANONYMIZED_EVENT_TYPES else e.text
         if e.deleted or (not all_events and (e.type in SKIPPED_EVENT_TYPES or e.text in SKIPPED_EVENT_TEXTS)):
-            skipped.append((e.type, e.text, "deleted" if e.deleted else "type skipped"))
+            skipped.append((e.type, shown, "deleted" if e.deleted else "type skipped"))
         elif onset < 0 or onset > seconds:
-            skipped.append((e.type, e.text, "outside exported range"))
-        elif anonymize and e.type in ("Comment", "UserEvent"):
+            skipped.append((e.type, shown, "outside exported range"))
+        elif anonymize and e.type in ANONYMIZED_EVENT_TYPES:
             ann.append((onset, dur if dur > 0 else -1, e.type))
         else:
             ann.append((onset, dur if dur > 0 else -1, e.text))

@@ -4,11 +4,13 @@ header: |
   Traceability validation
 level: 9.0
 links:
-- REQ013: hQwu6llnDjPZw6vfzScyFmNSGQqYCIDGSZKfStHm63U=
+- DES013: SK0D2x323dOAKMYMSe9CNlGD6WBP1Ya13H0EQbOW5hg=
 normative: true
 ref: ''
-reviewed: WlsSNHXv_QACTb_fDiuOyqwXcCDFLaD6zgV9W8cpMXQ=
+reviewed: p80sQm3qFI-wQQu5BLhCJnOpjto5XfXa8pdRwZGrB3Y=
 text: |
   Run `doorstop` on `docs/traceability/`. Pass if it reports no errors, every
-  normative REQ item links to at least one NEED item, and every normative REQ
-  item is linked from at least one TST item.
+  normative REQ item links to at least one NEED item, every normative REQ item
+  has a DES item with non-empty design text linking to it, every DES item is
+  linked from at least one TST item, and so every requirement is covered by a
+  test through its design. Implemented in tests/test_traceability.py.

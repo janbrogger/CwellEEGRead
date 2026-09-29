@@ -1,0 +1,18 @@
+active: true
+derived: false
+header: |
+  Signal fidelity
+level: 3.0
+links:
+- REQ003: kVnH7GDib_ckBl6RmquYOxAQgVXXkpRtbp_OWhxCh7E=
+normative: true
+ref: ''
+reviewed: EvY21lg7Pr4jc4YfWAlod5P1iUV0q4yfeTTiSJg8FCU=
+text: |
+  **Implements** REQ003 - for every EEG channel the label, sampling rate, microvolt dimension, physical and digital range and every sample value shall be preserved, with no filtering, resampling, re-referencing or truncation unless requested on the command line and then recorded in the EDF prefiltering field.
+
+  **Design.** Fidelity is the default `--mode raw` of `cwelleegread/edf.py: convert()`. Samples: `read_padded()` concatenates the decoded frames of each amplifier input (sorted amplifier-input order, which is the vendor's export column order) and multiplies by `cwelleegread/ezdata.py: UNIT_UV` = 0.72998046 µV per amplifier unit, an empirical constant fitted against the vendor's text export (bounded to [0.729980459, 0.729980461] at 250 Hz, consistent at 500 Hz; no closed form found; `convert(unit_uv=...)` can override it). Nothing is filtered, resampled or re-referenced; data stay referential to the recording reference (Cz, input 15). The only length changes are dropping the trailing partial second (`data[:(n_raw // rate) * rate]`, reported as `samples_dropped_at_end`) and zero-padding recording gaps (REQ019). Rate: the EDF `sample_frequency` is the nominal rate from the channel record (250 or 500 Hz). Dimension: `uV`. Labels: the Cadwell files store no channel labels, so `cwelleegread/layout.py: default_labels()` reconstructs `EEG <name>-<reference>` from a per-headbox table (Apollo type 5, Essentia type 1) chosen by the `AMPLAYOUT` amplifier type; an unknown type falls back to the Essentia table with a report warning, and `--labels` overrides. Ranges: the source has no physical or digital range of its own. Raw mode uses `nice_range()`: a symmetric per-channel range covering the peak plus 1 %, rounded up to two significant digits, at least ±100 µV, over digital -32768..32767, so the step is about peak/32767 - finer than one amplifier unit for ordinary EEG. The vendor's fixed range (±562500 µV on Apollo, 17.17 µV per step) was rejected for raw mode as too coarse (research note) and is kept only in vendor mode. Sample values are therefore preserved within half a quantisation step, not bit for bit.
+
+  **Deviations found.** The prefilter field is always written empty: the 0.16 Hz high-pass (`--highpass on`, also available in raw mode) and vendor-mode resampling are recorded only in the JSON report (`highpass_hz`, `mode`) and, for the mode, in the recording-additional field, contrary to the last sentence of REQ003. Dropping the trailing partial second is not optional (REQ020 permits it). Labels are cut to 16 characters.
+
+  **Verified by** TST002 - compares labels, sampling rates, physical ranges and start time with the vendor EDF (`tests/test_convert_public.py`, vendor mode, export 1; `tests/test_export3_gap.py`, labels and start time, export 3). TST003 - raw fidelity through the text export (TST005) and vendor-mode equivalence of every sample within one quantisation step against the vendor EDFs (`tests/test_convert_public.py`, `tests/test_vendor_exports_filtering.py`).

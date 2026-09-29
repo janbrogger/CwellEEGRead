@@ -1,0 +1,74 @@
+active: true
+derived: false
+header: |
+  Downstream use scaffolds
+level: 16.0
+links:
+- REQ016: lmgdzfwReBB4Kzrf7BETYxuSuAr-ZDnkeNwnNadqG0c=
+normative: true
+ref: ''
+reviewed: Vi3rMvueVVjB0I1_IBAn9mMSB9GQKgosNLRr1VyCyjk=
+text: |
+  **Implements** REQ016 - `uses/` shall hold one sub-folder per downstream use (Morgoth, SCORE-AI, EEGLAB), each with a README giving its status and prerequisites. The EEGLAB plugin can be packaged as a zip, shows a recording pause as a `Recording gap` event (padded) or a `boundary` event (concatenated, with later events moved earlier by the pause), and lists pauses in `EEG.etc.cadwell.gaps`.
+
+  **Design.** `uses/README.md` lists the three scaffolds with their status. Background: `docs/research/downstream-uses.md`.
+
+  *Morgoth (scaffold, never run end to end).*
+  - `uses/Morgoth/install.sh` clones `bdsp-core/morgoth` (`MORGOTH_REF`, default `main`) into the gitignored `morgoth/`, and records the commit in `morgoth.commit`. It creates the conda environment `morgoth` (Python 3.12, PyTorch 2.4.1 on CPU or CUDA 12.4) and installs the upstream requirements.
+  - `run.sh` runs event-level and EEG-level prediction per task. Options: `--cpu`, `--segment`, `--dry-run` (prints the commands) and `-h`.
+  - `morgoth_to_json.py` merges Morgoth's CSV outputs into one JSON document.
+  - The weights need credentialed BDSP access, and Morgoth is licensed CC BY-NC 4.0.
+
+  *SCORE-AI (scaffold).* No public SCORE-AI program exists.
+  - `uses/SCOREAI/run_scoreai.py` fills the command template `SCOREAI_CMD` (`{edf}`, `{json}`) and runs it.
+  - `check_edf()` uses pyedflib to check the input: all 19 10-20 electrodes (with T7/T8/P7/P8 aliases); a warning for no ECG channel or less than 15 minutes; units in µV.
+  - It writes JSON with the input's SHA-256, the check results, normalised probabilities, the raw output and provenance. Options: `--check-only`, `--dry-run`, `--batch`.
+
+  *EEGLAB plugin `cadwellio` 0.2.0 (`uses/EEGLAB/cadwellio/`).* Plain MATLAB/Octave. The main pieces:
+
+  - *Entry point.* `eegplugin_cadwellio.m` returns `vers = 'cadwellio0.2.0'` and adds *From Cadwell (.ezdataindex / converted EDF)* to the *Import data* menu.
+  - *Native SQLite reader.* `cadwell_sqlite_native.m` reads the whole file into memory and checks the header magic, page size and text encoding (Cadwell files use UTF-16LE). It walks each table's b-tree depth first with an explicit stack (interior pages type 5, leaf pages type 13), which yields rows in rowid order.
+    - It follows overflow chains using the file-format formulas (X, M, K).
+    - It decodes records by serial type, with a vectorised decoder for varint headers.
+    - It takes column names from the `CREATE TABLE` text and fills `INTEGER PRIMARY KEY` aliases.
+    - It keeps each value's storage class in `t.kinds`, and warns if a `-wal` file exists.
+    - No SQL, indexes or writes.
+  - *Backend switch.* `cadwell_sqlite.m` uses `native` by default. `mksqlite`, `sqlite` (Database Toolbox or Octave package), `jdbc` (xerial jar in `lib/`, fetched by `cadwell_get_jdbc.m`) and `python` (`py.sqlite3`, read-only) exist only to cross-check the native reader and for ad-hoc SQL.
+    - Why native: the scoping report (`docs/research/eeglab-fieldtrip-cadwell-reader.md`) rejected the library routes as defaults. The Database Toolbox is paid and does not return BLOBs [W]. MATLAB's Java support is being withdrawn [W]. MEX needs a binary per platform and MATLAB ABI.
+  - *Frame decoder.* `cadwell_decode_frame.m` is ported from the Python decoder in `cwelleegread/`.
+    - It checks the magic `0x033149BD`, finds the channel blocks by their 8-byte tag, and reads the channel count and start/end ticks (100 ns) from the header.
+    - Samples = first + cumsum(int16 or int8 deltas) × scale.
+    - It is vectorised: channels that share a delta type and length are decoded with one `typecast` and one `cumsum`.
+  - *Reader.*
+    - `cadwell_read_index.m` reads the GUIDs, track-0 channels, frames, gaps and clock correction. `cadwell_read_events.m` reads the events.
+    - `cadwell_read.m` finds the `.ezdataindex` and reads all `FrameInfo` blobs of each data file in one table read. It matches blobs to frames by FrameKey with `ismember`, because `containers.Map` is slow in Octave.
+    - It decodes the frames into a preallocated µV matrix. Labels come from the Apollo or Essentia headbox tables in `cadwell_layout.m`.
+  - *Pauses.*
+    - A frame number is one second, so a jump in frame numbers is a pause. `cadwell_read` records it in `gaps` (`startSample`, `seconds`, `startSec`, `padded`).
+    - With `PadGaps` on, the pause is zero-filled; with it off, the segments are concatenated.
+    - `pop_cadwell.m: gap_events()` then writes, when padded, a `Recording gap` event at `startSample`; when concatenated, a `boundary` event at `startSample - 0.5`. Both have `duration` = pause × srate samples.
+    - Moving later events up: in `ticks` mode `event_sample()` maps onto the concatenated sample axis, and an instant inside a pause lands on the join. In `stamp` mode the pause lengths are subtracted.
+    - `EEG.etc.cadwell` is `rec` without `data` and `events`, so `gaps` is there in both modes.
+    - Deviation from REQ016: with `'importevent','off'`, only boundary events are written, so padded mode then has no `Recording gap` event.
+  - *Event timing (REQ021).* The default, `ticks`, maps each event's StartOffset through the frames' tick spans (linear within a frame, nominal rate outside). `stamp` uses the wall-clock stamp relative to the first frame, as the vendor's EDF export does. Both onsets are kept.
+  - *Importer.* `pop_cadwell.m` builds the dataset from `eeg_emptyset` with single-precision data. Channel labels are electrode names with `.ref`, and `EEG.ref` is `'Cz'`. It then runs `eeg_checkset` (`eventconsistency`, `makeur`) and writes a history string. It skips deleted events, bookkeeping event types and `Photic Stim`. A `.edf` file is passed to `pop_biosig` or `pop_fileio`.
+  - *Self-test.* `cadwell_selftest.m` compares against reference data written by `tools/make_matlab_reference.py --tables`:
+    - A: the decoder against Python, on stored frames.
+    - B: a full read through every available backend.
+    - D: the native reader's canonical dump of every table, byte for byte.
+    - E: padded against concatenated reads.
+    - F: tick onsets against stamp onsets plus the frame drift.
+    - C: export 1 against the vendor text export. The code allows 0.06 µV, while TST013 says 0.05.
+  - *Zip.* `uses/EEGLAB/make_zip.sh` reads the version from `vers` and copies `*.m`, `README.md` and `LICENSE` into `dist/cadwellio<ver>/`, then zips it with the folder at the root. `--with-jdbc` also adds the jar. `dist/` is gitignored.
+  - *Release.* `.github/workflows/release-cadwellio.yml` runs on a `cadwellio-v*` tag, on a `release/cadwellio-v*` branch or by manual dispatch. It checks that the tag version equals `vers`, builds the zip and publishes it as the only asset with `softprops/action-gh-release@v2`. It does not run the self-test. The tag `cadwellio-v0.2.0` exists.
+
+  Not done yet:
+  - The MATLAB GUI has not been exercised.
+  - The plugin has not been submitted to the EEGLAB plugin list (`SUBMISSION.md`).
+  - The FieldTrip reader exists only in research notes.
+  - `uses/EEGLAB/README.md` no longer contains the words "status" or "prerequisite" (its section is headed "Requirements"), so the README check fails for EEGLAB.
+
+  **Verified by** TST013:
+  - `tests/test_uses_scaffold.py` checks that each README mentions status and prerequisites. It does not run the scripts' `--help` or `--dry-run` modes, which TST013 also asks for.
+  - `tests/test_octave_port.py` runs `cadwell_selftest` under GNU Octave on the three public exports.
+  - `tests/test_eeglab_import.py` runs `pop_cadwell` on export 3 with EEGLAB functions (`EEGLAB_DIR`, dipfit). It checks one `Recording gap` or `boundary` event of 10 s, zeros in the padded pause, the shifted latencies, and a `pop_saveset`/`pop_loadset` round trip.

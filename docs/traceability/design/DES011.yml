@@ -1,0 +1,27 @@
+active: true
+derived: false
+header: |
+  Automated test execution
+level: 11.0
+links:
+- REQ011: 95wcaPJf1AbIMh_A7DoxAFm89GFZY0j8-NaEVNqoOWA=
+normative: true
+ref: ''
+reviewed: d0NsP9YpLQLBoGdW2mJFZYncsOxmu4bB5zu4W2q4ASk=
+text: |
+  **Implements** REQ011 - all equivalence and validity tests run under `pytest`, and tests needing the out-of-band data skip with an explicit message when it is absent, so the rest can run in CI and without patient data.
+
+  **Design.** `pytest.ini` sets `testpaths = tests`, `pythonpath = .` (the package is imported without installation) and `addopts = -ra` (the summary lists every skip with its reason), and declares a marker `testdata`. `setup.sh` installs `requirements-dev.txt` (doorstop 3.2, pytest ≥ 8, pyyaml, plus the runtime `requirements.txt`: numpy, pyedflib, scipy) into the gitignored `.venv`. Skips, by missing resource:
+
+  - Test exports: module-level `pytestmark = pytest.mark.skipif(not (<export>/"native-export").exists(), reason="public test export ... missing")` in `test_convert_public.py`, `test_ezdata_public.py`, `test_export3_gap.py` and `test_vendor_exports_filtering.py`. `test_event_timing.py` and `test_metadata_json.py` call `pytest.skip()` per case.
+  - Private data: the `tests/conftest.py` fixtures `manifest` and `testdata` skip with a message naming the missing manifest, empty manifest or missing `testdata/private/`. No test uses them yet.
+  - Libraries: `pytest.importorskip("pyedflib")` and `importorskip("scipy.signal")`.
+  - Tools: `tests/test_octave_port.py` skips without `octave-cli`/`octave`. `tests/test_eeglab_import.py` also needs `EEGLAB_DIR` (with `functions/`) and dipfit (`DIPFIT_DIR` or `<EEGLAB_DIR>/plugins/dipfit`).
+
+  The test data are committed public recordings (DES007), so on a full clone the equivalence tests run instead of skipping. The skip paths cover pruned checkouts and missing tools.
+
+  Execution: **no CI workflow runs pytest.** `.github/workflows/` holds only `release-cadwellio.yml`, which builds and publishes the EEGLAB plugin zip on a `cadwellio-v*` tag. The automation today is the SessionStart hook `.claude/hooks/session-start.sh`. On Claude Code on the web (`CLAUDE_CODE_REMOTE=true`) it runs `setup.sh`, installs GNU Octave, zip and unzip, sparse-clones EEGLAB `functions/` and dipfit into the gitignored `.cache/`, and exports `EEGLAB_DIR` and `DIPFIT_DIR`, so the whole suite can run, including the Octave tests. Even there, `pytest` is started by hand. In local sessions the hook exits immediately; developers run `./setup.sh` and `pytest`.
+
+  Limits: the `testdata` marker is declared but never applied. A CI job would have to check out about 300 MB of test data or skip most tests. The Octave self-test has a 30-minute timeout.
+
+  **Verified by** TST008 - the graceful skip when `testdata/private/` is absent and the checksum verification exist only as the unused `tests/conftest.py` fixtures, so TST008 is not yet exercised by a test.

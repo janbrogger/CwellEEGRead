@@ -3,3 +3,4 @@
 doorstop==3.2
 pytest>=8
 pyyaml>=6
+weasyprint==70.0        # tools/doorstop_pdf.py: the committed PDF of the Doorstop tree

@@ -4,10 +4,10 @@ header: |
   Supported-version coverage
 level: 14.0
 links:
-- REQ001: yLgnZvR4tW-HIQzn-9tflosdpTwmy8eQip6P75NZ8Ps=
+- DES001: 4HxdlbLZy2iUwenxMDm9g5Aei-a_Gi75RTMZq37bkXM=
 normative: true
 ref: ''
-reviewed: qHkwy51E6wl6AGAMAs_2pUWtDzJfXlTbfpgTX8Q2dXU=
+reviewed: zN1kxPfWU1Wk2hqNrA2-R1FTu8YLg-PWfi4wERnPEtU=
 text: |
   Check that the documented list of supported Cadwell software versions is
   non-empty and that every listed version is represented by at least one

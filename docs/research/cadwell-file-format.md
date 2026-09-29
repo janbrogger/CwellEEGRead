@@ -658,7 +658,7 @@ Consequences for users:
 - Up to about 2 s of EEG before each stop and 1 s after each start are not
   in the export at all, so an event stamped in that window (a button press
   right before stopping) has no data under it. The Python converter reports
-  the same figures (`inspect --json`, `gaps` and `events`).
+  the same figures (`convert --json`: `gaps`, `gaps_padded` and `events_skipped`).
 
 # MATLAB/Octave port (added 2026-09-28)
 

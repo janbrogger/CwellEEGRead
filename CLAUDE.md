@@ -4,7 +4,7 @@
   with automated equivalence tests against the vendor's own EDF and CSV
   exports. See `README.md` and `docs/traceability/published/REQ.md`.
 - **Requirements first**: behaviour changes start as Doorstop items in
-  `docs/traceability/` (chain NEED -> REQ -> TST). Run `.venv/bin/doorstop`
+  `docs/traceability/` (chain NEED -> REQ -> DES -> TST). Run `.venv/bin/doorstop`
   before committing; keep `docs/traceability/published/*.md` regenerated.
 - **LLM provenance**: hooks in `.claude/settings.json` archive every session
   into `llm-logs/<session_id>/`. Never delete or hand-edit files there

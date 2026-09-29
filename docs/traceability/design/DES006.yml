@@ -1,0 +1,22 @@
+active: true
+derived: false
+header: |
+  Command-line interface
+level: 6.0
+links:
+- REQ006: 6S-SXdWXuL0OShDbdbJe9Mu1B6yTg-wq8HI0nfDHDGI=
+normative: true
+ref: ''
+reviewed: LncDiul3o-3rj752kX5DLrGfb_jz82PBcmcKAdjvd1s=
+text: |
+  **Implements** REQ006 - a command line `convert <cadwell-input> <output.edf>` for one recording, a batch mode for a folder, exit code 0 on success and non-zero on failure, and an optional JSON conversion report.
+
+  **Design.** `cwelleegread/__main__.py: main()` is an `argparse` parser (prog `cwelleegread`, `--version`) with two required sub-commands, run as `python -m cwelleegread`. There is no `pyproject.toml` or console-script entry point, so a bare `cwelleegread` command does not exist yet. `inspect <input>` prints record, schema, start, rate, channels, frames, gaps and the first `--max-events` events. `convert <input> <output>` (`cmd_convert()`) resolves the input with `cwelleegread/ezdata.py: open_recording()` (an `.ezdataindex` file, a `CadLink/Data` folder or an export folder; a folder holding several records is refused) and passes `--mode raw|vendor`, `--timezone`, `--labels`, `--anonymize`, `--patient-name`, `--all-events`, `--highpass auto|on|off`, `--start-at first-frame|record-origin` and `--event-timing auto|ticks|stamp` to `cwelleegread/edf.py: convert()`.
+
+  Failure handling: an existing output is refused unless `--force`. The EDF is written to `<output>.part` and moved into place with `os.replace()` only after `convert()` returns; on any exception the `.part` file is removed, so a failed conversion leaves no output. `main()` turns `FileNotFoundError`, `KeyError` and `ValueError` into one `error: ...` line on stderr and exit code 1, and any other exception (e.g. `sqlite3.DatabaseError` from a corrupt file) into a traceback and exit code 1; argparse usage errors exit with 2. Success prints a one-line summary and every report warning, and returns 0.
+
+  JSON report: `convert()` always builds a report dict and `--json <path>` writes it. It holds the program version, input and output paths, record and patient GUIDs (patient GUID omitted with `--anonymize`), schema versions, mode, high-pass, start and event-timing policy, start time (UTC and as written), clock correction, headbox, nominal and effective rate, frame and sample counts, `seconds`, gaps, per-channel label, range and resolution, `annotations_written`, `events_skipped` with reasons, and `warnings`. The annotations themselves are not listed.
+
+  Limits: **batch mode is not implemented** - one recording per call; callers loop in the shell. There is no supported-version check, so an unknown schema is rejected only if decoding fails. The JSON is written after the EDF is moved into place, so a failure writing the report exits 1 but leaves the EDF behind.
+
+  **Verified by** TST006 - `tests/test_convert_public.py: test_cli_behaviour()` runs the CLI as a subprocess on public export 1 (exit 0, EDF written, JSON `seconds == 45`), on a non-existent path (non-zero, `error` on stderr, no output file) and onto an existing output without `--force` (non-zero); the corrupt-file and unsupported-version cases of TST006 are not tested yet.

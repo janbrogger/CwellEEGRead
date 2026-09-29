@@ -4,10 +4,10 @@ header: |
   LLM log integrity
 level: 10.0
 links:
-- REQ012: qxro17ZTYc_Q8ACD-BitAUJtgxuG0UA2YuRC0TumhzU=
+- DES012: f-e8StAGUlWmxXatLWQXPDpanYxSZTrAeYTdlRG1LpI=
 normative: true
 ref: ''
-reviewed: ZqtJijzo1_AgGJtwDYusqj6BRe08rj39bggQrJ4FFQ0=
+reviewed: EQ5zSXdQkchYQ42cynh7spu10mPV4go67PyJ64IhmEI=
 text: |
   Verify that every session folder under `llm-logs/` contains a transcript
   and is listed in `llm-logs/sessions.csv`, that every session in

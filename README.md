@@ -48,7 +48,7 @@ whole repository to every release, which can be ignored).
 
 | Path | What |
 |---|---|
-| `docs/traceability/` | Requirements managed with [Doorstop](https://doorstop.readthedocs.io): `needs/` (NEED), `requirements/` (REQ), `tests/` (TST). Readable copies in `docs/traceability/published/*.md`. |
+| `docs/traceability/` | Requirements managed with [Doorstop](https://doorstop.readthedocs.io): `needs/` (NEED), `requirements/` (REQ), `design/` (DES, how each requirement is implemented), `tests/` (TST). Readable copies in `docs/traceability/published/*.md`, the whole tree as `docs/traceability/published/CwellEEGRead-traceability.pdf`. |
 | `docs/research/` | Research notes: the Cadwell file format, the BioSig toolbox and licensing, downstream uses. |
 | `llm-logs/` | Archive of every Claude Code session (prompts, responses, full transcripts) and `sessions.csv`. Filled automatically by hooks in `.claude/`. |
 | `cwelleegread/` | the Python package: `ezdata.py` reads a CadLink export (index, frames, events); `layout.py` amplifier-input labels; `edf.py` conversion policies; `edfwrite.py` EDF+ writer; `__main__.py` CLI. |
@@ -74,8 +74,8 @@ pytest                          # run the tests
 doorstop add REQ                # new requirement (edit the YAML it creates)
 doorstop link TST015 REQ019     # trace a test to a requirement
 doorstop review all             # mark reviewed after editing
-for d in NEED REQ TST; do doorstop publish $d docs/traceability/published/$d.md; done
-tools/doorstop_pdf.sh           # one PDF of NEED, REQ, TST and the traceability matrix (needs Chromium)
+for d in NEED REQ DES TST; do doorstop publish $d docs/traceability/published/$d.md; done
+tools/doorstop_pdf.sh           # the committed PDF of NEED, REQ, DES, TST and the traceability matrix
 ```
 
 ## Licence

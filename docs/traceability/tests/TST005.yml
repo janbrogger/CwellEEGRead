@@ -4,10 +4,10 @@ header: |
   Sample equivalence with native CSV/text export
 level: 5.0
 links:
-- REQ009: 9PHAlJnYghX3tFXNDsa9_D8OcT08CM4jeqbW2Ptzzq8=
+- DES009: XvGYnQe1Nl-kxHteNLFwEYqb-32-1OPFbFFOI7BGCW0=
 normative: true
 ref: ''
-reviewed: x9j1EKF1QaoodgzGVFe9PX2hc0DNb1KiTIKf2zfJvGQ=
+reviewed: DTx6-1UlVNNATW7Ct_abTDRAdbdIjlIgN27qdyighTU=
 text: |
   For each test recording parse the native CSV/text export, map its column
   order (amplifier input order) to EDF channel labels, and compare the

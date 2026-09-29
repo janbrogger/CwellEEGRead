@@ -12,6 +12,11 @@ Version 0.2.0. Public domain (Unlicense). Part of
 converter uses the same decoding rules and against which this plugin is
 tested.
 
+Status: working and released (GitHub release `cadwellio-v0.2.0`); verified
+under GNU Octave with EEGLAB's own functions, not yet exercised in the MATLAB
+GUI; submission to the EEGLAB plugin list pending. Prerequisites are listed
+under *Requirements* below.
+
 ## Requirements
 
 - MATLAB R2016b or newer, or GNU Octave 6 or newer.

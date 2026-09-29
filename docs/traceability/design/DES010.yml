@@ -1,0 +1,26 @@
+active: true
+derived: false
+header: |
+  Round-trip self-consistency
+level: 10.0
+links:
+- REQ010: Dvv2VHiuW9Q32NyjEhkKDYQRHZv_veCXJ6pKvWFfMCo=
+normative: true
+ref: ''
+reviewed: azvFCNRB3-DpcPayNeKtGLglzdY5R1utlDqCPkWraig=
+text: |
+  **Implements** REQ010 - the EDF the program writes, read back by an independent reader, yields the same labels, sampling rates, start time and samples (within 16-bit quantisation) as the data held in memory before writing.
+
+  **Design.** The file is written by the project's own `cwelleegread/edfwrite.py: write_edf_plus()` (EDF+C, 1 s records, one `EDF Annotations` signal) and read back in the tests with pyedflib (the C library EDFlib), so the check is not self-referential. A library writer was rejected so that annotation texts are not truncated, the sub-second start goes into the first TAL of every record as in the vendor's export, and every header field is under control.
+
+  Quantisation: `d = rint((x - pmin) / (pmax - pmin) × (dmax - dmin) + dmin)`, clipped to [-32768, 32767]. In raw mode `cwelleegread/edf.py: nice_range()` gives each channel a symmetric physical range: max|x| × 1.01, at least 100 µV, rounded up to two significant digits. The step is then about 1/32767 of the channel's peak and no sample is clipped. Vendor mode uses the vendor's fixed range. Header numbers are written by `_num()` in at most 8 characters. The start is a naive datetime (UTC, or `--timezone`) with whole seconds in the header and the sub-second (6 decimals) in the TALs. Raw mode keeps every sample and drops only a trailing partial second (`samples_dropped_at_end` in the report). The writer raises on overlong fields, signals that do not fill whole records, or a start year outside 1985-2084.
+
+  Acceptance rule: every read-back sample is within 0.51 × resolution of the decoded value (half a step plus floating-point margin). Each channel's resolution must be at most max(0.05 µV, 2.3 × peak/65535), so a data-driven range cannot become coarse.
+
+  Limits: only pyedflib reads back; MNE-Python, named in TST001, is not used and not a dependency. The in-memory reference is `CadwellRecording.read_signals()`, i.e. the decoded data. In raw mode without `--highpass on` that is exactly what was written. Vendor-mode output is compared with the vendor's file (DES008), not with memory. Labels are asserted on read-back only against the vendor's labels (export 3), and sampling rates only through samples per record.
+
+  **Verified by** TST001:
+
+  - `tests/test_convert_public.py: test_raw_mode_round_trip` - export 1: 45 records, 11250 × 32 samples, 8 samples dropped, per-channel resolution bound, every sample within 0.51 step, start 13:37:50 UTC, 7 annotations.
+  - `test_export2_converts` (same file) - export 2: 961 records, 480500 × 32, 52 annotations, local start time, Cz reference ≈ 0.
+  - `tests/test_export3_gap.py` (`raw_edf` fixture) - export 3: 1217 records, padded zeros within one step, labels equal to the vendor's.

@@ -4,10 +4,10 @@ header: |
   Anonymisation
 level: 7.0
 links:
-- REQ014: wu85oywYFHWrqdMOsZMrmJSIk1vv4LWfWTLgB8mTRac=
+- DES014: HNP79pZKmgVs0GY_c9nHybFxi3JEQ8SlkbSKTggI13w=
 normative: true
 ref: ''
-reviewed: aX26fRYhOws-yIhsE4Vnjk-el6ZTNg-3GL6KFemUxQc=
+reviewed: FTjeGahLJ7beV26074RF_csuuP_WhSsH3KZtsDTx9pQ=
 text: |
   Convert a test recording with the anonymisation option. Pass if the patient
   identification fields contain only the supplied or placeholder values, no

@@ -1,0 +1,18 @@
+active: true
+derived: false
+header: |
+  Output: EDF/EDF+ files
+level: 2.0
+links:
+- REQ002: -jQSDCLRm9FL-H7GgPx0R9PEpjGiBR94gF8DNwWXyOA=
+normative: true
+ref: ''
+reviewed: GhLulsRr26Q4YPZP_xmakWLEH25KTjmZlRFCyZRxCqU=
+text: |
+  **Implements** REQ002 - output files shall conform to EDF (Kemp et al. 1992) and, when annotations are present, EDF+ (Kemp & Olivan 2003), and be readable without header warnings by at least two independent EDF readers.
+
+  **Design.** `cwelleegread/edfwrite.py: write_edf_plus()` is an in-house EDF+C writer; `cwelleegread/edf.py: convert()` prepares signals, signal headers and annotations and calls it. A library writer (pyedflib/EDFlib) was not used so that annotation texts are not truncated, the sub-second start is written as the first TAL of every record (as the Cadwell export does) and every header field is under the project's control (module docstring). Rules: record duration 1 s; each signal has `round(rate x 1 s)` samples per record and all signals must span the same whole number of records (else ValueError); physical values are digitised as `rint((x - pmin) / (pmax - pmin) x (dmax - dmin) + dmin)`, clipped and stored as little-endian int16. Header: version `0`; EDF+ patient field `code sex birthdate name` and recording field `Startdate dd-MMM-yyyy admincode technician equipment [additional]`, spaces replaced by `_` and empty subfields written `X`; start date `dd.mm.yy` and time `hh.mm.ss` in whole seconds; reserved field `EDF+C`; a final `EDF Annotations` signal (physical -1..1, digital -32768..32767) sized to the longest record's TAL list, at least 30 samples. Every record's annotation block starts with the time-keeping TAL `+<subsecond + k>`; event TALs carry the onset plus the sub-second start (onsets are relative to the header's whole second), an optional duration after `0x15`, and UTF-8 text, and go into the record of their onset (clamped to the first/last record). Fields are ASCII-encoded; a value that does not fit raises ValueError instead of being cut (`_field()`, `_num()` picks the shortest numeric form fitting 8 characters); start years outside 1985-2084 are refused. The CLI (`cwelleegread/__main__.py: cmd_convert()`) writes `<output>.part` and renames it on success, so a failed conversion leaves no file.
+
+  **Limits.** An EDF+C file with an annotation signal is written even when there are no events; REQ002 asks for plain EDF then (an EDF+ file remains a valid EDF file with one extra signal). EDF+D is not implemented: recording gaps are zero-padded inside the continuous file (REQ019). `convert()` cuts labels to 16 and the recording-additional text to 34 characters. Read-back is checked only with pyedflib; nothing in the tests opens the files with MNE-Python or EDFbrowser, so the two-independent-readers clause is unverified.
+
+  **Verified by** TST001 - converts public exports 1 and 2 in raw mode and export 1 in vendor mode and reads them back with pyedflib, checking record count, duration, channel count and samples within half the declared resolution (`tests/test_convert_public.py`); the MNE-Python read-back that TST001 describes is not implemented.
