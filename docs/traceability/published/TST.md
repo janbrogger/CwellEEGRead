@@ -19,12 +19,16 @@
 
 # 1.0 EDF structural validity _(TST001)_ {#TST001}
 
-Convert each test recording and open the result with an independent EDF
-reader (pyedflib; MNE-Python when available). Pass if the file is read
-without header errors, reports the expected number of channels, records
-and duration, and the samples read back equal the decoded samples within
-the declared resolution. Implemented for the public exports in
-tests/test_convert_public.py (raw and vendor modes).
+Convert each test recording and open the result with two independent EDF
+readers (pyedflib and MNE-Python). Pass if the file is read without header
+errors, reports the expected number of channels, records and duration, and
+the samples read back equal the decoded samples within the declared
+resolution, with both readers. EDF+D files, which EDFlib/pyedflib refuses
+and MNE-Python reads as if contiguous, are checked with the test suite's own
+record-level reader for the record onsets. Implemented for the public
+exports in tests/test_convert_public.py (raw and vendor modes, pyedflib)
+and tests/test_edf_formats.py (MNE-Python read-back, plain EDF, EDF+D, the
+prefilter field).
 
 *Parent links: DES002, DES010*
 
@@ -87,10 +91,16 @@ tests/test_export3_gap.py and tests/test_vendor_exports_filtering.py.
 # 6.0 Command-line behaviour _(TST006)_ {#TST006}
 
 Run the CLI on a valid recording, on a non-existent path, on a corrupt
-file and on an unsupported version. Pass if the valid run returns exit
-code 0 and a valid JSON report when requested, and every invalid run
-returns a non-zero exit code, prints a diagnostic and leaves no output
-file behind.
+file and on an unsupported version, and run the batch mode on a folder
+holding several recordings, one of them unsupported. Pass if the valid run
+returns exit code 0 and a valid JSON report when requested; every invalid
+run returns a non-zero exit code, prints a one-line diagnostic (no
+traceback) and leaves no output file behind; an unsupported version
+converts only with `--allow-unsupported`, with a report warning; the batch
+converts every other recording, names the outputs after the records, writes
+a summary listing the failure and exits non-zero; and the installed
+`cwelleegread` command runs. Implemented in tests/test_convert_public.py
+(`test_cli_behaviour`) and tests/test_cli.py.
 
 *Parent links: DES006, DES018*
 
@@ -99,16 +109,24 @@ file behind.
 Convert a test recording with the anonymisation option. Pass if the patient
 identification fields contain only the supplied or placeholder values, no
 annotation contains the original patient name or identifier, and the signal
-data is identical to a conversion without the option.
+data is identical to a conversion without the option. Implemented in
+tests/test_anonymisation.py on cadwell-export2 (a Comment and a UserEvent
+with typed text): the patient GUID and the typed texts appear in the file
+and report without the option and nowhere in the EDF bytes or the JSON
+report with it, the patient field is `X X X <name>`, and the digital
+samples of all 32 signals are identical.
 
 *Parent links: DES014*
 
 # 8.0 Test data manifest and graceful skip _(TST008)_ {#TST008}
 
-Verify that every file under `testdata/private/` listed in the manifest
-matches its recorded SHA-256 checksum, and that when the folder is absent
-all data-dependent tests are reported as skipped with an explanatory
-message rather than failing.
+Verify that every test recording listed in the manifest matches its
+recorded sizes and SHA-256 checksums - the committed public recordings on
+every run, the private ones whenever `testdata/private/` is present - and
+that when the private folder is absent all tests needing it are reported as
+skipped with an explanatory message rather than failing. Implemented in
+tests/test_manifest.py (public entries) and the `testdata` fixture in
+tests/conftest.py (private entries).
 
 *Parent links: DES007, DES011*
 
@@ -117,8 +135,9 @@ message rather than failing.
 Run `doorstop` on `docs/traceability/`. Pass if it reports no errors, every
 normative REQ item links to at least one NEED item, every normative REQ item
 has a DES item with non-empty design text linking to it, every DES item is
-linked from at least one TST item, and so every requirement is covered by a
-test through its design. Implemented in tests/test_traceability.py.
+linked from at least one TST item, so every requirement is covered by a
+test through its design, and the committed `published/*.md` equal a fresh
+`doorstop publish`. Implemented in tests/test_traceability.py.
 
 *Parent links: DES013*
 
@@ -134,8 +153,13 @@ regenerates the derived files without error.
 # 11 Environment setup _(TST011)_ {#TST011}
 
 On a fresh clone run `./setup.sh`. Pass if it completes without error,
-`.venv/bin/doorstop --version` prints the pinned version, and `.venv` is
-ignored by git.
+`.venv/bin/doorstop --version` prints the pinned version, `.venv` is
+ignored by git, the `cwelleegread` command is installed and the test suite
+passes in that environment. Automated as the `python` job of
+`.github/workflows/tests.yml` (fresh checkout on every push, Python 3.11 and
+3.12); the checks that need no fresh clone (ignore rules, Doorstop pin,
+`setup.sh` syntax and mode, runtime dependencies of `pyproject.toml` equal
+to `requirements.txt`) are in tests/test_environment.py.
 
 *Parent links: DES017*
 
@@ -144,6 +168,12 @@ ignored by git.
 Inspect the LICENSE file and the headers of every ported third-party source
 file. Pass if the repository licence permits every ported file's licence
 and each ported file carries its original copyright and licence notice.
+Implemented in tests/test_licence.py: the root and plugin `LICENSE` files
+are the Unlicense; every file registered in
+`docs/research/ported-files.yml` exists, has a licence the Unlicense can
+carry and contains its notice; and no unregistered tracked source file
+contains third-party licence text (GPL, LGPL, Apache, MIT, BSD, MPL,
+SPDX or copyright notices).
 
 *Parent links: DES015*
 
@@ -172,21 +202,28 @@ pause must be present, with duration equal to the removed samples.
 
 # 14 Supported-version coverage _(TST014)_ {#TST014}
 
-Check that the documented list of supported Cadwell software versions is
-non-empty and that every listed version is represented by at least one
-recording in the test data manifest.
+Check that the documented list of supported Cadwell storage schema versions
+(`cwelleegread/ezdata.py: SUPPORTED_SCHEMA_VERSIONS`) is non-empty, that
+every listed version is represented by at least one recording in the test
+data manifest, and that each public manifest recording's data carries the
+schema version the manifest states. Implemented in tests/test_manifest.py;
+the refusal of other versions is tested under TST006.
 
 *Parent links: DES001*
 
 # 15 Gap handling _(TST015)_ {#TST015}
 
 Using a test recording that contains at least one acquisition gap
-(cadwell-export3: 10 s), convert in raw mode. Pass if the number of EDF
-records equals the frame-number span, the padded seconds read back as
-digital zero at exactly the missing frame numbers, the samples on both
-sides of the gap are unchanged, the gap annotation and the vendor's
+(cadwell-export3: 10 s), convert in raw mode with `--gaps pad`. Pass if the
+number of EDF records equals the frame-number span, the padded seconds read
+back as digital zero at exactly the missing frame numbers, the samples on
+both sides of the gap are unchanged, the gap annotation and the vendor's
 Stop/Start Recording events appear at the correct offsets, and the
-conversion report lists the gap. Implemented in tests/test_export3_gap.py.
+conversion report lists the gap. Convert it again with the default. Pass if
+the file is EDF+D, the record onsets skip exactly the gap seconds, the
+samples equal the padded file's without the gap records, and the gap and
+Stop/Start Recording annotations are present. Implemented in
+tests/test_export3_gap.py and tests/test_edf_formats.py.
 
 *Parent links: DES008, DES019*
 
@@ -203,11 +240,14 @@ peaks before 150 ms after the flash with `ticks` (a flash VEP) and
 later than 170 ms with `stamp` (the stamp-placed flash is early, so the
 response appears late); the report states the placement; and
 vendor-mode annotations are unchanged (the existing equivalence tests
-against the vendor EDF, TST003/TST005, keep passing). For the EEGLAB
-plugin the self-test checks that `EventTiming` ticks and stamp differ by
-the drift the frames show at each event (tolerance 5 ms, widened by the
-stamp jitter on Apollo recordings). Implemented in
-tests/test_event_timing.py and cadwell_selftest check F.
+against the vendor EDF, TST003/TST005, keep passing). In vendor mode with
+`ticks` (cadwell-export1), pass if the map from raw to resampled sample
+positions reproduces the resampled data exactly and every onset lies
+within one sample of its raw tick position minus the samples removed
+before it. For the EEGLAB plugin the self-test checks that `EventTiming`
+ticks and stamp differ by the drift the frames show at each event
+(tolerance 5 ms, widened by the stamp jitter on Apollo recordings).
+Implemented in tests/test_event_timing.py and cadwell_selftest check F.
 
 *Parent links: DES005, DES021*
 

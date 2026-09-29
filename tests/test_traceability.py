@@ -74,3 +74,15 @@ def test_every_requirement_is_covered_by_a_test_through_its_design():
     covered = {l for uid, d in designs.items() if uid in tested_designs for l in links_of(d)}
     missing = [uid for uid in reqs if uid not in covered]
     assert not missing, f"requirements without a TST item (through DES): {missing}"
+
+
+def test_published_markdown_is_up_to_date(tmp_path):
+    """docs/traceability/published/*.md equal a fresh `doorstop publish` of the tree."""
+    exe = ROOT / ".venv" / "bin" / "doorstop"
+    cmd = [str(exe)] if exe.exists() else [sys.executable, "-m", "doorstop"]
+    for doc in DOCS:
+        res = subprocess.run(cmd + ["publish", doc, str(tmp_path / f"{doc}.md")], cwd=ROOT, capture_output=True, text=True)
+        assert res.returncode == 0, res.stdout + res.stderr
+        committed = TRACE / "published" / f"{doc}.md"
+        assert (tmp_path / f"{doc}.md").read_text(encoding="utf-8") == committed.read_text(encoding="utf-8"), \
+            f"{committed} is stale: run `doorstop publish {doc} {committed.relative_to(ROOT)}`"

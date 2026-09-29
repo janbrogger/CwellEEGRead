@@ -4,11 +4,17 @@ header: |
   Licence compatibility check
 level: 12.0
 links:
-- DES015: CCHPaAE1bzAdJK5PxXTO-0ldCgS3qRaXO3CeveDWhIY=
+- DES015: tp1L7YnYYCPtkDDMpTurxXHAbjuWa9X8bFjjQ4R0N2w=
 normative: true
 ref: ''
-reviewed: pwj_UuJ7AjOWUpETkK1KxwA0oq2jLwbdnaiz9CIX1rM=
+reviewed: 6vz59K4cgDFyBVOCcO0A41G1-VZFXuO6AyoufwZ7gBk=
 text: |
   Inspect the LICENSE file and the headers of every ported third-party source
   file. Pass if the repository licence permits every ported file's licence
   and each ported file carries its original copyright and licence notice.
+  Implemented in tests/test_licence.py: the root and plugin `LICENSE` files
+  are the Unlicense; every file registered in
+  `docs/research/ported-files.yml` exists, has a licence the Unlicense can
+  carry and contains its notice; and no unregistered tracked source file
+  contains third-party licence text (GPL, LGPL, Apache, MIT, BSD, MPL,
+  SPDX or copyright notices).

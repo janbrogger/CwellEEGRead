@@ -1,3 +1,92 @@
 {
-  "recordings": []
+  "recordings": [
+    {
+      "id": "cadwell-export1",
+      "location": "public",
+      "cadwell_software_version": "Cadwell Arc, version not recorded (exported 2025-10-31)",
+      "schema_version": "2.5",
+      "notes": "no patient ('test, test'): 46 s amplifier noise, Apollo headbox, 32 channels, 250 Hz; vendor EDF+C 44 s, text export 30 s",
+      "cadwell": {
+        "file": "cadwell-export1/native-export",
+        "sha256": "9b6c3ca14f2e09154aa063b58cb4822ef767d25ef92ed27ff972f3ceafe9cc1f",
+        "bytes": 8353504
+      },
+      "native_edf": {
+        "file": "cadwell-export1/edf/test.edf",
+        "sha256": "db73ce407b3f4c7539e8cd73e576ce2529c861b82af538997d2e2f79232076fc",
+        "bytes": 729248
+      },
+      "native_csv": {
+        "file": "cadwell-export1/test/test-eeg20251031.txt",
+        "sha256": "1c855b738e0cb08baaafaf221c1723a22dbd99c4bd96a183a41dea6d2256fcae",
+        "bytes": 2141997
+      }
+    },
+    {
+      "id": "cadwell-export2",
+      "location": "public",
+      "cadwell_software_version": "Cadwell Arc 3.2.1097",
+      "schema_version": "2.5",
+      "notes": "volunteer EEG, no patient: 16 min, Essentia headbox, 500 Hz, hyperventilation and photic stimulation; vendor EDF+C from frame 1, text export 30 s",
+      "cadwell": {
+        "file": "cadwell-export2/native-export",
+        "sha256": "24ef3a85764ae7b3d508739e39c34e37e9c5963e88dfcccb229238dbb1901f65",
+        "bytes": 33670114
+      },
+      "native_edf": {
+        "file": "cadwell-export2/export-edf/cadwell2.edf",
+        "sha256": "71667be9d6c393d4cef882eee611521748c73454dce1451b18557a0e555a0615",
+        "bytes": 30974464
+      },
+      "native_csv": {
+        "file": "cadwell-export2/cadwell2.txt",
+        "sha256": "f1b00777162756321dda469d8f10bec64e0a3cab3f46b65daf7eeb71365bba72",
+        "bytes": 4279737
+      }
+    },
+    {
+      "id": "cadwell-export3",
+      "location": "public",
+      "cadwell_software_version": "Cadwell Arc 3.2.1097",
+      "schema_version": "2.5",
+      "notes": "volunteer EEG, no patient: 20 min, Essentia headbox, 500 Hz, one 10 s recording gap; vendor EDF+C from frame 30, full text export (zip)",
+      "cadwell": {
+        "file": "cadwell-export3/native-export",
+        "sha256": "6d451da01803e0db4f8ec79ade8a60db037a9e7294ebd19979c6bf4172b1d75d",
+        "bytes": 42180660
+      },
+      "native_edf": {
+        "file": "cadwell-export3/export-edf/cadwell3.edf",
+        "sha256": "7bd68f37cb7937de6a6b83b58a161d43e7d273a0627c9d55cfe5c73394806a72",
+        "bytes": 38360674
+      },
+      "native_csv": {
+        "file": "cadwell-export3/text/cadwell3.zip",
+        "sha256": "3b9ca41275ddc6e199d045cca73258e492a8052ef159d58b941878095e7e5875",
+        "bytes": 35423045
+      }
+    },
+    {
+      "id": "cadwell-export3-withfilter",
+      "location": "public",
+      "cadwell_software_version": "Cadwell Arc 3.2.1097",
+      "schema_version": "2.5",
+      "notes": "native files byte-identical to cadwell-export3, re-exported with a 10-15 Hz viewer filter; vendor EDF+C from the record origin, full text export (zip)",
+      "cadwell": {
+        "file": "cadwell-export3-withfilter/native-export",
+        "sha256": "15cadeddb6185ad5fbb8591b048d2873d746b83cfb7d63c85e1767c72bd2def3",
+        "bytes": 42180660
+      },
+      "native_edf": {
+        "file": "cadwell-export3-withfilter/export-edf/cadwell3-withfilter.edf",
+        "sha256": "3929a86aa49ee19b783f749fb152d99329bf829adc4eae358675d84d7ea8640e",
+        "bytes": 39264256
+      },
+      "native_csv": {
+        "file": "cadwell-export3-withfilter/text/cadwell3-with-filter.zip",
+        "sha256": "d77314e565bafd72615a4a0f97d820d415057ae739fb227cfac8c0fb88b7a625",
+        "bytes": 35423059
+      }
+    }
+  ]
 }

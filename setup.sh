@@ -9,6 +9,7 @@ if [ ! -x .venv/bin/python ]; then
 fi
 .venv/bin/pip install --quiet --upgrade pip
 .venv/bin/pip install --quiet -r requirements-dev.txt
+.venv/bin/pip install --quiet -e .            # the package itself, editable: provides .venv/bin/cwelleegread
 chmod +x .claude/hooks/*.sh llm-logs/tools/llmlog.py
 echo "Doorstop: $(.venv/bin/doorstop --version)"
 .venv/bin/doorstop            # validate docs/traceability
@@ -18,3 +19,4 @@ echo "Done. Activate with:  source .venv/bin/activate"
 echo "Requirements:         doorstop            (validate)"
 echo "                      doorstop publish all docs/traceability/published"
 echo "Tests:                pytest"
+echo "Converter:            cwelleegread convert|batch|inspect ..."

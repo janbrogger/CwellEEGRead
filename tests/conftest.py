@@ -1,10 +1,13 @@
 """Shared fixtures.
 
-Tests that need the clinical test recordings (never committed; see
-testdata/README.md) request the ``testdata`` fixture and are skipped with
-an explicit message when the folder or the manifest is missing (REQ011).
+testdata/manifest.json lists every test recording with sizes and SHA-256
+checksums (REQ007): "public" ones are committed under testdata/public/,
+"private" (clinical) ones are supplied out of band under testdata/private/
+and never committed. Tests that need the private recordings request the
+``testdata`` fixture and are skipped with an explicit message when the
+folder or its manifest entries are missing (REQ011).
 """
-import hashlib
+import importlib.util
 import json
 from pathlib import Path
 
@@ -13,14 +16,12 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 TESTDATA = ROOT / "testdata" / "private"
 MANIFEST = ROOT / "testdata" / "manifest.json"
+FILE_KEYS = ("cadwell", "native_edf", "native_csv")
 
-
-def sha256(path, chunk=1 << 20):
-    h = hashlib.sha256()
-    with open(path, "rb") as f:
-        for block in iter(lambda: f.read(chunk), b""):
-            h.update(block)
-    return h.hexdigest()
+_spec = importlib.util.spec_from_file_location("make_manifest", ROOT / "testdata" / "make_manifest.py")
+make_manifest = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(make_manifest)
+sha256_of = make_manifest.sha256_of          # file, or a study folder (sorted paths + contents)
 
 
 @pytest.fixture(scope="session")
@@ -36,12 +37,15 @@ def manifest():
 @pytest.fixture(scope="session")
 def testdata(manifest):
     """The private Cadwell test recordings, verified against the manifest (TST008)."""
+    private = [r for r in manifest["recordings"] if r.get("location", "private") == "private"]
+    if not private:
+        pytest.skip("test-data manifest lists no private recordings")
     if not TESTDATA.is_dir():
         pytest.skip(f"private test recordings not present at {TESTDATA}")
-    for rec in manifest["recordings"]:
-        for key in ("cadwell", "native_edf", "native_csv"):
+    for rec in private:
+        for key in FILE_KEYS:
             entry = rec[key]
             path = TESTDATA / entry["file"]
             assert path.exists(), f"{path} listed in manifest but missing"
-            assert sha256(path) == entry["sha256"], f"checksum mismatch for {path}"
+            assert sha256_of(path) == entry["sha256"], f"checksum mismatch for {path}"
     return TESTDATA

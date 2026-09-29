@@ -7,10 +7,11 @@ links:
 - DES013: SK0D2x323dOAKMYMSe9CNlGD6WBP1Ya13H0EQbOW5hg=
 normative: true
 ref: ''
-reviewed: p80sQm3qFI-wQQu5BLhCJnOpjto5XfXa8pdRwZGrB3Y=
+reviewed: orXia7442SRdeom9l45E7armcTJL5hGsglv8xeta5Xk=
 text: |
   Run `doorstop` on `docs/traceability/`. Pass if it reports no errors, every
   normative REQ item links to at least one NEED item, every normative REQ item
   has a DES item with non-empty design text linking to it, every DES item is
-  linked from at least one TST item, and so every requirement is covered by a
-  test through its design. Implemented in tests/test_traceability.py.
+  linked from at least one TST item, so every requirement is covered by a
+  test through its design, and the committed `published/*.md` equal a fresh
+  `doorstop publish`. Implemented in tests/test_traceability.py.

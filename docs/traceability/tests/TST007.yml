@@ -4,12 +4,17 @@ header: |
   Anonymisation
 level: 7.0
 links:
-- DES014: HNP79pZKmgVs0GY_c9nHybFxi3JEQ8SlkbSKTggI13w=
+- DES014: TcB3xUMRNXMRbgG4scC_gs0e1LP9JcbJOHe-zqDWgYc=
 normative: true
 ref: ''
-reviewed: FTjeGahLJ7beV26074RF_csuuP_WhSsH3KZtsDTx9pQ=
+reviewed: Umkc1PQxoEgDqrtzSHoyFIUWOaH-It-WDbIoW-ON82Y=
 text: |
   Convert a test recording with the anonymisation option. Pass if the patient
   identification fields contain only the supplied or placeholder values, no
   annotation contains the original patient name or identifier, and the signal
-  data is identical to a conversion without the option.
+  data is identical to a conversion without the option. Implemented in
+  tests/test_anonymisation.py on cadwell-export2 (a Comment and a UserEvent
+  with typed text): the patient GUID and the typed texts appear in the file
+  and report without the option and nowhere in the EDF bytes or the JSON
+  report with it, the patient field is `X X X <name>`, and the digital
+  samples of all 32 signals are identical.

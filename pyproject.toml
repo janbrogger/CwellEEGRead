@@ -1,0 +1,23 @@
+# Package metadata for `pip install -e .` (done by setup.sh), which provides the
+# `cwelleegread` console command (REQ006). Runtime dependencies mirror requirements.txt.
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cwelleegread"
+dynamic = ["version"]
+description = "Convert Cadwell Arc EEG recordings (CadLink exports, .ezdata) to EDF/EDF+"
+readme = "README.md"
+license = {text = "Unlicense"}
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.26", "pyedflib>=0.1.38", "scipy>=1.11"]
+
+[project.scripts]
+cwelleegread = "cwelleegread.__main__:main"
+
+[tool.setuptools]
+packages = ["cwelleegread"]
+
+[tool.setuptools.dynamic]
+version = {attr = "cwelleegread.__version__"}

@@ -7,7 +7,7 @@ links:
 - REQ015: 6jTbNdtR9QCowR6wLgF5UJA-KQMnWAOB9Opkg8K3Ir0=
 normative: true
 ref: ''
-reviewed: mXuy8iKYflMxkktLRCFGvHzFDbCOBop_uCOxEnJGuQc=
+reviewed: jgCq4eRyrW4x5HvC8e-7XGk-kjX7TEAqVr8Y-NuweuQ=
 text: |
   **Implements** REQ015 - the repository licence shall be compatible with every third-party source ported into it. If BioSig (GPL-3.0-or-later) code is ported, the repository shall be relicensed under a GPL-compatible licence, and the decision and attribution shall be recorded in `docs/research/` and `LICENSE`.
 
@@ -28,4 +28,6 @@ text: |
     - Morgoth (CC BY-NC 4.0) is cloned by `uses/Morgoth/install.sh` into a gitignored folder and is never redistributed. Its non-commercial term restricts use, not this repository's licence.
   - *Future.* A FieldTrip contribution would be a GPL-3 copy of our own file, which the Unlicense permits. It is not done.
 
-  **Verified by** TST012 - inspection of `LICENSE` and the header of every ported third-party file. There is no automated test in `tests/`. With no ported file the check currently passes trivially.
+  - *Register.* `docs/research/ported-files.yml` lists every ported third-party file with path, origin, SPDX licence and a line of its notice. It is empty (`ported: []`), and its header states the rule: only licences the Unlicense can carry (MIT, BSD-2/3-Clause, Apache-2.0, ISC, Zlib, CC0-1.0, Unlicense, public domain), with the notice kept.
+
+  **Verified by** TST012 - `tests/test_licence.py` checks that the root and plugin `LICENSE` files are the Unlicense; that every registered port exists, has an allowed licence, names its origin and contains its notice; and that no unregistered tracked source file (`.py`, `.m`, `.sh`, C and so on, outside `docs/`, `llm-logs/` and `testdata/`) contains third-party licence text (GPL/LGPL, Apache, MIT, BSD redistribution clause, MPL, SPDX identifier, "Copyright (c)"). With no ported file it passes because no source carries such text.

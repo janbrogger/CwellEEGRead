@@ -5,10 +5,10 @@ header: |
 level: 16.0
 links:
 - DES005: WCI05pb9-ddtCxoPcTAkdbmTQFhAkNk3v5mKXyqx9NU=
-- DES021: TTD6k4SzViGFM7UatMcQpif2W4wxiTTpF8iG66t33RA=
+- DES021: EjwH7K-_lg4pWSXDkDUJCVwnqtMqRNUx0qgMns8Mq3o=
 normative: true
 ref: ''
-reviewed: f2yr6-mAL5DGJjCNXV1AwslvWOgUbMo7YK9yMvnRoiY=
+reviewed: zYyoH5SgR6bN3i_3C7MoEk6GzJwarrIuLsZ1fI1LQs8=
 text: |
   Using a recording with photic stimulation (cadwell-export2 and 3: 244
   `Photic Stim` flash events each), convert in raw mode with every event
@@ -21,8 +21,11 @@ text: |
   later than 170 ms with `stamp` (the stamp-placed flash is early, so the
   response appears late); the report states the placement; and
   vendor-mode annotations are unchanged (the existing equivalence tests
-  against the vendor EDF, TST003/TST005, keep passing). For the EEGLAB
-  plugin the self-test checks that `EventTiming` ticks and stamp differ by
-  the drift the frames show at each event (tolerance 5 ms, widened by the
-  stamp jitter on Apollo recordings). Implemented in
-  tests/test_event_timing.py and cadwell_selftest check F.
+  against the vendor EDF, TST003/TST005, keep passing). In vendor mode with
+  `ticks` (cadwell-export1), pass if the map from raw to resampled sample
+  positions reproduces the resampled data exactly and every onset lies
+  within one sample of its raw tick position minus the samples removed
+  before it. For the EEGLAB plugin the self-test checks that `EventTiming`
+  ticks and stamp differ by the drift the frames show at each event
+  (tolerance 5 ms, widened by the stamp jitter on Apollo recordings).
+  Implemented in tests/test_event_timing.py and cadwell_selftest check F.

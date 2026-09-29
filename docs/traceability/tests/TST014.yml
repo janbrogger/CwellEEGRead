@@ -4,11 +4,14 @@ header: |
   Supported-version coverage
 level: 14.0
 links:
-- DES001: 4HxdlbLZy2iUwenxMDm9g5Aei-a_Gi75RTMZq37bkXM=
+- DES001: WV9JBISKFL5hmT3_vs_ulR3ArZFEw_rwoM-LQcFrwto=
 normative: true
 ref: ''
-reviewed: zN1kxPfWU1Wk2hqNrA2-R1FTu8YLg-PWfi4wERnPEtU=
+reviewed: 99U_hYiIP0g1qczdCo6r8bh-5LeQGYP_5yjI0dHjgeI=
 text: |
-  Check that the documented list of supported Cadwell software versions is
-  non-empty and that every listed version is represented by at least one
-  recording in the test data manifest.
+  Check that the documented list of supported Cadwell storage schema versions
+  (`cwelleegread/ezdata.py: SUPPORTED_SCHEMA_VERSIONS`) is non-empty, that
+  every listed version is represented by at least one recording in the test
+  data manifest, and that each public manifest recording's data carries the
+  schema version the manifest states. Implemented in tests/test_manifest.py;
+  the refusal of other versions is tested under TST006.

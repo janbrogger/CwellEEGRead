@@ -7,9 +7,11 @@ links:
 - NEED004: D6b_Or4VF1oKro2qBKf5hjPudugn6Oftb-fI9O950ic=
 normative: true
 ref: ''
-reviewed: LEwtq5HO-C530pswfZC7kp8_1-K9XdiV64k-QCPQfmQ=
+reviewed: Xh_p7z4LYViLbMqHiUpPSZPBlk4rkd3BYXp04r1Y5eI=
 text: |
   All equivalence and validity tests shall run under `pytest`. Tests that
   need the out-of-band test data shall skip with an explicit message when the
   data is absent, so that the remaining tests can run in continuous
-  integration and on machines without access to patient data.
+  integration and on machines without access to patient data. A continuous
+  integration workflow shall run the test suite on every push and pull
+  request.

@@ -11,9 +11,11 @@
   except the `topic` column of `llm-logs/sessions.csv`. If hooks did not
   run, archive manually: `python3 llm-logs/tools/llmlog.py archive
   --session-id <id> --transcript <path>`.
-- **Patient data**: test recordings live only under `testdata/private/`
-  (gitignored). Never commit EEG files, never paste patient identifiers or
-  raw EEG dumps into a session.
+- **Patient data**: recordings of real patients live only under
+  `testdata/private/` (gitignored); never commit them, never paste patient
+  identifiers or raw EEG dumps into a session. Recordings without patient
+  data may be committed under `testdata/public/` (REQ007); every test
+  recording is listed with checksums in `testdata/manifest.json`.
 - **Python**: everything runs from the gitignored `.venv` created by
   `./setup.sh`; pin new dependencies in `requirements-dev.txt` (tooling)
   or a future `requirements.txt` (runtime).

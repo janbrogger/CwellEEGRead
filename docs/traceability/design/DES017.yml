@@ -7,7 +7,7 @@ links:
 - REQ017: GQWkp3MuVxD1MODZ8TGC9YjKUNRvFfH8JKCnbLDQwPA=
 normative: true
 ref: ''
-reviewed: XZiRHalccpfSmuENTshEv-lEyLHH3YVaAws5C6fphRU=
+reviewed: 2LXJP3TTDQ1eBXjpWWHeMHX6D1r0SIiX-F4S4gc6k0U=
 text: |
   **Implements** REQ017 - all Python tooling shall be installed into a gitignored virtual environment from pinned requirement files by one `setup.sh`, so a fresh checkout works after one command.
 
@@ -20,9 +20,9 @@ text: |
     - prints the Doorstop version, runs `.venv/bin/doorstop` (an invalid requirement tree fails the setup) and `llmlog.py index`, which regenerates the derived `llm-logs` files as a side effect.
   - *Requirement files.*
     - `requirements.txt` (runtime): `numpy>=1.26`, `pyedflib>=0.1.38`, `scipy>=1.11`.
-    - `requirements-dev.txt` (tooling): includes `-r requirements.txt` and adds `doorstop==3.2`, `pytest>=8`, `pyyaml>=6`.
+    - `requirements-dev.txt` (tooling): includes `-r requirements.txt` and adds `doorstop==3.2`, `pytest>=8`, `pyyaml>=6`, `weasyprint==70.0` (the Doorstop PDF) and `mne>=1.6` (the second EDF reader in the tests).
+    - `pyproject.toml`: package metadata with the same runtime dependencies and the `cwelleegread` console script; `setup.sh` installs it editable after the requirements.
   - *Version pinning.* Only Doorstop is pinned exactly; the other packages have minimum versions only. There is no lock file, no hashes and no container image, so two fresh setups can resolve different versions.
-  - *Unlisted dependency.* `pypdf`, which `tools/doorstop_pdf.sh` imports from the `.venv`, is in no requirement file. It is installed in the current `.venv` but a fresh checkout does not get it. This contradicts REQ017.
   - *Ignored and test configuration.* `.gitignore` excludes `.venv/`, `__pycache__/`, `.pytest_cache/` and `.cache/`. `pytest.ini` sets `testpaths = tests`, `pythonpath = .` and the `testdata` marker. Tests that need the private recordings skip through `tests/conftest.py`.
   - *Cloud sessions.* `.claude/hooks/session-start.sh` is a `SessionStart` hook in `.claude/settings.json` with a 600 s timeout. It acts only when `CLAUDE_CODE_REMOTE=true`. It:
     - runs `./setup.sh`;
@@ -33,4 +33,4 @@ text: |
     This makes the Octave and EEGLAB tests runnable there. None of these non-Python tools is version-pinned. Local sessions are left alone, and those tests skip when Octave or EEGLAB is absent.
   - *Out of scope.* The Morgoth scaffold has its own conda environment (`uses/Morgoth/install.sh`). `setup.sh` does not handle it.
 
-  **Verified by** TST011 - run `./setup.sh` on a fresh clone. It passes if the script completes, `.venv/bin/doorstop --version` prints the pinned version and `.venv` is ignored by git. No automated test in `tests/` does this; it is a manual check. The current `.venv` reports `Doorstop v3.2`, matching the pin.
+  **Verified by** TST011 - the `python` job of `.github/workflows/tests.yml` runs `./setup.sh` on a fresh checkout (Python 3.11 and 3.12), checks `doorstop --version`, `git check-ignore .venv` and `cwelleegread --version`, and runs the test suite in that `.venv`. `tests/test_environment.py` checks in any checkout that `.venv`, `.cache`, `testdata/private/` and the egg-info are ignored, that the installed Doorstop equals the pin, that `setup.sh` passes `bash -n`, is executable in git and installs the package, and that `pyproject.toml` and `requirements.txt` list the same runtime dependencies.

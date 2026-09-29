@@ -60,6 +60,15 @@ FRAME_MAGIC = 0x033149BD
 UNIT_UV = 0.72998046          # microvolts per amplifier unit (empirical, see module doc)
 TICKS_PER_SECOND = 10_000_000
 
+# Storage schema versions (last NewVersion in SchemaUpdateLog) verified against a
+# test recording listed in testdata/manifest.json (REQ001, DES001). Conversion of
+# any other version is refused unless explicitly allowed (REQ018).
+SUPPORTED_SCHEMA_VERSIONS = ("2.5",)
+
+
+class UnsupportedVersionError(ValueError):
+    """The recording's storage schema version is not in SUPPORTED_SCHEMA_VERSIONS."""
+
 
 def _ro(path: str) -> sqlite3.Connection:
     return sqlite3.connect(f"file:{path}?mode=ro&immutable=1", uri=True)
@@ -192,6 +201,19 @@ class CadwellRecording:
         self.start_time = (self.origin + self.clock_correction) if self.origin else None
         # export column order = amplifier input order
         self.amp_inputs = sorted(c.amp_input for c in self.channels)
+
+    @property
+    def schema_version(self) -> str | None:
+        """Current storage schema version: NewVersion of the last SchemaUpdateLog row."""
+        return self.schema_versions[-1].split("->")[-1] if self.schema_versions else None
+
+    def check_supported(self) -> None:
+        """Raise UnsupportedVersionError unless the schema version is a supported one."""
+        if self.schema_version not in SUPPORTED_SCHEMA_VERSIONS:
+            raise UnsupportedVersionError(
+                f"unsupported Cadwell storage schema version {self.schema_version or 'unknown'} in "
+                f"{os.path.basename(self.index_path)} (supported: {', '.join(SUPPORTED_SCHEMA_VERSIONS)}); "
+                "use --allow-unsupported to try anyway")
 
     # ------------------------------------------------------------------ events
     def events(self) -> list[Event]:

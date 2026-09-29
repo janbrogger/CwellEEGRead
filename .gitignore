@@ -21,7 +21,8 @@ Thumbs.db
 .vscode/
 
 # Clinical test EEG data (real patients) lives only here and is never committed.
-# Anonymised/synthetic test data may be committed under testdata/public/.
+# Test data without patient data may be committed under testdata/public/ (REQ007),
+# listed with checksums in testdata/manifest.json.
 testdata/private/
 
 # Doorstop HTML publish output (regenerate: doorstop publish all docs/traceability/published/html).

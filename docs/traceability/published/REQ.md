@@ -45,10 +45,14 @@ recording.
 # 2.0 Output: EDF/EDF+ files _(REQ002)_ {#REQ002}
 
 The program shall write European Data Format files conforming to the EDF
-specification (Kemp et al. 1992) and, when annotations are present, to the
-EDF+ specification (Kemp & Olivan 2003). Output files shall be readable by
+specification (Kemp et al. 1992) and, when annotations, a sub-second start
+time or a discontinuous time axis (EDF+D) require it, to the EDF+
+specification (Kemp & Olivan 2003). Output files shall be readable by
 at least two independent EDF readers (e.g. EDFbrowser and pyedflib or
-MNE-Python) without warnings about header validity.
+MNE-Python) without warnings about header validity. Where a common reader
+cannot represent a file correctly (EDF+D), the documentation shall say so.
+When the program applies a filter to the signal, the EDF prefilter field
+shall say so.
 
 *Parent links: NEED002*
 
@@ -113,13 +117,18 @@ scripts.
 
 # 7.0 Test data set supplied out of band _(REQ007)_ {#REQ007}
 
-Development shall use a small set of test EEGs supplied outside the
-repository, each consisting of (a) the recording in native Cadwell format,
-(b) the same recording exported to EDF by the native Cadwell application
-and (c) the same recording exported to CSV/text by the native Cadwell
-application. The test data shall live under `testdata/private/` (gitignored);
-the repository shall contain only a manifest with file names, sizes,
-SHA-256 checksums and the Cadwell software version that produced them.
+Development shall use a small set of test EEGs, each consisting of (a) the
+recording in native Cadwell format, (b) the same recording exported to EDF
+by the native Cadwell application and (c) the same recording exported to
+CSV/text by the native Cadwell application. Recordings of real patients
+shall be supplied outside the repository and live only under
+`testdata/private/` (gitignored). Recordings that contain no patient data
+(synthetic, amplifier noise or consenting volunteers recorded under a
+placeholder name) may be committed under `testdata/public/`, so that the
+equivalence tests run on every clone. Every test recording, public or
+private, shall be listed in `testdata/manifest.json` with its file names,
+sizes, SHA-256 checksums, storage schema version and the Cadwell software
+version that produced it, and the checksums shall be verified by the tests.
 
 *Parent links: NEED003, NEED005*
 
@@ -176,7 +185,9 @@ held in memory before writing.
 All equivalence and validity tests shall run under `pytest`. Tests that
 need the out-of-band test data shall skip with an explicit message when the
 data is absent, so that the remaining tests can run in continuous
-integration and on machines without access to patient data.
+integration and on machines without access to patient data. A continuous
+integration workflow shall run the test suite on every push and pull
+request.
 
 *Parent links: NEED004*
 
@@ -281,14 +292,17 @@ mistaken for a complete conversion.
 Cadwell recordings can contain gaps (recording stopped and restarted); the
 index then lacks the frame numbers of the gap and holds a GapInfo row. The
 program shall detect gaps from the frame numbering and represent them in
-the EDF output, by default as the vendor's own export does: a continuous
-EDF+C file in which the missing seconds are written as digital zero at the
-frame boundaries so that the time axis and every annotation stay aligned
-with wall-clock time, plus an annotation "Recording gap N s (padded with
-zeros)" at the gap start. A discontinuous EDF+D representation may be
-offered as an option later. The gaps shall be listed in the conversion
-report, and the equivalence tests shall compare segment by segment so that
-gap handling differences are explicit rather than hidden.
+the EDF output. By default a recording with gaps shall be written as a
+discontinuous EDF+D file whose data records carry their true onsets, so
+that the gap seconds are left out rather than filled with invented data,
+with an annotation "Recording gap N s" at the gap start. As an option, and
+always in the vendor-compatible mode, the program shall instead write what
+the vendor's own export does: a continuous EDF+C file in which the missing
+seconds are written as digital zero at the frame boundaries so that the time
+axis and every annotation stay aligned with wall-clock time, plus an
+annotation "Recording gap N s (padded with zeros)". The gaps shall be listed
+in the conversion report, and the equivalence tests shall compare segment
+by segment so that gap handling differences are explicit rather than hidden.
 
 *Parent links: NEED003*
 

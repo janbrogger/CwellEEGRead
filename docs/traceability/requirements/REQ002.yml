@@ -7,10 +7,14 @@ links:
 - NEED002: -3b22MT9D16eSDE9DvFsiQ809NMm3_W9zT3RSJOoJA4=
 normative: true
 ref: ''
-reviewed: ekIiO7BA9uOM6CAtlS9dNxClnINKyGVOOIfbZQhtQ-4=
+reviewed: 0H58X9fm2uKyz-L3ChZo5F1tcYQgPWEqI6ba2KdYSKU=
 text: |
   The program shall write European Data Format files conforming to the EDF
-  specification (Kemp et al. 1992) and, when annotations are present, to the
-  EDF+ specification (Kemp & Olivan 2003). Output files shall be readable by
+  specification (Kemp et al. 1992) and, when annotations, a sub-second start
+  time or a discontinuous time axis (EDF+D) require it, to the EDF+
+  specification (Kemp & Olivan 2003). Output files shall be readable by
   at least two independent EDF readers (e.g. EDFbrowser and pyedflib or
-  MNE-Python) without warnings about header validity.
+  MNE-Python) without warnings about header validity. Where a common reader
+  cannot represent a file correctly (EDF+D), the documentation shall say so.
+  When the program applies a filter to the signal, the EDF prefilter field
+  shall say so.

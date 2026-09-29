@@ -4,13 +4,16 @@ header: |
   Test data manifest and graceful skip
 level: 8.0
 links:
-- DES007: 8iBzs7rXjtpTCuD6o_m3L17JiDs-UcIQ9fyUAkyyOF4=
-- DES011: M4FFaYa4mSknOhe0KHXjx9RUgxpcd2t-oFesHHt6IYA=
+- DES007: FKcn61I4WB18ZLvCn93EToCwJGI0LUEEOBbF59I2g7c=
+- DES011: RML38we_oBZaTCqlCvDbyRNtTjtYEB2AuTa9cFwpnaE=
 normative: true
 ref: ''
-reviewed: fr6n7c6om6-hkCTU0UBukmlQw2J008OlgOShxdOEX1I=
+reviewed: TE2ws4vCifkTFS9BAxCMh8cXlB2PUAXiMTsXaaupeRc=
 text: |
-  Verify that every file under `testdata/private/` listed in the manifest
-  matches its recorded SHA-256 checksum, and that when the folder is absent
-  all data-dependent tests are reported as skipped with an explanatory
-  message rather than failing.
+  Verify that every test recording listed in the manifest matches its
+  recorded sizes and SHA-256 checksums - the committed public recordings on
+  every run, the private ones whenever `testdata/private/` is present - and
+  that when the private folder is absent all tests needing it are reported as
+  skipped with an explanatory message rather than failing. Implemented in
+  tests/test_manifest.py (public entries) and the `testdata` fixture in
+  tests/conftest.py (private entries).

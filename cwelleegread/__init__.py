@@ -1,7 +1,8 @@
 """CwellEEGRead - read Cadwell Arc EEG recordings (CadLink exports) and convert to EDF.
 
 Status: reader for the `.ezdataindex` / `.ezdata` / `.ezevents` family
-(see docs/research/cadwell-file-format.md). EDF writing not yet implemented.
+(see docs/research/cadwell-file-format.md) and EDF/EDF+ writer (edf.py,
+edfwrite.py); command line in __main__.py (`cwelleegread` once installed).
 """
 from .ezdata import CadwellRecording, open_recording  # noqa: F401
 

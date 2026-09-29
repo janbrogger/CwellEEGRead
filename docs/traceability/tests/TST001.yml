@@ -4,15 +4,19 @@ header: |
   EDF structural validity
 level: 1.0
 links:
-- DES002: sIv6LD6GBvtMUif-tluQG0qMf3OF9Z8Zw147pDAf8q4=
+- DES002: m6uYCgEXlhu4hb_l-LLKrX8qJMyI3_EG1F6lgcnBrtU=
 - DES010: eOyLIShsH2uiHIV2H0cP10Lket-LiIq70tvGvYYQkOA=
 normative: true
 ref: ''
-reviewed: Sv3Ci8q_lX29C-dBQLADnu3K0_mV9_6Ww1hmiqygm9k=
+reviewed: TgB1BOlkLNXJ8Hn209aGfjXxUOr_wR60kiPft5o7olM=
 text: |
-  Convert each test recording and open the result with an independent EDF
-  reader (pyedflib; MNE-Python when available). Pass if the file is read
-  without header errors, reports the expected number of channels, records
-  and duration, and the samples read back equal the decoded samples within
-  the declared resolution. Implemented for the public exports in
-  tests/test_convert_public.py (raw and vendor modes).
+  Convert each test recording and open the result with two independent EDF
+  readers (pyedflib and MNE-Python). Pass if the file is read without header
+  errors, reports the expected number of channels, records and duration, and
+  the samples read back equal the decoded samples within the declared
+  resolution, with both readers. EDF+D files, which EDFlib/pyedflib refuses
+  and MNE-Python reads as if contiguous, are checked with the test suite's own
+  record-level reader for the record onsets. Implemented for the public
+  exports in tests/test_convert_public.py (raw and vendor modes, pyedflib)
+  and tests/test_edf_formats.py (MNE-Python read-back, plain EDF, EDF+D, the
+  prefilter field).

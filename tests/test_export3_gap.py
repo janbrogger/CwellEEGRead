@@ -28,7 +28,7 @@ def rec():
 @pytest.fixture(scope="module")
 def raw_edf(tmp_path_factory, rec):
     out = tmp_path_factory.mktemp("edf") / "e3.edf"
-    report = convert(rec, str(out), mode="raw", timezone="Europe/Oslo")
+    report = convert(rec, str(out), mode="raw", timezone="Europe/Oslo", gaps="pad")
     with pyedflib.EdfReader(str(out)) as f:
         hdr = f.getHeader(); labels = f.getSignalLabels()
         data = np.column_stack([f.readSignal(i) for i in range(32)]); ann = list(zip(*f.readAnnotations()))

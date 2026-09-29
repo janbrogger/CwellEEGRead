@@ -38,7 +38,7 @@ def test_ticks_versus_stamp(tmp_path, export, drift_lo, drift_hi):
     out = {}
     for et in ("ticks", "stamp"):
         out[et] = tmp_path / f"{et}.edf"
-        report = convert(rec, str(out[et]), mode="raw", event_timing=et, all_events=True)
+        report = convert(rec, str(out[et]), mode="raw", event_timing=et, all_events=True, gaps="pad")
         assert report["event_timing"] == et
     assert convert(rec, str(tmp_path / "auto.edf"), mode="raw")["event_timing"] == "ticks"
     assert convert(rec, str(tmp_path / "vendor.edf"), mode="vendor")["event_timing"] == "stamp"
@@ -61,3 +61,42 @@ def test_ticks_versus_stamp(tmp_path, export, drift_lo, drift_hi):
     # physiology: a flash VEP on the sample clock, the same complex shifted later by stamp
     assert peak_t < 150, peak_t
     assert peak_s > 170, peak_s
+
+
+def test_vendor_mode_ticks_follow_the_removed_samples(tmp_path):
+    """Vendor mode removes samples (vendor_resample); with --event-timing ticks the
+    onsets are mapped onto the resampled axis (DES021). On export 1 (Apollo, 250 Hz,
+    ~251-sample frames) the uncorrected onsets drift up to 8 samples (32 ms) late."""
+    from cwelleegread.edf import (read_padded, vendor_resample, vendor_raw_positions,
+                                  raw_to_output_position)
+    from cwelleegread.ezdata import UNIT_UV
+    base = ROOT / "testdata" / "public" / "cadwell-export1"
+    if not (base / "native-export").exists():
+        pytest.skip("public test export missing")
+    rec = open_recording(str(base))
+    # the position map reproduces the resampled data exactly: copied samples on their
+    # raw index, the two-point means half-way between their raw neighbours
+    data, _, per_frame, _ = read_padded(rec, UNIT_UV)
+    out, removed, _ = vendor_resample(data, per_frame, rec.sample_rate)
+    pos = vendor_raw_positions(removed, len(out))
+    assert len(removed) >= 8 and np.all(np.diff(pos) > 0)
+    for j in (0, 13, 31):
+        assert np.allclose(out[:, j], np.interp(pos, np.arange(len(data)), data[:, j]))
+    assert raw_to_output_position(float(removed[-1]) + 5, pos) == pytest.approx(removed[-1] + 5 - len(removed))
+
+    rep_raw = convert(rec, str(tmp_path / "raw.edf"), mode="raw", event_timing="ticks", all_events=True)
+    rep_ven = convert(rec, str(tmp_path / "ven.edf"), mode="vendor", event_timing="ticks", all_events=True)
+    assert rep_ven["samples_removed_by_vendor_rule"] == removed
+    with pyedflib.EdfReader(str(tmp_path / "raw.edf")) as f:
+        raw_on = dict((t, o) for o, _, t in zip(*f.readAnnotations()) if not t.startswith("Recording gap"))
+    with pyedflib.EdfReader(str(tmp_path / "ven.edf")) as f:
+        ven_on = dict((t, o) for o, _, t in zip(*f.readAnnotations()))
+    common = sorted(set(raw_on) & set(ven_on), key=raw_on.get)
+    assert len(common) >= 3
+    rate = rec.sample_rate
+    for t in common:
+        p = raw_on[t] * rate
+        n_before = sum(r < p for r in removed)
+        assert abs(ven_on[t] * rate - (p - n_before)) <= 1.0, t   # within one sample of the mapped position
+    late = common[-1]
+    assert raw_on[late] - ven_on[late] > 0.02      # the correction is material at the end (~32 ms)

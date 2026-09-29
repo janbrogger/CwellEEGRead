@@ -1,0 +1,20 @@
+# Register of third-party source files ported (copied or translated) into this
+# repository (REQ015, DES015, checked by tests/test_licence.py = TST012).
+#
+# The repository is under the Unlicense. A ported file is allowed only under a
+# licence the Unlicense can carry (permissive: MIT, BSD-2-Clause, BSD-3-Clause,
+# Apache-2.0, ISC, Zlib, CC0-1.0, Unlicense, public-domain) and must keep its
+# original copyright and licence notice; `notice` is a line of that notice that
+# must appear in the file. Porting GPL code (e.g. BioSig) first needs the
+# relicensing decision described in docs/research/README.md.
+#
+# Entry format:
+#   - path: relative/path/in/this/repo
+#     origin: URL or project and version it came from
+#     licence: SPDX identifier
+#     notice: "Copyright (c) 20xx Someone"
+#
+# Nothing is ported so far: the decoder, the EEGLAB plugin and the SQLite
+# readers are written from the project's own analysis and public format
+# descriptions (docs/research/biosig-cadwell-reader.md, eeglab-fieldtrip-cadwell-reader.md).
+ported: []

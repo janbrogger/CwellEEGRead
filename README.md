@@ -7,23 +7,52 @@ that the conversion is equivalent to the vendor's own export - so that
 clinically recorded EEGs can be analysed with research tools such as
 SCORE-AI, the Morgoth foundation model, EEGLAB, FieldTrip and MNE.
 
-**Status: converter working on the two public test recordings.**
-`python -m cwelleegread convert <export> out.edf` reads a CadLink study
-export and writes EDF+C. The decoder is verified sample-for-sample against
-the vendor's text export, and the vendor-compatible mode reproduces the
-vendor's own EDF export to within one quantisation step, including its
-annotations and start time (`tests/test_convert_public.py`). Recording
-gaps are padded with zeros as the vendor does (export 3). Channel labels
-come from per-headbox tables (Apollo, Essentia) selected by the amplifier
-type in the file; other headboxes need `--labels`. Not yet handled: a
-user-chosen time range, EDF+D output, anonymisation beyond the header.
+**Status: converter working on the public test recordings.**
+`cwelleegread convert <export> out.edf` reads a CadLink study export and
+writes EDF+ (plain EDF when nothing needs EDF+); `cwelleegread batch <folder>
+<outdir>` converts every recording below a folder. The decoder is verified
+sample-for-sample against the vendor's text export, and the
+vendor-compatible mode reproduces the vendor's own EDF export to within one
+quantisation step, including its annotations and start time
+(`tests/test_convert_public.py`). Channel labels come from per-headbox tables
+(Apollo, Essentia) selected by the amplifier type in the file; other
+headboxes need `--labels`. Not yet handled: a user-chosen time range,
+anonymisation beyond the header and typed-text event types.
 
 ```bash
-./setup.sh && source .venv/bin/activate
-python -m cwelleegread inspect testdata/public/cadwell-export2
-python -m cwelleegread convert testdata/public/cadwell-export2 out.edf --timezone Europe/Oslo --json out.json
-python -m cwelleegread convert testdata/public/cadwell-export1 out.edf --mode vendor --timezone Europe/Oslo
+./setup.sh && source .venv/bin/activate      # installs the `cwelleegread` command into .venv
+cwelleegread inspect testdata/public/cadwell-export2
+cwelleegread convert testdata/public/cadwell-export2 out.edf --timezone Europe/Oslo --json out.json
+cwelleegread convert testdata/public/cadwell-export1 out.edf --mode vendor --timezone Europe/Oslo
+cwelleegread batch /path/to/exports edf-out/ --reports --json edf-out/batch.json
 ```
+
+`python -m cwelleegread ...` works too. Exit code 0 means success; batch mode
+continues past a failing recording, lists it in the summary and exits 1.
+
+**Supported versions.** Only recordings whose storage schema (the last
+`SchemaUpdateLog` entry, shown by `inspect`) has been verified on a test
+recording are converted; others are refused unless `--allow-unsupported` is
+given (a warning then goes into the report).
+
+| Schema | Cadwell software | Test recordings (`testdata/manifest.json`) |
+|---|---|---|
+| 2.5 | Arc (version not recorded, 2025); Arc 3.2.1097 (2026) | cadwell-export1 (Apollo, 250 Hz); cadwell-export2, -3, -3-withfilter (Essentia, 500 Hz) |
+
+**Recording gaps.** In raw mode (the default) a recording with gaps is
+written as **EDF+D**: the gap seconds are left out and each data record
+carries its true onset, with a `Recording gap N s` annotation. EDFbrowser
+reads EDF+D correctly, but EDFlib/pyedflib refuses it and MNE-Python (1.13)
+reads it as if it were continuous, silently shifting everything after a
+gap earlier by the gap length. For those tools use `--gaps pad`, which
+writes EDF+C with the gap filled with zeros, as the vendor does (always in
+`--mode vendor`).
+
+**Filters.** The converter applies no filter in raw mode. In `--mode
+vendor` on Essentia recordings (or with `--highpass on`) it applies the
+high-pass the vendor's EDF export uses (identified as a 2nd-order
+Butterworth at 0.16 Hz) and writes `HP: unknown (0.16 Hz?)` into the EDF
+prefilter field; the vendor itself leaves that field empty.
 
 Events are placed on the amplifier's sample clock by default (`--event-timing
 ticks`); the vendor's EDF export places them by a wall-clock stamp that runs
@@ -51,10 +80,10 @@ whole repository to every release, which can be ignored).
 | `docs/traceability/` | Requirements managed with [Doorstop](https://doorstop.readthedocs.io): `needs/` (NEED), `requirements/` (REQ), `design/` (DES, how each requirement is implemented), `tests/` (TST). Readable copies in `docs/traceability/published/*.md`, the whole tree as `docs/traceability/published/CwellEEGRead-traceability.pdf`. |
 | `docs/research/` | Research notes: the Cadwell file format, the BioSig toolbox and licensing, downstream uses. |
 | `llm-logs/` | Archive of every Claude Code session (prompts, responses, full transcripts) and `sessions.csv`. Filled automatically by hooks in `.claude/`. |
-| `cwelleegread/` | the Python package: `ezdata.py` reads a CadLink export (index, frames, events); `layout.py` amplifier-input labels; `edf.py` conversion policies; `edfwrite.py` EDF+ writer; `__main__.py` CLI. |
+| `cwelleegread/` | the Python package: `ezdata.py` reads a CadLink export (index, frames, events, supported schema versions); `layout.py` amplifier-input labels; `edf.py` conversion policies; `edfwrite.py` EDF / EDF+C / EDF+D writer; `__main__.py` CLI (`convert`, `batch`, `inspect`). `pyproject.toml` makes it installable with the `cwelleegread` command. |
 | `tools/` | `cadwell_inspect.py`: stdlib inventory of a CadLink export. |
-| `tests/` | pytest suite, incl. `test_ezdata_public.py` (decoder vs vendor text/EDF export). Private-data tests skip until the recordings are present. |
-| `testdata/` | Manifest and instructions for the out-of-band test recordings (the recordings themselves are gitignored). |
+| `tests/` | pytest suite, incl. `test_ezdata_public.py` (decoder vs vendor text/EDF export). Private-data tests skip until the recordings are present. Run on every push by `.github/workflows/tests.yml`. |
+| `testdata/` | `manifest.json` (every test recording with checksums, schema and Cadwell version), `public/` (non-patient recordings, committed), `private/` (clinical recordings, gitignored). |
 | `uses/` | Downstream-use scaffolds: `Morgoth/`, `SCOREAI/`, `EEGLAB/`. |
 | `setup.sh`, `requirements-dev.txt` | One-command developer setup into a gitignored `.venv`. |
 

@@ -4,24 +4,24 @@ header: |
   Test data set supplied out of band
 level: 7.0
 links:
-- REQ007: wPLD7USTOssjsHjoLc9wQO7ETcUcPN3PchmEYtGQUzk=
+- REQ007: 8qMQyKuVASVss_HuV8_KlqROG0ApxqOqbdLSFoTxrDY=
 normative: true
 ref: ''
-reviewed: Fq3soArM4NWFyQw_1z3h1tzZ66fKDl04oFFyl_p3RQI=
+reviewed: rkI9tcNO4568wVbhCrqLnpN-_LxeS4vpyAVv8mObOrs=
 text: |
-  **Implements** REQ007 - test recordings, each with native Cadwell files, the vendor's EDF export and the vendor's CSV/text export, kept out of the repository under `testdata/private/`, with only a manifest (names, sizes, SHA-256, Cadwell software version) committed.
+  **Implements** REQ007 - test recordings, each with native Cadwell files, the vendor's EDF export and the vendor's CSV/text export; patient recordings only under the gitignored `testdata/private/`, non-patient recordings allowed under `testdata/public/`; every recording listed in `testdata/manifest.json` with names, sizes, SHA-256, schema and Cadwell software version, and the checksums verified by the tests.
 
-  **Design.** The private-data mechanism exists but is empty. `.gitignore` excludes `testdata/private/`. `testdata/README.md` defines `testdata/manifest.json`: a `recordings` list whose entries carry `id`, `cadwell_software_version`, `notes` and three file entries `cadwell`, `native_edf`, `native_csv`, each `{file, sha256, bytes}` relative to `testdata/private/`, and asks for the export settings to be written down. `testdata/make_manifest.py` fills in only `sha256` and `bytes` (a multi-file study folder is hashed over its sorted relative paths and contents). `tests/conftest.py` provides the fixtures `manifest` (skips when the manifest is missing or lists no recordings) and `testdata` (skips when `testdata/private/` is absent, otherwise asserts that every listed file exists and matches its SHA-256). The committed manifest has `"recordings": []` and no test requests these fixtures.
+  **Design.** `.gitignore` excludes `testdata/private/`. `testdata/README.md` defines `testdata/manifest.json`: a `recordings` list whose entries carry `id`, `location` (`public` or `private`, default private), `cadwell_software_version`, `schema_version`, `notes` and three file entries `cadwell`, `native_edf`, `native_csv`, each `{file, sha256, bytes}` relative to `testdata/<location>/`, and asks for the export settings to be written down. `testdata/make_manifest.py` fills in only `sha256` and `bytes` (a study folder is hashed over its sorted relative paths and contents) and skips entries whose files are absent. `tests/conftest.py` loads that script's `sha256_of()` and provides the fixtures `manifest` (skips when the manifest is missing or empty) and `testdata` (skips when the manifest lists no private recording or `testdata/private/` is absent, otherwise asserts that every private file exists and matches its SHA-256).
 
-  The tests use committed data under `testdata/public/` instead (about 300 MB). The `.gitignore` comment allows this for anonymised or synthetic data. These are Cadwell Arc recordings of no real patient, each with a README describing the export dialogs:
+  The manifest lists the four committed public exports (about 300 MB under `testdata/public/`), which the equivalence tests use. They are Cadwell Arc recordings of no real patient, each with a README describing the export dialogs:
 
   - `cadwell-export1`: Apollo headbox, 250 Hz, 46 s of amplifier noise; study export, vendor EDF+ and a 30 s text export.
   - `cadwell-export2`: Essentia, 500 Hz, 16 min volunteer EEG with hyperventilation and photic stimulation; vendor EDF from frame 1 and a 30 s text export.
   - `cadwell-export3`: Essentia, 500 Hz, 20 min with a 10 s recording break; vendor EDF starting at frame 30 and a full-length text export (zip, 603000 rows).
   - `cadwell-export3-withfilter`: byte-identical native files re-exported with a 10-15 Hz viewer filter; EDF from the record origin and a full text export.
 
-  Keeping these files private was rejected: they contain no patient data, and committing them makes every equivalence test reproducible on any clone. The vendor's "CSV" is its tab-separated text export with a decimal comma (`.txt`).
+  Keeping these files private was rejected: they contain no patient data, and committing them makes every equivalence test reproducible on any clone (REQ007 was amended to allow this). Moving them to Git LFS or a release download was considered and not done: it would not shrink the existing history, and CI would need the download. The vendor's "CSV" is its tab-separated text export with a decimal comma (`.txt`; zipped for exports 3).
 
-  Limits: git verifies the public files, not manifest checksums. The Cadwell software version appears only in prose (the research note gives Arc 3.2.1097 for the 2026 exports; export 1's is not recorded). No clinical recordings have been supplied under `testdata/private/`, so REQ007 as worded is met only in its mechanism. It also conflicts with the committed public data and with the CLAUDE.md rule that test recordings live only under `testdata/private/`.
+  Limits: export 1's Arc software version was not recorded (manifest: "version not recorded"); exports 2 and 3 are Arc 3.2.1097. No clinical recordings have been supplied under `testdata/private/`, so the private path is exercised only by its skip. The screenshots and READMEs under `testdata/public/` are documentation and are not listed in the manifest.
 
-  **Verified by** TST008 - checksum verification against the manifest is implemented in `tests/conftest.py: testdata()`, but no test uses the fixture and the manifest is empty, so TST008 currently checks nothing.
+  **Verified by** TST008 - `tests/test_manifest.py` checks that every manifest entry is complete and that each public recording's three files match their SHA-256 (about 2 s for 300 MB); private entries are checked by `tests/conftest.py: testdata()` when present. TST014 checks the schema versions against the data.

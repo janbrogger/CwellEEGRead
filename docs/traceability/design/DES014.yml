@@ -7,7 +7,7 @@ links:
 - REQ014: wu85oywYFHWrqdMOsZMrmJSIk1vv4LWfWTLgB8mTRac=
 normative: true
 ref: ''
-reviewed: XOQNz6qm45wByCcaK7tmzJjn0o2rESBYb0XgUGZsSbc=
+reviewed: cm_Vhn4QU0t9QWAI2iYiJFmQYFfTysR6gH2Ca9LvFDI=
 text: |
   **Implements** REQ014 - a command-line option shall replace the patient identification fields with user values or placeholders and remove patient-identifying text from annotations, leaving the signal unchanged.
 
@@ -15,11 +15,11 @@ text: |
 
   - *Option.* `cwelleegread/__main__.py` offers `--anonymize` (a flag) and `--patient-name`, passed to `cwelleegread/edf.py: convert(anonymize=, patient=)`. The `patient` dict accepts `code` and `name`, but the CLI fills only `name`; there is no option for the code, birth date or sex.
   - *Header.* Without the flag the patient code is the patient GUID from `MediaHeader.MediaDescriptor`; with it, `X`. The name is `--patient-name` or `X`; sex and birth date are always `X` (`cwelleegread/edfwrite.py: write_edf_plus()` defaults). The converter never reads the real name, birth date or sex - they sit in the encrypted `EEGRECORDINFO` blob (research note) - so these cannot leak from the recording with or without the flag. Still written with the flag: the first 8 characters of the record GUID in the recording field, and the start date and time.
-  - *Annotations.* With the flag, events of type `Comment` and `UserEvent` are written with their type name instead of their text. Other free-text types (`Annotation`, `PatientEvent`, Persyst comments and so on) keep their text. No name matching is done; the converter has no copy of the name to search for.
-  - *Report.* `patient_guid` becomes null, but the JSON report still holds `record_guid`, the input path, and in `events_skipped` the full text of omitted events - including deleted `Comment` texts - because the skip list is built before the anonymisation branch in `convert()`.
+  - *Annotations.* With the flag, events of the types in `cwelleegread/edf.py: ANONYMIZED_EVENT_TYPES` (`Comment`, `UserEvent`, `Annotation`, `PatientEvent`: text typed by people) are written with their type name instead of their text. Other types (Persyst comments and so on) keep their text. No name matching is done; the converter has no copy of the name to search for.
+  - *Report.* `patient_guid` becomes null, and `events_skipped` shows those types by type name too (deleted comments included). The report still holds `record_guid` and the input path.
   - *Signal.* The flag is consulted only in the header and annotation code; samples, physical ranges and records are the same as without it.
   - *EEGLAB plugin.* No anonymisation option; `EEG.etc.cadwell` carries `patientGuid` and `recordGuid`.
 
   Not yet designed: scrubbing all free-text types, shifting the start date, and CLI options for the patient code, sex and birth date.
 
-  **Verified by** TST007 - conversion with the option, checking the patient fields, annotation texts and unchanged signal; no automated test implements it yet (nothing in `tests/` exercises `--anonymize`).
+  **Verified by** TST007 - `tests/test_anonymisation.py` converts export 2 (a `Comment` and a `UserEvent` with typed text) through the CLI with and without `--anonymize --patient-name`: without the flag the patient GUID and the typed texts are in the EDF and report; with it they are nowhere in the EDF bytes or the JSON report, the patient field is `X X X <name>`, the two events are written by type name, the annotation count is unchanged and the digital samples of all 32 signals are identical.

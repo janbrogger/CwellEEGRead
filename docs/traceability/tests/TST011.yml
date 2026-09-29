@@ -4,11 +4,16 @@ header: |
   Environment setup
 level: 11.0
 links:
-- DES017: JWYsSLEKlp7_pcBgDXygbG86w5tSbAnN3JJEo7oHn7Y=
+- DES017: GERozCx0LeEGWUZJQj4QRnZTjqpEUbukm1Pegsi69-0=
 normative: true
 ref: ''
-reviewed: _z5OrbL3rLiCD-fiHuhq8xjziQrL2fOO5FYIcoDwuR0=
+reviewed: 7d4ZNDw-IGH6MUN7nHiN6vnMt2uhKAowrijmjVt1EIk=
 text: |
   On a fresh clone run `./setup.sh`. Pass if it completes without error,
-  `.venv/bin/doorstop --version` prints the pinned version, and `.venv` is
-  ignored by git.
+  `.venv/bin/doorstop --version` prints the pinned version, `.venv` is
+  ignored by git, the `cwelleegread` command is installed and the test suite
+  passes in that environment. Automated as the `python` job of
+  `.github/workflows/tests.yml` (fresh checkout on every push, Python 3.11 and
+  3.12); the checks that need no fresh clone (ignore rules, Doorstop pin,
+  `setup.sh` syntax and mode, runtime dependencies of `pyproject.toml` equal
+  to `requirements.txt`) are in tests/test_environment.py.

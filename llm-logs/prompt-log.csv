@@ -678,3 +678,4 @@ Drag and drop the ZIP file of your plugin directly into this issue.
 * `testdata/manifest.json`This session isn’t running, so its files can’t be opened. Send a message to start it again. is empty and its checksum fixtures are unused, while about 300 MB of non-patient data sits committed under `testdata/public/`, contrary to REQ007's wording.
 * Vendor mode with `--event-timing ticks` does not correct onsets for the samples the vendor resampling removes, up to 32 ms late by the end of export 1; the defaults are unaffected.
 * TST007, TST011 and TST012 have no automated tests, and read-back is checked with pyedflib only, not MNE as TST001 mentions."
+2026-09-29,08:26:32,jan@brogger.no,4f8951a5-bd29-5446-9df5-040fb4ec277a,"1. Amend REQ007 and keep data in git. 2. Make the prefilter field into ""HP: unknown (0.16 Hz?)"". 3. Unknown schema: refuse by default. 4. Write EDF+D as default if there are gaps in the data. 5. When done, push to master."
