@@ -7,7 +7,7 @@ links:
 - REQ016: lmgdzfwReBB4Kzrf7BETYxuSuAr-ZDnkeNwnNadqG0c=
 normative: true
 ref: ''
-reviewed: K2OfeyWMJb3XqsdCByVPhOTeInpSHOIZ1N8VNEwzhsc=
+reviewed: 1WHfPJbS02gC2_uBnU2zfCxm8fzLs0i15PQoNnJz_pM=
 text: |
   **Implements** REQ016 - `uses/` shall hold one sub-folder per downstream use (Morgoth, SCORE-AI, EEGLAB), each with a README giving its status and prerequisites. The EEGLAB plugin can be packaged as a zip, shows a recording pause as a `Recording gap` event (padded) or a `boundary` event (concatenated, with later events moved earlier by the pause), and lists pauses in `EEG.etc.cadwell.gaps`.
 
@@ -64,7 +64,7 @@ text: |
 
   Not done yet:
   - The plugin has not been run in MATLAB (its menu and dialogs are exercised under Octave, TST017).
-  - 0.2.0 is submitted to the EEGLAB plugin list (sccn/eeglab issue 971, `SUBMISSION.md`); 0.3.0 is released (`cadwellio-v0.3.0`), the update is not yet posted to the plugin list.
+  - 0.2.0 is submitted to the EEGLAB plugin list (sccn/eeglab issue 971, `SUBMISSION.md`); 0.3.0 is released (`cadwellio-v0.3.0`) and submitted to the same issue.
   - The FieldTrip reader exists only in research notes.
   - `uses/EEGLAB/README.md` no longer contains the words "status" or "prerequisite" (its section is headed "Requirements"), so the README check fails for EEGLAB.
 

@@ -52,10 +52,10 @@ Later versions: same template with *Current version* and *New version*
 filled in, after pushing a `release/cadwellio-v<version>` branch (or a
 `cadwellio-v<version>` tag) so the workflow publishes the new zip.
 
-## 0.3.0 (released, update not yet posted to EEGLAB)
+## 0.3.0 (released, submitted)
 
-Released as GitHub release `cadwellio-v0.3.0`. Text for a follow-up on
-sccn/eeglab issue 971 or a new update issue:
+Released as GitHub release `cadwellio-v0.3.0` and posted to sccn/eeglab
+issue 971 on 2026-09-29 with this text:
 
 **Plugin name:** cadwellio
 

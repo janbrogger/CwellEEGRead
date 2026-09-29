@@ -426,7 +426,7 @@ Not yet designed: scrubbing all free-text types, shifting the start date, and CL
 
 Not done yet:
 - The plugin has not been run in MATLAB (its menu and dialogs are exercised under Octave, TST017).
-- 0.2.0 is submitted to the EEGLAB plugin list (sccn/eeglab issue 971, `SUBMISSION.md`); 0.3.0 is released (`cadwellio-v0.3.0`), the update is not yet posted to the plugin list.
+- 0.2.0 is submitted to the EEGLAB plugin list (sccn/eeglab issue 971, `SUBMISSION.md`); 0.3.0 is released (`cadwellio-v0.3.0`) and submitted to the same issue.
 - The FieldTrip reader exists only in research notes.
 - `uses/EEGLAB/README.md` no longer contains the words "status" or "prerequisite" (its section is headed "Requirements"), so the README check fails for EEGLAB.
 

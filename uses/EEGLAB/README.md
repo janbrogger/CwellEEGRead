@@ -13,9 +13,8 @@ converter uses the same decoding rules and against which this plugin is
 tested.
 
 Status: working; 0.3.0 (import options dialog, GNU Octave stand-ins)
-released as GitHub release `cadwellio-v0.3.0`; 0.2.0 was submitted to the
-EEGLAB plugin list (sccn/eeglab issue 971), the 0.3.0 update is not yet
-posted there (`SUBMISSION.md`). Verified under GNU
+released as GitHub release `cadwellio-v0.3.0` and submitted to the EEGLAB
+plugin list (sccn/eeglab issue 971, after 0.2.0; `SUBMISSION.md`). Verified under GNU
 Octave with EEGLAB's own functions and through EEGLAB's own menu and
 dialogs; not yet exercised in MATLAB. Prerequisites are listed
 under *Requirements* below.
