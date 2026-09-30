@@ -45,6 +45,7 @@ Only the Python standard library plus numpy is used.
 """
 from __future__ import annotations
 
+import contextlib
 import copy
 import datetime as dt
 import glob
@@ -72,9 +73,16 @@ class UnsupportedVersionError(ValueError):
     """The recording's storage schema version is not in SUPPORTED_SCHEMA_VERSIONS."""
 
 
-def _ro(path: str) -> sqlite3.Connection:
-    # Path.as_uri() percent-encodes the path and handles Windows drive letters (DES023)
-    return sqlite3.connect(Path(path).resolve().as_uri() + "?mode=ro&immutable=1", uri=True)
+@contextlib.contextmanager
+def _ro(path: str):
+    """Read-only connection, closed on exit (sqlite3's own context manager only ends the
+    transaction; an open file cannot be deleted on Windows, DES023). Path.as_uri()
+    percent-encodes the path and handles Windows drive letters."""
+    con = sqlite3.connect(Path(path).resolve().as_uri() + "?mode=ro&immutable=1", uri=True)
+    try:
+        yield con
+    finally:
+        con.close()
 
 
 def parse_timestamp(s: str) -> dt.datetime:

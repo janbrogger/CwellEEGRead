@@ -4,10 +4,10 @@ header: |
   Standalone program file and README
 level: 19.0
 links:
-- DES023: i_5O1U2MkMVT9NKg95Oh-XBQDdRmAqFVJFXwMEONlH8=
+- DES023: vIB3mZr9wGo2RCL1I7EeMUrmOurd3k09eAEJJ__PRMg=
 normative: true
 ref: ''
-reviewed: OoEKCWJdOk8PUwzbIRHpcQ11zkmIXT5TLz0rRBWF43w=
+reviewed: Cn4Djjcjc7W4KhPpNEs0KwRgqBnQfgY9pDgozG5bsPM=
 text: |
   `tests/test_standalone.py`: build the archive with `uses/standalone/build.py
   --outdir <tmp>`. Pass if:
@@ -23,7 +23,9 @@ text: |
     a readable EDF, and `--version` prints the package version;
   - `uses/standalone/README.md` is at most 45 lines and names each
     shortcoming of REQ023 (schema version, headboxes, microvolt scale,
-    sample clock and event timing, gaps, high-pass, not handled, platforms).
+    sample clock and event timing, gaps, high-pass, not handled, platforms);
+  - every SQLite connection that reading export 1 opens (index, events,
+    frames) is closed again.
 
   On every push, the `standalone` job of `.github/workflows/tests.yml` builds
   the archive and runs the self-test and a conversion from it on ubuntu

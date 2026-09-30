@@ -7,7 +7,7 @@ links:
 - REQ023: WKNe680xSNSIq1pegy1R21VBi-_0VMx5mHc8rNXyZ_E=
 normative: true
 ref: ''
-reviewed: Ee03NvQ72XlDpNAFPztDqGPaw5j3gZKqhtX6osv8EKY=
+reviewed: z-a0jjLRmguuStLVb5x8nu6fxm1da2_1aA7t5OVICEg=
 text: |
   **Implements** REQ023 - a single-file program built from the package, with the self-test recording inside, a short README, its own release and CI on Linux, Windows and macOS.
 
@@ -15,7 +15,7 @@ text: |
 
   *Test recording.* cadwell-export1 (REQ007): 46 s of amplifier noise, no patient, Apollo headbox, 250 Hz, 32 channels; the three SQLite files the converter reads (`.ezdataindex`, `-1.ezdata`, `.ezevents`, not the media databases or encrypted catalogues) and the vendor's `test.edf`, 2.1 MB in all. It is the smallest public recording and the one where the vendor's resampling of surplus samples is exercised.
 
-  *Portability.* SQLite files are opened read-only through a `file:` URI built with `pathlib.Path.as_uri()` (percent-encoded, drive letters on Windows) instead of pasting the path into the URI. `--timezone` accepts `UTC+HH:MM` / `UTC-HH:MM` besides IANA names (`edf.resolve_timezone`), because IANA names need the `tzdata` package on Windows; the self-test uses such fixed offsets and so needs no time-zone database.
+  *Portability.* SQLite files are opened read-only through a `file:` URI built with `pathlib.Path.as_uri()` (percent-encoded, drive letters on Windows) instead of pasting the path into the URI, and every connection is closed after reading (`ezdata._ro`; sqlite3's own context manager only ends the transaction), because Windows cannot delete an open file - the self-test's temporary copy failed to clean up there until this was fixed. `--timezone` accepts `UTC+HH:MM` / `UTC-HH:MM` besides IANA names (`edf.resolve_timezone`), because IANA names need the `tzdata` package on Windows; the self-test uses such fixed offsets and so needs no time-zone database.
 
   *README.* `uses/standalone/README.md`: the commands, then one bullet per shortcoming (schema versions, headboxes, microvolt scale, raw-mode sample clock drift and event placement, gaps, vendor-mode high-pass, not handled, memory, platforms tested). It is the README shipped in the archive.
 

@@ -69,3 +69,37 @@ def test_readme_is_short_and_names_the_shortcomings():
     for pattern in (r"schema 2\.5", r"Apollo", r"Essentia", r"--labels", r"microvolt", r"sample clock",
                     r"wall clock", r"Gaps", r"high-pass", r"Not handled", r"Windows", r"macOS", r"selftest"):
         assert re.search(pattern, text), f"README does not mention {pattern}"
+
+
+def test_sqlite_files_are_closed_after_reading(monkeypatch):
+    """Every SQLite connection the reader opens is closed again, so that the self-test's temporary
+    copy can be deleted on Windows (open files are locked there; found by the CI standalone job)."""
+    import sqlite3
+    from cwelleegread import open_recording
+    opened = []
+    real = sqlite3.connect
+
+    class Tracked:
+        def __init__(self, *a, **kw):
+            self._con = real(*a, **kw)
+            self.closed = False
+            opened.append(self)
+
+        def close(self):
+            self.closed = True
+            self._con.close()
+
+        def __getattr__(self, name):
+            return getattr(self._con, name)
+
+        def __enter__(self):
+            return self._con.__enter__()
+
+        def __exit__(self, *exc):
+            return self._con.__exit__(*exc)
+
+    monkeypatch.setattr(sqlite3, "connect", Tracked)
+    rec = open_recording(str(E1))
+    rec.events()
+    rec.read_signals()
+    assert len(opened) == 3 and all(c.closed for c in opened)

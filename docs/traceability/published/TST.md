@@ -333,7 +333,9 @@ Repeat the manual part whenever the plugin's dialogs or data path change.
   a readable EDF, and `--version` prints the package version;
 - `uses/standalone/README.md` is at most 45 lines and names each
   shortcoming of REQ023 (schema version, headboxes, microvolt scale,
-  sample clock and event timing, gaps, high-pass, not handled, platforms).
+  sample clock and event timing, gaps, high-pass, not handled, platforms);
+- every SQLite connection that reading export 1 opens (index, events,
+  frames) is closed again.
 
 On every push, the `standalone` job of `.github/workflows/tests.yml` builds
 the archive and runs the self-test and a conversion from it on ubuntu
