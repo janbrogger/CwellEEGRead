@@ -26,7 +26,8 @@ own recording and its vendor EDF (any part of the recording), so that
 other amplifiers and Cadwell versions can be checked (REQ024). A
 **standalone** single-file build, `cwelleegread.pyz` with the self-test
 recording inside, needs only Python with numpy and scipy
-(`uses/standalone/`, REQ023).
+(`uses/standalone/`, REQ023); the standalone executables for Windows,
+macOS and Linux need nothing installed (REQ025).
 
 ```bash
 ./setup.sh && source .venv/bin/activate      # installs the `cwelleegread` command into .venv
@@ -84,7 +85,7 @@ whole repository to every release, which can be ignored).
 |---|---|---|---|
 | EEGLAB plugin `cadwellio` | `cadwellio-v<version>` (version = `vers` in `eegplugin_cadwellio.m`) | `cadwellio<version>.zip` | `.github/workflows/release-cadwellio.yml` |
 | Python converter `cwelleegread` | `cwelleegread-v<version>` (planned; version = `__version__`) | wheel / sdist | not yet |
-| Standalone converter | `cwelleegread-standalone-v<version>` (version = `__version__`) | `cwelleegread-standalone-<version>.zip` (`cwelleegread.pyz`, README, LICENSE); published only after its self-test passed on Linux, Windows and macOS | `.github/workflows/release-standalone.yml` |
+| Standalone converter | `cwelleegread-standalone-v<version>` (version = `__version__`; 0.2.0 released) | `cwelleegread-standalone-<version>.zip` (`cwelleegread.pyz`, README, LICENSE) and, from 0.3.0, executables `cwelleegread-<version>-windows-x64.exe`, `-macos-arm64`, `-linux-x64` (REQ025); published only after the self-test passed on each, on its platform | `.github/workflows/release-standalone.yml` |
 
 ## Repository layout
 

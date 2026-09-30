@@ -67,7 +67,8 @@ def test_readme_is_short_and_names_the_shortcomings():
     text = (STANDALONE / "README.md").read_text(encoding="utf-8")
     assert len(text.splitlines()) <= 45
     for pattern in (r"schema 2\.5", r"Apollo", r"Essentia", r"--labels", r"microvolt", r"sample clock",
-                    r"wall clock", r"Gaps", r"high-pass", r"Not handled", r"Windows", r"macOS", r"selftest"):
+                    r"wall clock", r"Gaps", r"high-pass", r"Not handled", r"Windows", r"macOS", r"selftest",
+                    r"unsigned", r"xattr", r"chmod", r"windows-x64\.exe"):
         assert re.search(pattern, text), f"README does not mention {pattern}"
 
 
@@ -103,3 +104,27 @@ def test_sqlite_files_are_closed_after_reading(monkeypatch):
     rec.events()
     rec.read_signals()
     assert len(opened) == 3 and all(c.closed for c in opened)
+
+
+@pytest.fixture(scope="module")
+def executable(tmp_path_factory):
+    pytest.importorskip("PyInstaller", reason="PyInstaller not installed (requirements-dev.txt)")
+    out = tmp_path_factory.mktemp("exe")
+    r = subprocess.run([sys.executable, str(STANDALONE / "build.py"), "--exe", "--outdir", str(out)],
+                       capture_output=True, text=True)
+    assert r.returncode == 0, r.stdout[-3000:] + r.stderr[-3000:]
+    exes = [p for p in out.iterdir() if p.name.startswith(f"cwelleegread-{__version__}-")]
+    assert len(exes) == 1, [p.name for p in out.iterdir()]
+    return exes[0]
+
+
+def test_executable_runs_without_python_environment(executable, tmp_path):
+    """TST021: the executable's self-test passes from outside the checkout, with no Python paths set."""
+    import os
+    assert re.fullmatch(rf"cwelleegread-{re.escape(__version__)}-(linux|macos|windows)-(x64|arm64)(\.exe)?", executable.name)
+    env = {k: v for k, v in os.environ.items() if not k.startswith(("PYTHON", "VIRTUAL_ENV"))}
+    r = subprocess.run([str(executable), "--version"], cwd=tmp_path, env=env, capture_output=True, text=True)
+    assert r.returncode == 0 and r.stdout.strip() == __version__
+    r = subprocess.run([str(executable), "selftest"], cwd=tmp_path, env=env, capture_output=True, text=True)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "RESULT: PASS" in r.stdout and f"bundled in {executable}" in r.stdout

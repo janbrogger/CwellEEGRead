@@ -24,6 +24,7 @@
  * 22 EEGLAB plugin import dialog (DES022)
  * 23 Standalone distribution (DES023)
  * 24 Equivalence self-test (DES024)
+ * 25 Standalone executables (DES025)
 
 # 1.0 Input: Cadwell EEG recordings from around 2020 onward _(DES001)_ {#DES001}
 
@@ -605,4 +606,20 @@ Every check line gives its numbers, and `--json` writes them all (checks, alignm
 *Parent links: REQ024*
 
 *Child links: TST020*
+
+# 25 Standalone executables _(DES025)_ {#DES025}
+
+**Implements** REQ025 - PyInstaller one-file executables per platform, self-tested before release.
+
+**Design.** `uses/standalone/build.py --exe` stages the same sources as the program file (DES023: the package, the self-test files of `BUNDLED` under `cwelleegread/selftest_data/`, checksums verified, and the root `__main__.py`) and runs PyInstaller (pinned in `requirements-dev.txt`) in one-file mode on that `__main__.py`, with the staged folder on the module search path and `selftest_data` added as package data. The result, `cwelleegread-<version>-<platform>-<arch>[.exe]` (`windows-x64`, `macos-arm64`, `linux-x64`), holds a Python interpreter, numpy, scipy, the tzdata time-zone database (Windows has none for `--timezone Europe/Oslo`) and the package; at start it unpacks itself into a temporary folder, where `importlib.resources` finds the self-test data exactly as in the program file. When frozen, the self-test names the executable (`sys.executable`) as the source of its data. PyInstaller cannot cross-compile, so each executable is built on its own platform: the Linux one on ubuntu-22.04, so that it runs on distributions with glibc 2.35 or newer.
+
+*Release and CI.* `release-standalone.yml` builds the three executables in a matrix job, runs `<executable> selftest` and `--version` on each on its own runner, and the release job attaches them next to the zip only when every job passed. `tests.yml` job `standalone` builds the executable on the same three platforms and runs its self-test on every push.
+
+*Not code-signed.* Windows SmartScreen warns on first start (*More info > Run anyway*); macOS quarantines downloaded files (`xattr -d com.apple.quarantine <file>`, or right-click > Open); on Linux the file must be made executable (`chmod +x`). The README says so.
+
+**Verified by** TST021.
+
+*Parent links: REQ025*
+
+*Child links: TST021*
 

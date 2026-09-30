@@ -1,9 +1,11 @@
-# Release of the standalone converter only (REQ023, DES023). Push a tag
+# Release of the standalone converter only (REQ023, REQ025). Push a tag
 # "cwelleegread-standalone-v<version>" and this builds
-# cwelleegread-standalone-<version>.zip (cwelleegread.pyz, README.md, LICENSE),
-# runs the program's self-test from that archive on Linux, Windows and macOS,
-# and only then publishes a GitHub release named after the tag with the zip as
-# its only asset.
+# cwelleegread-standalone-<version>.zip (cwelleegread.pyz, README.md, LICENSE)
+# and runs its self-test on Linux, Windows and macOS; builds the executables
+# cwelleegread-<version>-{windows-x64.exe,macos-arm64,linux-x64}, each on its own
+# platform, and runs each one's self-test there; and only when all of that
+# passed publishes a GitHub release named after the tag with the zip and the
+# three executables as assets.
 #
 #   git tag cwelleegread-standalone-v0.2.0 && git push origin cwelleegread-standalone-v0.2.0
 #
@@ -92,13 +94,48 @@ jobs:
           cd "cwelleegread-standalone-${{ needs.build.outputs.version }}"
           python cwelleegread.pyz selftest
 
+  executables:
+    needs: build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-22.04, windows-latest, macos-latest]    # linux-x64 (glibc 2.35+), windows-x64, macos-arm64
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build the executable and run its self-test
+        run: |
+          python -m pip install -q numpy scipy pyinstaller==6.22.3 tzdata
+          python uses/standalone/build.py --exe --outdir dist
+          exe="$PWD/$(ls dist/cwelleegread-${{ needs.build.outputs.version }}-*)"
+          cd "$RUNNER_TEMP"
+          "$exe" --version
+          "$exe" selftest
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: exe-${{ matrix.os }}
+          path: dist/cwelleegread-${{ needs.build.outputs.version }}-*
+
   release:
-    needs: [build, selftest]
+    needs: [build, selftest, executables]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
         with:
           name: standalone
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: exe-*
+          merge-multiple: true
 
       - name: Release notes
         run: |
@@ -106,10 +143,13 @@ jobs:
           {
             echo "Standalone Cadwell Arc EEG to EDF/EDF+ converter, version $v."
             echo
-            echo "One file, \`cwelleegread.pyz\`, for Python 3.10+ with numpy and scipy (\`pip install numpy scipy\`)."
+            echo "Executables (nothing to install, not code-signed - see the README): \`cwelleegread-$v-windows-x64.exe\`,"
+            echo "\`cwelleegread-$v-macos-arm64\` (Apple silicon), \`cwelleegread-$v-linux-x64\` (glibc 2.35+)."
+            echo "Or the zip: \`cwelleegread.pyz\` for Python 3.10+ with numpy and scipy (\`pip install numpy scipy\`)."
             echo "\`python cwelleegread.pyz selftest\` proves on your computer that the conversion reproduces Cadwell's own"
             echo "EDF export of the bundled test recording; \`python cwelleegread.pyz selftest EXPORT CADWELL.edf\` does the same"
-            echo "for your own recording. The self-test passed on Linux, Windows and macOS before this release was published."
+            echo "for your own recording. The self-test passed on every executable and on the zip, on Linux, Windows and"
+            echo "macOS, before this release was published."
             echo
             echo "Read the README in the zip for the known shortcomings."
             echo "The \"Source code\" archives below are the whole repository, added by GitHub; the program is the zip above."
@@ -122,4 +162,6 @@ jobs:
           target_commitish: ${{ github.sha }}
           name: cwelleegread standalone ${{ needs.build.outputs.version }}
           body_path: notes.md
-          files: cwelleegread-standalone-${{ needs.build.outputs.version }}.zip
+          files: |
+            cwelleegread-standalone-${{ needs.build.outputs.version }}.zip
+            cwelleegread-${{ needs.build.outputs.version }}-*

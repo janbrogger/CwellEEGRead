@@ -23,6 +23,7 @@
     * 20.1 Event placement on the sample clock (REQ021)
     * 20.2 EEGLAB plugin import dialog (REQ022)
  * 21 Standalone distribution (REQ023)
+    * 21.1 Standalone executables (REQ025)
  * 22 Equivalence self-test (REQ024)
 
 # 1.0 Input: Cadwell EEG recordings from around 2020 onward _(REQ001)_ {#REQ001}
@@ -409,6 +410,22 @@ self-test on the three platforms on every push.
 *Parent links: NEED001, NEED006*
 
 *Child links: DES023*
+
+## 21.1 Standalone executables _(REQ025)_ {#REQ025}
+
+For users without Python, the standalone converter (REQ023) shall also be
+released as one executable file per platform - Windows x64, macOS on
+Apple silicon and Linux x64 - that runs without any installation and
+offers the same commands as the program file, the self-test on the
+bundled test recording included (REQ024). Each executable shall be built
+on its own platform from the same package sources, and a release shall
+carry an executable only if the self-test passed on that executable on
+its own platform. The README shall name the platforms and what users must
+do because the executables are not code-signed.
+
+*Parent links: NEED001, NEED006*
+
+*Child links: DES025*
 
 # 22 Equivalence self-test _(REQ024)_ {#REQ024}
 

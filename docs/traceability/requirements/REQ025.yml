@@ -1,0 +1,21 @@
+active: true
+derived: false
+header: |
+  Standalone executables
+level: 21.1
+links:
+- NEED001: ogWiGqMUKrWu8GuJ-1yWWgBtG0KutZETWRjoz3qwfrA=
+- NEED006: m0kjqwxo_577eQbRuqQo5nqZfb5bgs_ek76_j-0WXYo=
+normative: true
+ref: ''
+reviewed: WNyvNCU4-5BRcVinArezgq3G0EYr1lC7IChBjOZoEbc=
+text: |
+  For users without Python, the standalone converter (REQ023) shall also be
+  released as one executable file per platform - Windows x64, macOS on
+  Apple silicon and Linux x64 - that runs without any installation and
+  offers the same commands as the program file, the self-test on the
+  bundled test recording included (REQ024). Each executable shall be built
+  on its own platform from the same package sources, and a release shall
+  carry an executable only if the self-test passed on that executable on
+  its own platform. The README shall name the platforms and what users must
+  do because the executables are not code-signed.

@@ -15,6 +15,7 @@ import bisect
 import datetime as dt
 import hashlib
 import os
+import sys
 import tempfile
 from importlib import resources
 from pathlib import Path
@@ -67,7 +68,9 @@ def bundled_source():
     """(root to read BUNDLED paths from, description, 'bundle' or 'checkout') or None."""
     res = resources.files(__package__).joinpath("selftest_data")
     if res.is_dir():
-        return res, f"bundled in {os.path.dirname(os.path.dirname(os.path.abspath(__file__)))}", "bundle"
+        # frozen executable (DES025): name it, not its temporary unpack folder
+        where = sys.executable if getattr(sys, "frozen", False) else os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        return res, f"bundled in {where}", "bundle"
     repo = Path(__file__).resolve().parents[1]
     if all((repo / src).is_file() for src, _ in BUNDLED.values()):
         return repo, f"{_E1.rstrip('/')} (repository checkout)", "checkout"

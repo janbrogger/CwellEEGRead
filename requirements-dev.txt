@@ -5,4 +5,6 @@ pytest>=8
 pyyaml>=6
 weasyprint==70.0        # tools/doorstop_pdf.py: the committed PDF of the Doorstop tree
 mne>=1.6                # tests: second independent EDF reader (TST001)
+pyinstaller==6.22.3     # uses/standalone/build.py --exe: the standalone executables (REQ025, TST021)
+tzdata                  # bundled into the executables for --timezone on Windows
 pillow>=10              # tools/eeglab_screenshots.py: finds the OK button in a dialog screenshot (TST018)

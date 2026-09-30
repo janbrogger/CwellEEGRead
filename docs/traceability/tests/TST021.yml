@@ -1,0 +1,21 @@
+active: true
+derived: false
+header: |
+  Standalone executable
+level: 21.0
+links:
+- DES025: nRgNtzya0515tlPDI1aEhmhopNL_Auk0tutBgt4llEs=
+normative: true
+ref: ''
+reviewed: JdV8TcouU59crFVq_yun5QXxViREr5BwldAUtN9Rs9o=
+text: |
+  `tests/test_standalone.py` (skipped when PyInstaller is not installed):
+  build the executable for the current platform with `uses/standalone/build.py
+  --exe`. Pass if the file is named `cwelleegread-<version>-<platform>-<arch>`,
+  `--version` prints the package version, and `selftest`, run from a folder
+  outside the repository in an environment without the checkout on the
+  module path, exits 0 with `RESULT: PASS` and names the executable as the
+  source of its test data.
+
+  CI: the `standalone` job of `tests.yml` and the release workflow repeat
+  this on Windows x64, macOS arm64 and Linux x64 (ubuntu-22.04).

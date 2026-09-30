@@ -20,6 +20,7 @@
  * 18 EEGLAB plugin screenshots, manually verified (TST018)
  * 19 Standalone program file and README (TST019)
  * 20 Equivalence self-test on public and altered data (TST020)
+ * 21 Standalone executable (TST021)
 
 # 1.0 EDF structural validity _(TST001)_ {#TST001}
 
@@ -371,4 +372,19 @@ self-test on the three platforms before it publishes.
   0.2766482 s, and its samples and annotations equal pyedflib's.
 
 *Parent links: DES024*
+
+# 21 Standalone executable _(TST021)_ {#TST021}
+
+`tests/test_standalone.py` (skipped when PyInstaller is not installed):
+build the executable for the current platform with `uses/standalone/build.py
+--exe`. Pass if the file is named `cwelleegread-<version>-<platform>-<arch>`,
+`--version` prints the package version, and `selftest`, run from a folder
+outside the repository in an environment without the checkout on the
+module path, exits 0 with `RESULT: PASS` and names the executable as the
+source of its test data.
+
+CI: the `standalone` job of `tests.yml` and the release workflow repeat
+this on Windows x64, macOS arm64 and Linux x64 (ubuntu-22.04).
+
+*Parent links: DES025*
 

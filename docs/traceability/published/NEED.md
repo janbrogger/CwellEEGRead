@@ -16,7 +16,7 @@ onward) for research purposes, without depending on the proprietary Cadwell
 application. Many research EEGs are recorded for clinical purposes first, so
 the clinical archive is the source of research data.
 
-*Child links: REQ001, REQ006, REQ023, REQ024*
+*Child links: REQ001, REQ006, REQ023, REQ025, REQ024*
 
 # 2.0 A standard interchange format for downstream analysis _(NEED002)_ {#NEED002}
 
@@ -59,7 +59,7 @@ the intended downstream analyses: scripts to check out and run the Morgoth
 foundation model, a wrapper to call a SCORE-AI command-line program on the
 converted files, and an EEGLAB (and possibly FieldTrip) reader plugin.
 
-*Child links: REQ006, REQ016, REQ022, REQ023*
+*Child links: REQ006, REQ016, REQ022, REQ023, REQ025*
 
 # 7.0 Open-source licensing that permits reuse of prior work _(NEED007)_ {#NEED007}
 

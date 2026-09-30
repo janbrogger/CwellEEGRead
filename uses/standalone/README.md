@@ -1,14 +1,17 @@
 # CwellEEGRead standalone converter
 
 Converts Cadwell Arc EEG recordings (CadLink exports with `CadLink/Data/*.ezdataindex`)
-to EDF/EDF+. One file, `cwelleegread.pyz`; needs Python 3.10+ and `pip install numpy scipy`.
+to EDF/EDF+. Either one executable (release assets `cwelleegread-<version>-windows-x64.exe`,
+`-macos-arm64`, `-linux-x64`; nothing to install) or `cwelleegread.pyz` for Python 3.10+
+with `pip install numpy scipy` (run as `python cwelleegread.pyz ...`). Examples call it
+`cwelleegread`.
 
 ```
-python cwelleegread.pyz selftest                     # self-test on the bundled test EEG
-python cwelleegread.pyz selftest EXPORT CADWELL.edf  # self-test on your recording + Cadwell's EDF export of it
-python cwelleegread.pyz convert EXPORT out.edf --timezone Europe/Oslo
-python cwelleegread.pyz batch FOLDER OUTDIR          # every recording below FOLDER
-python cwelleegread.pyz COMMAND --help               # all options
+cwelleegread selftest                     # self-test on the bundled test EEG
+cwelleegread selftest EXPORT CADWELL.edf  # self-test on your recording + Cadwell's EDF export of it
+cwelleegread convert EXPORT out.edf --timezone Europe/Oslo
+cwelleegread batch FOLDER OUTDIR          # every recording below FOLDER
+cwelleegread COMMAND --help               # all options
 ```
 
 `selftest` converts as Cadwell's own EDF export does (`--mode vendor`) and compares
@@ -33,7 +36,10 @@ any time range). It prints no patient fields, but may quote annotation texts.
 - **Filter**: `--mode vendor` applies Cadwell's 0.16 Hz export high-pass on Essentia.
 - **Not handled**: choosing a time range, video, typed-text event types. The whole
   recording is held in memory (~1.5 GB per hour at 500 Hz, 32 channels).
-- **Platforms**: CI runs the self-test on Linux, Windows and macOS. On Windows, IANA
-  time-zone names need `pip install tzdata` (or use e.g. `--timezone UTC+01:00`).
+- **Platforms**: CI runs the self-test on Linux, Windows and macOS. With the `.pyz` on
+  Windows, IANA time-zone names need `pip install tzdata` (or use `--timezone UTC+01:00`).
+- **Executables** are unsigned: Windows SmartScreen asks (*More info > Run anyway*); on
+  macOS run `xattr -d com.apple.quarantine FILE` (Apple silicon only); on Linux `chmod +x
+  FILE` (glibc 2.35+). They unpack to a temporary folder at each start (a few seconds).
 
 Public domain (Unlicense). Source and documentation: https://github.com/janbrogger/CwellEEGRead
