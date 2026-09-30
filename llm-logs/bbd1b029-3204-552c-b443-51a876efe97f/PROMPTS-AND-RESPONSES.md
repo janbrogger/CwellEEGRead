@@ -2,10 +2,10 @@
 # Session `bbd1b029-3204-552c-b443-51a876efe97f`
 
 - Started (UTC): 2026-09-30T06:33:11.920Z  
-- Last event (UTC): 2026-09-30T07:49:29.315Z (span 1 h 16 min)  
+- Last event (UTC): 2026-09-30T08:19:51.964Z (span 1 h 46 min)  
 - User: jan@brogger.no; source: claude-code-remote; branch: `claude/funny-fermi-3x57jz`  
 - Models: claude-opus-5-5; Claude Code 2.1.285  
-- Prompts: 2; transcript: transcript.jsonl (2.2 MB)
+- Prompts: 2; transcript: transcript.jsonl (2.4 MB)
 
 This file is derived from the transcript for readers without an LLM. Prompts are verbatim; responses are the assistant's text messages (tool calls and their output are only summarised - see the JSONL for those).
 
@@ -240,11 +240,64 @@ The package version is now 0.2.0. `--timezone` also accepts fixed offsets like `
 Help me push the release on github. Then make a standalone executable for the python standalone tool.
 ```
 
-_Tools used in this turn: Bash ×1, AskUserQuestion ×1_
+_Tools used in this turn: Bash ×15, AskUserQuestion ×1_
 
 ### Response 2
 
 **[07:49 UTC]**
 
 Let me check where the release workflow can run from: whether the branch is merged, and whether I can push tags.
+
+**[08:01 UTC]**
+
+Fast-forwarding `main`, then pushing the release branch:
+
+**[08:03 UTC]**
+
+PyInstaller 6.22 installs fine. Requirements first, as the repo requires: REQ025 (standalone executables), with DES025 and TST021.
+
+**[08:04 UTC]**
+
+Now the build: refactor `build.py` so the program file and the executable share one staging step.
+
+**[08:06 UTC]**
+
+Now the README: the executable goes first, since it's what most users will want.
+
+**[08:08 UTC]**
+
+One fix before testing: in the release job, `$GITHUB_WORKSPACE` is a Windows-style path under Git Bash, which bash may not execute reliably. I'll capture a POSIX path instead:
+
+**[08:09 UTC]**
+
+Updating the root README and `uses/README.md` for the release and the executables, then the full suite:
+
+**[08:15 UTC]**
+
+All 93 tests pass. Committing, pushing to the feature branch, and waiting for CI to build and self-test the executables on all three platforms:
+
+**[08:19 UTC]**
+
+All green. Let me confirm the Windows job actually ran the executable's self-test and its `Europe/Oslo` conversion, rather than just skipping the step:
+
+**[08:19 UTC]**
+
+Both parts are done. Release 0.2.0 is published, and the standalone executables build and pass their self-test on Windows, macOS and Linux in CI. The executables themselves haven't been released yet.
+
+**Release 0.2.0.** I fast-forwarded `main` to the feature branch, as you chose, and pushed `release/cwelleegread-standalone-v0.2.0`. The workflow built the zip, ran the self-test from it on Windows, Linux and macOS, and only then published. It's live at [cwelleegread-standalone-v0.2.0](https://github.com/janbrogger/CwellEEGRead/releases/tag/cwelleegread-standalone-v0.2.0), with `cwelleegread-standalone-0.2.0.zip` as its only asset.
+
+**Standalone executables.** As before, I wrote the requirement, design and test spec first (REQ025, DES025, TST021).
+- **What it is:** `python uses/standalone/build.py --exe` builds one PyInstaller file per platform, about 77 MiB, containing Python, numpy, scipy, the time-zone database and the self-test data. Users install nothing. The names are `cwelleegread-<version>-windows-x64.exe`, `-macos-arm64` and `-linux-x64`.
+- **Tested here (Linux):** I ran it with an empty environment from outside the repo. Both the bundled self-test and the recording-3 self-test passed; the latter uses scipy's filter, so scipy is bundled correctly. A new pytest test builds and runs it, and the full suite passes (93 tests).
+- **Tested in CI:** each platform builds its own executable and runs its self-test, plus a conversion with `--timezone Europe/Oslo`, which needs the bundled time-zone data on Windows. All jobs pass.
+- **Release workflow:** it now also builds and self-tests the three executables, each on its own platform, and attaches them to the release only if all passed.
+- The version is now 0.3.0, since 0.2.0 is already released.
+
+**Limits of the executables:**
+- **Unsigned:** Windows SmartScreen asks for confirmation on first start. On macOS users must remove the quarantine flag (`xattr -d com.apple.quarantine`). On Linux the file must be made executable with `chmod +x`. The README says all this; signing would need Apple and Windows certificates.
+- **Apple silicon only:** the macOS build doesn't run on Intel Macs.
+- **Linux:** needs glibc 2.35 or newer (Ubuntu 22.04 era).
+- **Startup:** each run first unpacks itself to a temporary folder, which takes a few seconds.
+
+**Your call:** to publish the executables, I'd fast-forward `main` again and push `release/cwelleegread-standalone-v0.3.0`, the same route as 0.2.0. Shall I?
 
