@@ -691,3 +691,4 @@ Drag and drop the ZIP file of your plugin directly into this issue.
 2026-09-30,08:56:12,jan@brogger.no,bbd1b029-3204-552c-b443-51a876efe97f,"yes, release 0.3.0"
 2026-09-30,09:41:46,jan@brogger.no,bbd1b029-3204-552c-b443-51a876efe97f,Investigate cheap code signing options.
 2026-09-30,09:44:54,jan@brogger.no,bbd1b029-3204-552c-b443-51a876efe97f,1. add the free build attestations to the release workflow. 2. record this as a note in docs/research/
+2026-09-30,09:52:42,jan@brogger.no,bbd1b029-3204-552c-b443-51a876efe97f,"yes, release 0.3.1"
