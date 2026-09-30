@@ -2,10 +2,10 @@
 # Session `bbd1b029-3204-552c-b443-51a876efe97f`
 
 - Started (UTC): 2026-09-30T06:33:11.920Z  
-- Last event (UTC): 2026-09-30T08:19:51.964Z (span 1 h 46 min)  
+- Last event (UTC): 2026-09-30T09:43:00.289Z (span 3 h 9 min)  
 - User: jan@brogger.no; source: claude-code-remote; branch: `claude/funny-fermi-3x57jz`  
 - Models: claude-opus-5-5; Claude Code 2.1.285  
-- Prompts: 2; transcript: transcript.jsonl (2.4 MB)
+- Prompts: 4; transcript: transcript.jsonl (2.7 MB)
 
 This file is derived from the transcript for readers without an LLM. Prompts are verbatim; responses are the assistant's text messages (tool calls and their output are only summarised - see the JSONL for those).
 
@@ -300,4 +300,84 @@ Both parts are done. Release 0.2.0 is published, and the standalone executables 
 - **Startup:** each run first unpacks itself to a temporary folder, which takes a few seconds.
 
 **Your call:** to publish the executables, I'd fast-forward `main` again and push `release/cwelleegread-standalone-v0.3.0`, the same route as 0.2.0. Shall I?
+
+
+## Prompt 3 - 2026-09-30 08:56:12 UTC
+
+```text
+yes, release 0.3.0
+```
+
+_Tools used in this turn: Bash ×3_
+
+### Response 3
+
+**[08:59 UTC]**
+
+Release 0.3.0 is live: [cwelleegread-standalone-v0.3.0](https://github.com/janbrogger/CwellEEGRead/releases/tag/cwelleegread-standalone-v0.3.0). I fast-forwarded `main` to the tested commit and pushed `release/cwelleegread-standalone-v0.3.0`. The workflow built everything and ran the self-test on each executable on its own platform, and on the zip on all three platforms. It published only after every one of those passed.
+
+| Asset | For | Size |
+|---|---|---|
+| `cwelleegread-0.3.0-windows-x64.exe` | Windows, nothing to install | 50 MiB |
+| `cwelleegread-0.3.0-macos-arm64` | Apple-silicon Macs | 27 MiB |
+| `cwelleegread-0.3.0-linux-x64` | Linux with glibc 2.35+ | 66 MiB |
+| `cwelleegread-standalone-0.3.0.zip` | `cwelleegread.pyz` + README + LICENSE, for Python 3.10+ with numpy and scipy | 0.7 MiB |
+
+The executables are unsigned, so first-time users will see a warning. On Windows, SmartScreen needs *More info > Run anyway*. On macOS, remove the quarantine flag with `xattr -d com.apple.quarantine FILE`. On Linux, make the file executable with `chmod +x FILE`. The README and the release notes both say this. Once it runs, `cwelleegread-0.3.0-windows-x64.exe selftest` shows on the user's own machine that it reproduces Cadwell's EDF export.
+
+
+## Prompt 4 - 2026-09-30 09:41:46 UTC
+
+```text
+Investigate cheap code signing options.
+```
+
+_Tools used in this turn: WebSearch ×9, WebFetch ×3, ToolSearch ×1_
+
+### Response 4
+
+**[09:42 UTC]**
+
+I'll check current prices and eligibility on the web rather than rely on memory, because code-signing rules changed a lot in 2023–2025.
+
+**[09:42 UTC]**
+
+A few sites are blocked by the proxy, so I'll confirm the remaining points through search:
+
+**[09:42 UTC]**
+
+Code signing won't make the warnings go away on day one, whatever you pay. Since 2024, Microsoft gives every certificate the same treatment: SmartScreen warns until the publisher builds up download reputation. The one exception is Apple notarization, which removes the macOS block immediately.
+
+With that caveat, here's the cheapest route per platform.
+
+| Option | Platform | Cost | Fits this project? |
+|---|---|---|---|
+| **[SignPath Foundation](https://signpath.org/)** | Windows | Free | **Likely, and my recommendation.** It is for open-source projects with an OSI licence (the Unlicense is OSI-approved), fully open source, actively maintained and already released, all of which this repo is. Signing is triggered from GitHub Actions, and SignPath checks that the binary was built by your workflow. The catch: the certificate names **SignPath Foundation** as publisher, not you, and you must publish a code-signing policy page and use MFA. |
+| **Your institution via GÉANT TCS (HARICA)** | Windows | Free or discounted | **Worth one email.** Sikt is Norway's TCS member, and TCS covers code-signing certificates, which would carry your institution's name. HARICA issues these only on hardware tokens since June 2023, which is awkward for CI signing. Ask your IT department whether they can issue one. |
+| **[Certum Open Source Code Signing (cloud)](https://shop.certum.eu/open-source-code-signing-on-simplysign.html)** | Windows | from about €49/year | Cheapest paid certificate in your own name, for open-source developers; the key lives in Certum's cloud (SimplySign). Certificates are capped at 459 days from February 2026, so it's a yearly renewal. Automating its cloud login in CI is fiddly. |
+| **[Azure Artifact Signing](https://azure.microsoft.com/en-us/products/artifact-signing)** (formerly Trusted Signing) | Windows | $9.99/month | Integrates best with GitHub Actions. Now generally available for EU businesses, including self-employed individuals, but reportedly still not for private individuals outside the US and Canada. So it only works if you sign as a business or through an institution. |
+| **Apple Developer Program + notarization** | macOS | $99/year | The only way to remove the macOS block properly. Apple's fee waivers go to nonprofits, schools and government bodies in a fixed list of countries, and Norway wasn't on it in the lists I found. |
+| **[GitHub artifact attestations](https://docs.github.com/actions/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds)** | All | Free for public repos | Doesn't silence any OS warning. It does let anyone verify with `gh attestation verify FILE --repo janbrogger/CwellEEGRead` that the file was built by this repo's workflow. Linux has no OS-level signing anyway, so for Linux this is the right tool. |
+
+**What I'd do, in order:**
+1. **Now, free, about 10 lines of workflow:** add `actions/attest-build-provenance` to `release-standalone.yml`, so every release asset gets a verifiable build record. I can do this immediately.
+2. **Apply to SignPath Foundation** for the Windows `.exe`. The application is yours to submit because it's in your name; I can prepare the workflow step and the code-signing policy page they require.
+3. **Ask your IT department about a TCS/HARICA code-signing certificate**, if you'd rather the publisher shown were your institution than SignPath.
+4. **macOS:** $99/year only if Mac users matter enough. Otherwise keep the documented `xattr` step, or point Mac users to the `.pyz`, which Gatekeeper doesn't block.
+
+**What I couldn't confirm:** the proxy blocked the SignPath terms page, Sikt's certificate page and Microsoft's docs, so those rows rest on search summaries. Please confirm them before relying on them:
+- whether SignPath Foundation also signs for macOS (my understanding is Windows only: its product does notarization, but an Apple identity has to be your own);
+- whether Sikt currently issues code-signing certificates;
+- Apple's current fee-waiver country list.
+
+Shall I add step 1 now, and record this as a note in `docs/research/`?
+
+Sources:
+- [SignPath Foundation](https://signpath.org/), [its conditions](https://signpath.org/terms.html), [SignPath GitHub trusted build](https://docs.signpath.io/trusted-build-systems/github), [SignPath for open source](https://signpath.io/solutions/open-source-community)
+- [Azure Artifact Signing](https://azure.microsoft.com/en-us/products/artifact-signing), [Trusted Signing for individuals](https://techcommunity.microsoft.com/blog/microsoft-security-blog/trusted-signing-is-now-open-for-individual-developers-to-sign-up-in-public-previ/4273554), [Rick Strahl on setting up Trusted Signing](https://weblog.west-wind.com/posts/2025/Jul/20/Fighting-through-Setting-up-Microsoft-Trusted-Signing)
+- [Microsoft: code signing options](https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/code-signing-options), [SmartScreen reputation](https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/smartscreen-reputation), [ToDesktop: EV no longer grants reputation](https://www.todesktop.com/blog/posts/windows-apps-psa-ev-certs-do-not-grant-immediate-reputation-anymore), [electron-builder note](https://github.com/electron-userland/electron-builder/pull/10190)
+- [Certum Open Source Code Signing in the Cloud](https://shop.certum.eu/open-source-code-signing-on-simplysign.html), [Certum code signing](https://shop.certum.eu/code-signing.html)
+- [GÉANT TCS](https://security.geant.org/trusted-certificate-services/), [TCS participants (HARICA)](https://wiki.geant.org/spaces/TCSNT/pages/929693819/TCS+Participants+HARICA), [HARICA code signing](https://www.harica.gr/en/Products/Code-Signing), [HARICA code-signing news](https://news.harica.gr/categories/code-signing-certificates/), [Sikt certificates](https://platon.sikt.no/tjenester/certificates)
+- [Apple fee waivers](https://developer.apple.com/help/account/membership/fee-waivers/), [Apple: waivers in more countries](https://developer.apple.com/news/?id=02032020a)
+- [GitHub artifact attestations](https://docs.github.com/actions/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds), [actions/attest-build-provenance](https://github.com/actions/attest-build-provenance)
 

@@ -1,3 +1,5 @@
 n,date,time_utc,prompt_text
 1,2026-09-30,06:33:12,"Help me make a standalone version of the Cadwell to EDF converter tool in Python. First, let's make a top-folder uses/standalone . Stick a README.md in there. It should be as short as possible, but mention possible shortcomings (unsupported versions, timing issues etc). Then we should have one of the test EEGs in the release, and a self-test diagnostic mode in the Python code that tries to convert that test EEG using the tool and then proves (near) bit equivalence to the sideloaded native Cadwell EDF export. Also we should have the diagnostic self-test mode available for a user-specified native Cadwell file + native Cadwell EDF exported file, so user can self-verify equivalence on their data (for example if they have other amplifiers, other software versions). Write up the requirements, then write the design, then implement in code."
 2,2026-09-30,07:49:06,Help me push the release on github. Then make a standalone executable for the python standalone tool.
+3,2026-09-30,08:56:12,"yes, release 0.3.0"
+4,2026-09-30,09:41:46,Investigate cheap code signing options.
