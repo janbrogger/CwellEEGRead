@@ -9,7 +9,7 @@ Every Claude Code session run in this repository is archived here: one folder pe
 | 2026-09-28 06:31 | untagged | [`831b87b8…`](831b87b8-e6bd-4acd-901b-d67180234ee3/PROMPTS-AND-RESPONSES.md) | 2 | 49 min | `claude/zen-lovelace-vq1to3` | 2.6 MB |
 | 2026-09-29 08:10 | untagged | [`4f8951a5…`](4f8951a5-bd29-5446-9df5-040fb4ec277a/PROMPTS-AND-RESPONSES.md) | 2 | 1 h 4 min | `claude/serene-davinci-0nlq5s` | 2.2 MB |
 | 2026-09-29 09:58 | untagged | [`cf13040e…`](cf13040e-bd76-59ca-a29e-acac61c6b3ca/PROMPTS-AND-RESPONSES.md) | 4 | 2 h 33 min | `claude/admiring-maxwell-f5w6tr` | 5.1 MB |
-| 2026-09-30 06:33 | untagged | [`bbd1b029…`](bbd1b029-3204-552c-b443-51a876efe97f/PROMPTS-AND-RESPONSES.md) | 4 | 3 h 10 min | `claude/funny-fermi-3x57jz` | 2.7 MB |
+| 2026-09-30 06:33 | untagged | [`bbd1b029…`](bbd1b029-3204-552c-b443-51a876efe97f/PROMPTS-AND-RESPONSES.md) | 5 | 3 h 17 min | `claude/funny-fermi-3x57jz` | 2.9 MB |
 
 ## 2026-09-15 - `adede7d2-9fc1-585c-a838-bea822978308`
 
@@ -80,9 +80,10 @@ Topic: untagged. Models: claude-opus-5-5. Tools: Bash ×120, Read ×9, mcp__gith
 
 ## 2026-09-30 - `bbd1b029-3204-552c-b443-51a876efe97f`
 
-Topic: untagged. Models: claude-opus-5-5. Tools: Bash ×86, WebSearch ×9, Write ×6, ToolSearch ×3, WebFetch ×3, Edit ×2, mcp__github__actions_list ×1, Monitor ×1.
+Topic: untagged. Models: claude-opus-5-5. Tools: Bash ×97, WebSearch ×9, Write ×7, ToolSearch ×3, WebFetch ×3, Edit ×2, mcp__github__actions_list ×1, Monitor ×1.
 
 1. 06:33 - Help me make a standalone version of the Cadwell to EDF converter tool in Python. First, let's make a top-folder uses/standalone . Stick a README.md in there. It should be as short as possible, but m…
 2. 07:49 - Help me push the release on github. Then make a standalone executable for the python standalone tool.
 3. 08:56 - yes, release 0.3.0
 4. 09:41 - Investigate cheap code signing options.
+5. 09:44 - 1. add the free build attestations to the release workflow. 2. record this as a note in docs/research/

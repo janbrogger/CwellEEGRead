@@ -3,3 +3,4 @@ n,date,time_utc,prompt_text
 2,2026-09-30,07:49:06,Help me push the release on github. Then make a standalone executable for the python standalone tool.
 3,2026-09-30,08:56:12,"yes, release 0.3.0"
 4,2026-09-30,09:41:46,Investigate cheap code signing options.
+5,2026-09-30,09:44:54,1. add the free build attestations to the release workflow. 2. record this as a note in docs/research/

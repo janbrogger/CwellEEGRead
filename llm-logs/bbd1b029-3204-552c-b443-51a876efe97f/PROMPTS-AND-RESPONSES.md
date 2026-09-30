@@ -2,10 +2,10 @@
 # Session `bbd1b029-3204-552c-b443-51a876efe97f`
 
 - Started (UTC): 2026-09-30T06:33:11.920Z  
-- Last event (UTC): 2026-09-30T09:43:11.838Z (span 3 h 10 min)  
+- Last event (UTC): 2026-09-30T09:50:56.203Z (span 3 h 17 min)  
 - User: jan@brogger.no; source: claude-code-remote; branch: `claude/funny-fermi-3x57jz`  
 - Models: claude-opus-5-5; Claude Code 2.1.285  
-- Prompts: 4; transcript: transcript.jsonl (2.7 MB)
+- Prompts: 5; transcript: transcript.jsonl (2.9 MB)
 
 This file is derived from the transcript for readers without an LLM. Prompts are verbatim; responses are the assistant's text messages (tool calls and their output are only summarised - see the JSONL for those).
 
@@ -388,4 +388,53 @@ I committed the updated session logs, the only uncommitted files, and pushed the
 Two things are waiting on you:
 - Should I add the free build attestations to the release workflow (step 1 of the signing plan)?
 - Should I write the signing findings up as a note in `docs/research/`?
+
+
+## Prompt 5 - 2026-09-30 09:44:54 UTC
+
+```text
+1. add the free build attestations to the release workflow. 2. record this as a note in docs/research/
+```
+
+_Tools used in this turn: Bash ×11, Write ×1_
+
+### Response 5
+
+**[09:44 UTC]**
+
+Checking the action's current major version and required permissions before editing:
+
+**[09:45 UTC]**
+
+The README is now 46 lines, one over its 45-line limit. I'll tighten a line rather than raise the limit:
+
+**[09:45 UTC]**
+
+Now the research note. First, the style of the existing notes:
+
+**[09:46 UTC]**
+
+Committing and pushing to the feature branch:
+
+**[09:50 UTC]**
+
+Both are done and pushed to `claude/funny-fermi-3x57jz`, and CI passes. `main` is unchanged, and the attestation step itself hasn't run yet: the release workflow only runs when a release is published.
+
+**1. Build attestations.** The release workflow now creates a signed record for every release file (the zip and the three executables) just before publishing, using GitHub's `actions/attest-build-provenance@v4`. It's free for public repos. Anyone can then check a download with:
+```
+gh attestation verify cwelleegread-0.3.1-windows-x64.exe --repo janbrogger/CwellEEGRead
+```
+That proves the file was built by this repo's release workflow from the tagged commit. The release notes, the standalone README and DES023 say so. This is not code signing, so the Windows and macOS warnings stay.
+
+I granted only the two permissions the step needs (`id-token` and `attestations`), and only to the release job. GitHub's docs also list `artifact-metadata`, which is only for packages pushed to a registry; I left it out in case the unfamiliar key makes the workflow file invalid.
+
+**2. Research note.** It's in `docs/research/code-signing.md` and listed in the research index, in the same format as the other notes. It covers:
+- what signing does and doesn't achieve on each platform;
+- the options table, with cost and catches;
+- the recommended next steps;
+- all sources.
+
+It marks the rows that rest on search summaries because the proxy blocked the SignPath, Sikt and Microsoft pages.
+
+**Next:** the quickest way to test the attestation step is a small 0.3.1 release. That means bumping the version, fast-forwarding `main` and pushing `release/cwelleegread-standalone-v0.3.1`. Otherwise it runs with the next real release. Shall I do 0.3.1?
 
