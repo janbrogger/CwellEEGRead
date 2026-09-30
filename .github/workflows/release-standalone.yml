@@ -5,7 +5,10 @@
 # cwelleegread-<version>-{windows-x64.exe,macos-arm64,linux-x64}, each on its own
 # platform, and runs each one's self-test there; and only when all of that
 # passed publishes a GitHub release named after the tag with the zip and the
-# three executables as assets.
+# three executables as assets, each with a signed build-provenance attestation
+# (Sigstore, free for public repositories) that users can check with
+#   gh attestation verify <file> --repo janbrogger/CwellEEGRead
+# (not code signing: the OS warnings stay; docs/research/code-signing.md).
 #
 #   git tag cwelleegread-standalone-v0.2.0 && git push origin cwelleegread-standalone-v0.2.0
 #
@@ -127,6 +130,10 @@ jobs:
   release:
     needs: [build, selftest, executables]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write           # publish the release
+      id-token: write           # OIDC token for the Sigstore signing certificate
+      attestations: write       # store the attestations
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -136,6 +143,13 @@ jobs:
         with:
           pattern: exe-*
           merge-multiple: true
+
+      - name: Build-provenance attestations for every asset
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-path: |
+            cwelleegread-standalone-${{ needs.build.outputs.version }}.zip
+            cwelleegread-${{ needs.build.outputs.version }}-*
 
       - name: Release notes
         run: |
@@ -152,6 +166,9 @@ jobs:
             echo "macOS, before this release was published."
             echo
             echo "Read the README in the zip for the known shortcomings."
+            echo
+            echo "Every file has a build-provenance attestation: \`gh attestation verify FILE --repo ${{ github.repository }}\`"
+            echo "shows that it was built by this repository's release workflow from the tagged commit."
             echo "The \"Source code\" archives below are the whole repository, added by GitHub; the program is the zip above."
           } > notes.md
 

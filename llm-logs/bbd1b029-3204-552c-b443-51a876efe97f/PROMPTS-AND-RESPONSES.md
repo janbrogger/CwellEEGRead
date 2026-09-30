@@ -2,7 +2,7 @@
 # Session `bbd1b029-3204-552c-b443-51a876efe97f`
 
 - Started (UTC): 2026-09-30T06:33:11.920Z  
-- Last event (UTC): 2026-09-30T09:43:00.289Z (span 3 h 9 min)  
+- Last event (UTC): 2026-09-30T09:43:11.838Z (span 3 h 10 min)  
 - User: jan@brogger.no; source: claude-code-remote; branch: `claude/funny-fermi-3x57jz`  
 - Models: claude-opus-5-5; Claude Code 2.1.285  
 - Prompts: 4; transcript: transcript.jsonl (2.7 MB)
@@ -332,7 +332,7 @@ The executables are unsigned, so first-time users will see a warning. On Windows
 Investigate cheap code signing options.
 ```
 
-_Tools used in this turn: WebSearch ×9, WebFetch ×3, ToolSearch ×1_
+_Tools used in this turn: WebSearch ×9, WebFetch ×3, ToolSearch ×1, Bash ×1_
 
 ### Response 4
 
@@ -380,4 +380,12 @@ Sources:
 - [GÉANT TCS](https://security.geant.org/trusted-certificate-services/), [TCS participants (HARICA)](https://wiki.geant.org/spaces/TCSNT/pages/929693819/TCS+Participants+HARICA), [HARICA code signing](https://www.harica.gr/en/Products/Code-Signing), [HARICA code-signing news](https://news.harica.gr/categories/code-signing-certificates/), [Sikt certificates](https://platon.sikt.no/tjenester/certificates)
 - [Apple fee waivers](https://developer.apple.com/help/account/membership/fee-waivers/), [Apple: waivers in more countries](https://developer.apple.com/news/?id=02032020a)
 - [GitHub artifact attestations](https://docs.github.com/actions/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds), [actions/attest-build-provenance](https://github.com/actions/attest-build-provenance)
+
+**[09:43 UTC]**
+
+I committed the updated session logs, the only uncommitted files, and pushed them to `claude/funny-fermi-3x57jz`. That branch is now ahead of `main` by these log commits only; I didn't push to `main`.
+
+Two things are waiting on you:
+- Should I add the free build attestations to the release workflow (step 1 of the signing plan)?
+- Should I write the signing findings up as a note in `docs/research/`?
 

@@ -1,10 +1,9 @@
 # CwellEEGRead standalone converter
 
 Converts Cadwell Arc EEG recordings (CadLink exports with `CadLink/Data/*.ezdataindex`)
-to EDF/EDF+. Either one executable (release assets `cwelleegread-<version>-windows-x64.exe`,
-`-macos-arm64`, `-linux-x64`; nothing to install) or `cwelleegread.pyz` for Python 3.10+
-with `pip install numpy scipy` (run as `python cwelleegread.pyz ...`). Examples call it
-`cwelleegread`.
+to EDF/EDF+. Either one executable (`cwelleegread-<version>-windows-x64.exe`, `-macos-arm64`,
+`-linux-x64`; nothing to install) or `cwelleegread.pyz` for Python 3.10+ with `pip install
+numpy scipy` (`python cwelleegread.pyz ...`). Examples call it `cwelleegread`.
 
 ```
 cwelleegread selftest                     # self-test on the bundled test EEG
@@ -41,5 +40,6 @@ any time range). It prints no patient fields, but may quote annotation texts.
 - **Executables** are unsigned: Windows SmartScreen asks (*More info > Run anyway*); on
   macOS run `xattr -d com.apple.quarantine FILE` (Apple silicon only); on Linux `chmod +x
   FILE` (glibc 2.35+). They unpack to a temporary folder at each start (a few seconds).
+  Check a download's origin with `gh attestation verify FILE --repo janbrogger/CwellEEGRead`.
 
 Public domain (Unlicense). Source and documentation: https://github.com/janbrogger/CwellEEGRead
