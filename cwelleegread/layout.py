@@ -10,7 +10,7 @@ a layout GUID (bytes 8-24). Two headboxes have been seen:
   28, 30, 32 (references 2R, 2R, 3R, Cz...), physical range ±562500 µV.
 * type 1, "Essentia" (cadwell-export2/3, 32 ch, 500 Hz): inputs 1-2 are
   labelled E1/Pg1, E2/Pg2, the non-EEG inputs 1A-1R ... 7A-7R, physical
-  range ±32767 amplifier units (±23919 µV).
+  range -23919.0 / 23919.03 µV (about ±32767 amplifier units).
 
 The EEG inputs 3-25 map identically (Fp1 ... O2 with Cz = input 15 as
 reference). The tables were taken from the vendor's own exports and checked
@@ -30,11 +30,12 @@ HEADBOXES = {
     5: {"name": "Apollo",
         "labels": {1: "E1", 2: "E2", **_EEG_3_25, 26: "27", 27: "29", 28: "31", 29: "26", 30: "28", 31: "30", 32: "32"},
         "refs": {26: "2R", 27: "2R", 28: "3R"},
-        "vendor_physical_max": 562500.0},
+        "vendor_physical_range": (-562500.0, 562500.0)},
     1: {"name": "Essentia",
         "labels": {1: "E1/Pg1", 2: "E2/Pg2", **_EEG_3_25, 26: "1A", 27: "2A", 28: "3A", 29: "4A", 30: "5A", 31: "6A", 32: "7A"},
         "refs": {26: "1R", 27: "2R", 28: "3R", 29: "4R", 30: "5R", 31: "6R", 32: "7R"},
-        "vendor_physical_max": None},          # None = 32767 x amplifier unit
+        # the vendor's EDF header, not ±32767 x UNIT_UV = ±23919.27 (one step = 0.729961 µV)
+        "vendor_physical_range": (-23919.0, 23919.03)},
 }
 DEFAULT_HEADBOX = 1
 EEG_INPUTS = set(range(1, 26))

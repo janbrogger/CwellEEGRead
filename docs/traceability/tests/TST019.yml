@@ -1,0 +1,31 @@
+active: true
+derived: false
+header: |
+  Standalone program file and README
+level: 19.0
+links:
+- DES023: i_5O1U2MkMVT9NKg95Oh-XBQDdRmAqFVJFXwMEONlH8=
+normative: true
+ref: ''
+reviewed: OoEKCWJdOk8PUwzbIRHpcQ11zkmIXT5TLz0rRBWF43w=
+text: |
+  `tests/test_standalone.py`: build the archive with `uses/standalone/build.py
+  --outdir <tmp>`. Pass if:
+  - the archive holds exactly one folder `cwelleegread-standalone-<version>/`
+    with `cwelleegread.pyz`, `README.md` and `LICENSE`, and the program file
+    holds the package, a root `__main__.py` and the bundled self-test files
+    of `BUNDLED` with their checksums;
+  - `python cwelleegread.pyz selftest`, run from a folder outside the
+    repository, exits 0, prints `RESULT: PASS` and reports the test data as
+    bundled in the program file (so the copy inside the `.pyz` was used, not
+    the checkout);
+  - `python cwelleegread.pyz convert` of public export 1 exits 0 and writes
+    a readable EDF, and `--version` prints the package version;
+  - `uses/standalone/README.md` is at most 45 lines and names each
+    shortcoming of REQ023 (schema version, headboxes, microvolt scale,
+    sample clock and event timing, gaps, high-pass, not handled, platforms).
+
+  On every push, the `standalone` job of `.github/workflows/tests.yml` builds
+  the archive and runs the self-test and a conversion from it on ubuntu
+  (Python 3.10), windows and macos; the release workflow repeats the
+  self-test on the three platforms before it publishes.

@@ -1,0 +1,125 @@
+# Release of the standalone converter only (REQ023, DES023). Push a tag
+# "cwelleegread-standalone-v<version>" and this builds
+# cwelleegread-standalone-<version>.zip (cwelleegread.pyz, README.md, LICENSE),
+# runs the program's self-test from that archive on Linux, Windows and macOS,
+# and only then publishes a GitHub release named after the tag with the zip as
+# its only asset.
+#
+#   git tag cwelleegread-standalone-v0.2.0 && git push origin cwelleegread-standalone-v0.2.0
+#
+# The version in the tag must equal __version__ in cwelleegread/__init__.py.
+name: release-standalone
+
+on:
+  push:
+    tags:
+      - "cwelleegread-standalone-v*"
+    branches:                               # pushing a branch release/cwelleegread-standalone-v<version>
+      - "release/cwelleegread-standalone-v*"  # also works; the workflow then creates the tag
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "converter version, must equal __version__ in cwelleegread/__init__.py (e.g. 0.2.0)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
+      tag: ${{ steps.ver.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check that the tag matches the package version
+        id: ver
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            tag_version="${{ github.event.inputs.version }}"
+          elif [ "$GITHUB_REF_TYPE" = "branch" ]; then
+            tag_version="${GITHUB_REF_NAME#release/cwelleegread-standalone-v}"
+          else
+            tag_version="${GITHUB_REF_NAME#cwelleegread-standalone-v}"
+          fi
+          pkg_version=$(sed -n 's/^__version__ = "\([0-9.]*\)"/\1/p' cwelleegread/__init__.py)
+          echo "tag $tag_version, cwelleegread/__init__.py $pkg_version"
+          if [ "$tag_version" != "$pkg_version" ]; then
+            echo "tag version and __version__ differ" >&2; exit 1
+          fi
+          echo "version=$pkg_version" >> "$GITHUB_OUTPUT"
+          echo "tag=cwelleegread-standalone-v$pkg_version" >> "$GITHUB_OUTPUT"
+
+      - name: Build the archive
+        run: |
+          python -m pip install -q numpy scipy
+          python uses/standalone/build.py --outdir dist
+          unzip -l "dist/cwelleegread-standalone-${{ steps.ver.outputs.version }}.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: standalone
+          path: dist/cwelleegread-standalone-${{ steps.ver.outputs.version }}.zip
+
+  selftest:
+    needs: build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: standalone
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Self-test from the archive
+        run: |
+          python -m pip install -q numpy scipy
+          python -c "import zipfile, sys; zipfile.ZipFile(sys.argv[1]).extractall('.')" "cwelleegread-standalone-${{ needs.build.outputs.version }}.zip"
+          cd "cwelleegread-standalone-${{ needs.build.outputs.version }}"
+          python cwelleegread.pyz selftest
+
+  release:
+    needs: [build, selftest]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: standalone
+
+      - name: Release notes
+        run: |
+          v="${{ needs.build.outputs.version }}"
+          {
+            echo "Standalone Cadwell Arc EEG to EDF/EDF+ converter, version $v."
+            echo
+            echo "One file, \`cwelleegread.pyz\`, for Python 3.10+ with numpy and scipy (\`pip install numpy scipy\`)."
+            echo "\`python cwelleegread.pyz selftest\` proves on your computer that the conversion reproduces Cadwell's own"
+            echo "EDF export of the bundled test recording; \`python cwelleegread.pyz selftest EXPORT CADWELL.edf\` does the same"
+            echo "for your own recording. The self-test passed on Linux, Windows and macOS before this release was published."
+            echo
+            echo "Read the README in the zip for the known shortcomings."
+            echo "The \"Source code\" archives below are the whole repository, added by GitHub; the program is the zip above."
+          } > notes.md
+
+      - name: Publish the release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.build.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: cwelleegread standalone ${{ needs.build.outputs.version }}
+          body_path: notes.md
+          files: cwelleegread-standalone-${{ needs.build.outputs.version }}.zip

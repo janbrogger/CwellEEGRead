@@ -1,4 +1,4 @@
-"""Command line: cwelleegread convert|batch|inspect ...  (REQ006)"""
+"""Command line: cwelleegread convert|batch|inspect|selftest ...  (REQ006, REQ024)"""
 from __future__ import annotations
 
 import argparse
@@ -120,10 +120,24 @@ def cmd_batch(args):
     return 1 if failed else 0
 
 
+def cmd_selftest(args):
+    from .selftest import run
+    from .layout import load_labels_file
+    if (args.recording is None) != (args.vendor_edf is None):
+        print("error: give both RECORDING and VENDOR_EDF, or neither (bundled test recording)", file=sys.stderr)
+        return 1
+    report = run(args.recording, args.vendor_edf, timezone=args.timezone, highpass=args.highpass,
+                 labels=load_labels_file(args.labels) if args.labels else None, keep_edf=args.keep_edf,
+                 out=lambda line: print(line, flush=True))
+    if args.json:
+        write_json(args.json, report)
+    return 0 if report["verdict"] == "PASS" else 1
+
+
 def add_convert_options(c):
     c.add_argument("--mode", choices=["raw", "vendor"], default="raw",
                    help="raw = keep every sample (default); vendor = mimic the Cadwell EDF export")
-    c.add_argument("--timezone", help="IANA zone for the EDF start time, e.g. Europe/Oslo (default UTC)")
+    c.add_argument("--timezone", help="time zone of the EDF start time: IANA name such as Europe/Oslo, or UTC+01:00 (default UTC)")
     c.add_argument("--labels", help="file with 'amp_input label' lines overriding the default layout")
     c.add_argument("--anonymize", action="store_true", help="no patient GUID; comment/user event texts replaced by type")
     c.add_argument("--patient-name", help="patient name field (default X)")
@@ -148,6 +162,9 @@ def add_convert_options(c):
 
 
 def main(argv=None):
+    for stream in (sys.stdout, sys.stderr):      # e.g. a cp1252 Windows console and annotation texts
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(errors="backslashreplace")
     ap = argparse.ArgumentParser(prog="cwelleegread", description="Convert Cadwell Arc EEG (CadLink export) to EDF/EDF+.")
     ap.add_argument("--version", action="version", version=__version__)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -164,9 +181,25 @@ def main(argv=None):
     add_convert_options(b)
     b.add_argument("--reports", action="store_true", help="also write <record>-<timestamp>.json conversion reports")
     b.add_argument("--json", help="write a JSON batch summary here")
+    t = sub.add_parser("selftest", help="prove that the conversion reproduces Cadwell's own EDF export, on the "
+                                        "bundled test recording or on your recording and its Cadwell EDF export",
+                       description="Convert in vendor-compatible mode over the vendor export's frame range and compare "
+                                   "with the vendor's EDF: signals, start time, every sample (at most one quantisation "
+                                   "step), gain and lag, annotations. Exit code 0 only if every check passes.")
+    t.add_argument("recording", nargs="?", help="export folder, CadLink/Data folder or .ezdataindex file "
+                                                "(omit both arguments for the bundled test recording)")
+    t.add_argument("vendor_edf", nargs="?", help="the EDF file Cadwell exported from that recording")
+    t.add_argument("--timezone", help="time zone of the vendor EDF's start time (IANA name or UTC+01:00); "
+                                      "inferred from the start time if omitted")
+    t.add_argument("--labels", help="file with 'amp_input label' lines overriding the default layout")
+    t.add_argument("--highpass", choices=["auto", "on", "off"], default="auto",
+                   help="vendor EDF-export high-pass (auto = on for Essentia)")
+    t.add_argument("--json", help="write the self-test report here")
+    t.add_argument("--keep-edf", help="keep the converted EDF here")
     args = ap.parse_args(argv)
     try:
-        return {"inspect": cmd_inspect, "convert": cmd_convert, "batch": cmd_batch}[args.cmd](args)
+        return {"inspect": cmd_inspect, "convert": cmd_convert, "batch": cmd_batch,
+                "selftest": cmd_selftest}[args.cmd](args)
     except (FileNotFoundError, KeyError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1

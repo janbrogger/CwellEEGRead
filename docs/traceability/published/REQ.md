@@ -22,6 +22,8 @@
  * 20 Sample clock and resampling policy (REQ020)
     * 20.1 Event placement on the sample clock (REQ021)
     * 20.2 EEGLAB plugin import dialog (REQ022)
+ * 21 Standalone distribution (REQ023)
+ * 22 Equivalence self-test (REQ024)
 
 # 1.0 Input: Cadwell EEG recordings from around 2020 onward _(REQ001)_ {#REQ001}
 
@@ -379,4 +381,76 @@ documented steps for what the plugin cannot do by itself.
 *Parent links: NEED006*
 
 *Child links: DES022*
+
+# 21 Standalone distribution _(REQ023)_ {#REQ023}
+
+The converter shall also be released as a standalone product, built from
+`uses/standalone/`: one archive holding a single self-contained program
+file that runs with Python 3.10 or newer and the numerical libraries numpy
+and scipy, on Linux, Windows and macOS, without installing the package and
+without a copy of this repository, and that offers the same commands as the
+installed `cwelleegread` (REQ006) plus the self-test (REQ024).
+
+The archive shall contain one public test recording without patient data
+(REQ007): its native Cadwell files and the vendor's EDF export of it, as
+the reference for the self-test. It shall contain a README that is as short
+as possible: how to run the program and the self-test, and the known
+shortcomings - the Cadwell storage schema versions and headboxes verified,
+the empirical microvolt scale, the sample-clock and event-timing
+behaviour, recording gaps, the vendor-mode filter, what is not handled,
+and on which platforms it was tested.
+
+The standalone product shall be released on its own tag prefix (as the
+other products, see the root README), and a release shall be published
+only when the self-test passes on the built program file on every platform
+above. Continuous integration shall build the program file and run its
+self-test on the three platforms on every push.
+
+*Parent links: NEED001, NEED006*
+
+*Child links: DES023*
+
+# 22 Equivalence self-test _(REQ024)_ {#REQ024}
+
+The program shall offer a self-test (command `selftest`) that proves on the
+user's own computer, with the user's own installation, that the program
+reproduces the vendor's EDF export:
+
+1. without arguments, on the test recording bundled with the program
+   (REQ023) or, in a repository checkout, on the same public recording,
+   after verifying the SHA-256 checksum of every bundled file;
+2. given a native Cadwell recording and the vendor's EDF export of it, on
+   the user's data, so that users can check recordings made with other
+   amplifiers or Cadwell software versions. The recording shall be
+   converted even if its storage schema version is not a supported one
+   (REQ018); the self-test then reports this as a warning.
+
+The self-test shall convert in vendor-compatible mode (REQ020) over the
+vendor export's own time range: it shall identify the frames the export
+covers from its start time and record count (the export may cover only
+part of the recording) and the UTC offset of its start time (given by the
+user, or inferred when only one offset matches a frame), and it shall
+say so, rather than compare, when the EDF file does not match the
+recording. It shall read the vendor's file with its own EDF reader and
+compare, reporting each as a check that passes or fails:
+
+- the signals: number, labels, sampling rates, physical and digital
+  ranges; the record duration and the number of records;
+- the start date and time, to 1 ms;
+- every sample, as digital value: pass if none differs by more than one
+  quantisation step; the share of bit-identical samples shall be reported;
+- the gain (least-squares ratio of the vendor's samples to the program's)
+  and the time lag (the shift, in samples, that best aligns the two), so
+  that scale and timing errors too small to exceed one quantisation step
+  are also found;
+- the annotations: onset to 1 ms and text.
+
+It shall print one line per check and an overall verdict, return exit
+code 0 only if every check passes, and optionally write a JSON report and
+keep its own EDF file. It shall not print or store the patient
+identification fields of either file.
+
+*Parent links: NEED001, NEED003*
+
+*Child links: DES024*
 

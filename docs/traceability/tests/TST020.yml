@@ -1,0 +1,34 @@
+active: true
+derived: false
+header: |
+  Equivalence self-test on public and altered data
+level: 20.0
+links:
+- DES024: TUQJYJpX0mwMRczrEs2umSUBnnbm_hcewJyNQxy13sk=
+normative: true
+ref: ''
+reviewed: KW6WdSZyhz6AnYJEij4W5rTpjDVJHh5JC7Jfohxj9Mo=
+text: |
+  `tests/test_selftest.py`, on the public exports. Pass if:
+  - `cwelleegread selftest` (bundled recording) exits 0 with every check
+    PASS, the checksums verified, the UTC offset +01:00 inferred, 31 of 32
+    channels bit-identical (Cz-Cz one step, the vendor's rounding of 0 µV),
+    gain within 1e-4 and lag 0, 7 annotations matched; `--json` writes the
+    same checks and no patient field;
+  - the user-data form passes for public export 2 with its EDF (starts at
+    frame 1), export 3 with the EDF of 3-withfilter (starts at the record
+    origin before the first stored frame, one gap) and export 3 with its
+    own EDF (starts at frame 30, i.e. part of the recording), each with
+    `--timezone Europe/Oslo` and with the offset inferred; `--keep-edf`
+    leaves the program's EDF;
+  - a recording whose schema version has been set to one that is not
+    supported still passes, with a WARN on the recording line;
+  - it fails, with exit code 1 and the failing check named, when: the
+    EDF belongs to another recording (alignment); a wrong `--timezone` is
+    given (alignment); one sample of the vendor EDF is changed by 3 steps
+    (samples); the vendor samples are scaled by 1.001, which stays within
+    one step (samples pass) but not within the gain tolerance (gain); one
+    annotation text is changed (annotations); a channel label is changed
+    (signals, while the samples are still compared);
+  - `edfread.read_edf` reads the vendor's sub-second start of export 1 as
+    0.2766482 s, and its samples and annotations equal pyedflib's.

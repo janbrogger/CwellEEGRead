@@ -10,7 +10,7 @@ Two policies for the sample clock (REQ020):
                evenly spaced positions, and at each removal the two samples
                around it are replaced by two-point means (this is what the
                Cadwell Arc export does; see the research note). Physical
-               range is the vendor's ±562500 µV.
+               range is the vendor's (layout.HEADBOXES).
 """
 from __future__ import annotations
 
@@ -18,6 +18,7 @@ import datetime as dt
 import json
 import math
 import os
+import re
 import zoneinfo
 
 import numpy as np
@@ -32,6 +33,22 @@ SKIPPED_EVENT_TYPES = {"AmpConfigurationData", "LiveAmpConfigurationData", "Revi
                        "ContinuousImpedanceEvent", "BaselineImpedanceEvent"}
 SKIPPED_EVENT_TEXTS = {"Photic Stim"}      # the individual flash markers (hundreds); "Photic Start 2Hz" etc. are kept
 ANONYMIZED_EVENT_TYPES = {"Comment", "UserEvent", "Annotation", "PatientEvent"}   # free text typed by people
+
+
+def resolve_timezone(name: str | None) -> dt.tzinfo:
+    """None -> UTC; 'UTC+01:00' / 'UTC-05:30' -> that fixed offset; otherwise an IANA name
+    such as 'Europe/Oslo' (on Windows these need the tzdata package; fixed offsets do not)."""
+    if not name or name.upper() in ("UTC", "Z"):
+        return dt.timezone.utc
+    m = re.fullmatch(r"(?i)UTC([+-])(\d{1,2}):?(\d{2})", name.strip())
+    if m:
+        off = dt.timedelta(hours=int(m.group(2)), minutes=int(m.group(3)))
+        return dt.timezone(-off if m.group(1) == "-" else off)
+    try:
+        return zoneinfo.ZoneInfo(name)
+    except (zoneinfo.ZoneInfoNotFoundError, ValueError) as exc:
+        raise ValueError(f"unknown time zone {name!r} (IANA name such as Europe/Oslo, or UTC+01:00; "
+                         "IANA names need the tzdata package on Windows)") from exc
 
 
 def vendor_resample(data: np.ndarray, per_frame: list[int], rate: int) -> tuple[np.ndarray, list[int], int]:
@@ -256,14 +273,14 @@ def convert(rec: CadwellRecording, out_path: str, *, mode: str = "raw", labels: 
     seconds = n_out // rate
 
     labels = {**default_labels(amp_inputs, amp["amp_type"]), **(labels or {})}
-    vendor_max = headbox["vendor_physical_max"] or round(32767 * unit_uv, 2)
+    vendor_range = headbox["vendor_physical_range"]
     start_utc = rec.start_time - dt.timedelta(seconds=lead)
-    start_local = start_utc.astimezone(zoneinfo.ZoneInfo(timezone)) if timezone else start_utc
+    start_local = start_utc.astimezone(resolve_timezone(timezone))
     start_naive = start_local.replace(tzinfo=None)
 
     headers = []
     for j, a in enumerate(amp_inputs):
-        pmin, pmax = (-vendor_max, vendor_max) if mode == "vendor" else nice_range(data[:, j])
+        pmin, pmax = vendor_range if mode == "vendor" else nice_range(data[:, j])
         headers.append({"label": labels[a][:16], "dimension": "uV", "sample_frequency": rate,
                         "physical_min": pmin, "physical_max": pmax, "digital_min": -32768, "digital_max": 32767,
                         "transducer": "X", "prefilter": HIGHPASS_PREFILTER if apply_hp else ""})

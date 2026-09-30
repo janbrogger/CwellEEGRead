@@ -1,0 +1,24 @@
+active: true
+derived: false
+header: |
+  Standalone distribution
+level: 23.0
+links:
+- REQ023: WKNe680xSNSIq1pegy1R21VBi-_0VMx5mHc8rNXyZ_E=
+normative: true
+ref: ''
+reviewed: Ee03NvQ72XlDpNAFPztDqGPaw5j3gZKqhtX6osv8EKY=
+text: |
+  **Implements** REQ023 - a single-file program built from the package, with the self-test recording inside, a short README, its own release and CI on Linux, Windows and macOS.
+
+  **Design.** *Program file.* `uses/standalone/build.py` (standard library only) builds a Python zip application (PEP 441, `zipapp`) `cwelleegread.pyz` from the package sources as they are, so there is no second copy of the converter to keep in step: it stages `cwelleegread/*.py`, the self-test files named in `cwelleegread.selftest.BUNDLED` (copied from `testdata/public/cadwell-export1` into `cwelleegread/selftest_data/`, their SHA-256 checked while copying) and a root `__main__.py` that calls `cwelleegread.__main__.main()` and passes its return value to `sys.exit` (zipapp's generated entry point would drop the exit code). Python puts the `.pyz` first on `sys.path`, so the bundled copy of the package is the one imported even where another version is installed. `python cwelleegread.pyz <command>` then offers `convert`, `batch`, `inspect` and `selftest`. numpy is imported at start; scipy only where the vendor high-pass is applied (vendor mode on Essentia), so the bundled self-test recording (Apollo) needs numpy alone. `build.py` then writes `cwelleegread-standalone-<version>.zip` (version = `cwelleegread.__version__`) with one folder holding `cwelleegread.pyz`, `README.md` (from `uses/standalone/`) and `LICENSE`, into `uses/standalone/dist/` (gitignored) or `--outdir`.
+
+  *Test recording.* cadwell-export1 (REQ007): 46 s of amplifier noise, no patient, Apollo headbox, 250 Hz, 32 channels; the three SQLite files the converter reads (`.ezdataindex`, `-1.ezdata`, `.ezevents`, not the media databases or encrypted catalogues) and the vendor's `test.edf`, 2.1 MB in all. It is the smallest public recording and the one where the vendor's resampling of surplus samples is exercised.
+
+  *Portability.* SQLite files are opened read-only through a `file:` URI built with `pathlib.Path.as_uri()` (percent-encoded, drive letters on Windows) instead of pasting the path into the URI. `--timezone` accepts `UTC+HH:MM` / `UTC-HH:MM` besides IANA names (`edf.resolve_timezone`), because IANA names need the `tzdata` package on Windows; the self-test uses such fixed offsets and so needs no time-zone database.
+
+  *README.* `uses/standalone/README.md`: the commands, then one bullet per shortcoming (schema versions, headboxes, microvolt scale, raw-mode sample clock drift and event placement, gaps, vendor-mode high-pass, not handled, memory, platforms tested). It is the README shipped in the archive.
+
+  *Release and CI.* `.github/workflows/release-standalone.yml`: tag `cwelleegread-standalone-v<version>` (or branch `release/cwelleegread-standalone-v<version>`, or a manual run), checked against `__version__`; one job builds the archive, a matrix job runs `python cwelleegread.pyz selftest` from the archive on ubuntu, windows and macos, and only then the release is published with the archive as its only asset. `.github/workflows/tests.yml` job `standalone` builds and runs the self-test and a conversion on the same three platforms (Python 3.10 on Linux, the oldest supported) on every push.
+
+  **Verified by** TST019.

@@ -1,0 +1,32 @@
+active: true
+derived: false
+header: |
+  Equivalence self-test
+level: 24.0
+links:
+- REQ024: vuEjrcXxq8T9lNKRxBrJsYHm7xaGFxX5rgF2IC-mJ84=
+normative: true
+ref: ''
+reviewed: CcUKpn-08-V6kezJ327rEfg6m0GL6Jbj3Wn7DL_l94k=
+text: |
+  **Implements** REQ024 - `cwelleegread selftest [RECORDING VENDOR_EDF]`: convert in vendor mode over the vendor export's range, compare with the vendor's EDF, one PASS/FAIL line per check.
+
+  **Design.** `cwelleegread/selftest.py`, command `selftest` in `__main__.py` (options `--timezone`, `--labels`, `--highpass`, `--json`, `--keep-edf`).
+
+  *Input.* Without arguments, `bundled_recording()` takes the files listed in `BUNDLED` from the package resource `selftest_data/` (standalone program, DES023) or, in a checkout, from `testdata/public/cadwell-export1`, checks each file's SHA-256 against `BUNDLED` (check *bundled files*) and copies them to a temporary `CadLink/Data` folder, since SQLite needs real files. With arguments, the recording is opened as by `convert` and the EDF is the user's. Check *recording* reports schema version, headbox, rate, channels, frames and gaps: WARN (not a failure) for a schema version outside `SUPPORTED_SCHEMA_VERSIONS` or an unknown headbox; the conversion then runs with `allow_unsupported`.
+
+  *Reading the vendor file.* `cwelleegread/edfread.py`, a numpy EDF/EDF+ reader written for this (pyedflib misreads the vendor's 7-digit sub-second start, `+0.2766482`, as 0.027665 s): header, per-signal label, rate, physical and digital range, digital samples as int16, and the annotations from every TAL, onsets parsed from their decimal text; the sub-second start is the first TAL of the first record. The patient and recording identification fields are skipped, never returned.
+
+  *Alignment* (`align`). The vendor's start instant (header date and time plus the sub-second TAL) is local time. Frame n is taken to start at the time stamp of stored frame n plus the recording's clock correction (the vendor's rule, REQ004), or, for a frame number not stored (gap, before the first frame), at the nearest stored frame's time plus the difference in frame numbers in seconds, as `convert` pads. For the UTC offset given with `--timezone` (IANA or `UTC±HH:MM`), or else for every offset from -12:00 to +14:00 in 15-minute steps, the start is converted to UTC and the nearest frame number N computed; a candidate is kept if that frame's start is within 2 ms (the vendor start equals a frame start plus correction to about 1 µs; wrong offsets land off by the stamp drift or jitter) and the export fits the recording: N >= 0 and N + R <= last frame number, R = number of vendor records. None: check *alignment* fails ("the EDF does not match this recording, or a wrong --timezone"), nothing is compared. More than one (possible for long Apollo recordings): fails, naming the offsets, and asks for `--timezone`. The vendor export of frames N ... N+R holds R records, since the vendor drops the last frame of the range (REQ020).
+
+  *Conversion.* `CadwellRecording.frame_range(N, N + R)` returns a view of the recording holding only those frames, renumbered from N, so that `convert` treats N as the record origin: vendor mode, `start_at='record-origin'` when frame N itself is not stored (leading zero padding), stamp event timing (vendor-mode default), the resolved offset as time zone, patient fields `X`, the user's labels and high-pass choice, into a temporary EDF (or `--keep-edf`). The resampling of surplus samples depends on the frame range and the high-pass is primed at the range start, so converting the whole recording would not reproduce an export of part of it; with the view, public export 3's vendor EDF, which starts 29 s into the recording, is reproduced within one step. The file written is then read with the same reader.
+
+  *Checks* (each PASS or FAIL; the verdict is PASS only if none fails; exit code 0 / 1):
+  - *signals*: number, labels (trailing blanks ignored), rates, physical and digital ranges, record duration, number of records. Samples are compared channel by channel in file order even when labels differ, so that a label table problem does not hide the data comparison.
+  - *start time*: header date and time equal, sub-second start within 1 ms.
+  - *samples*: over the common records, |our digital - vendor digital| per sample (in physical units divided by the coarser step where the ranges differ); PASS if the maximum is <= 1 step. Reported: maximum per channel, share of bit-identical samples, channels with any difference. One step is the tolerance because two independent floating-point pipelines that round to the nearest step disagree by one where the exact value lies close to a rounding boundary; the vendor also writes a constant 0 µV (Cz-Cz) as digital -1, the program as 0.
+  - *gain and lag*: gain = sum(v x) / sum(x x) over the physical samples of all channels that are not constant in either file; PASS if |gain - 1| <= 1e-4. Rounding alone gives |gain - 1| of about 1e-6 (exactly 0 on the bundled recording); a 0.1 % scale error on the bundled recording still passes the one-step check (its signals are about 4 steps rms at 17 µV per step) but gives gain - 1 = 6.6e-4. Lag: the shift in -rate/10 ... +rate/10 samples that maximises the summed cross-product of the first differences of the two files over up to 60 s from the middle of the common range; PASS if 0.
+  - *annotations*: the multisets of (onset rounded to 1 ms, text) are equal; up to five unmatched on each side are listed.
+  Every check line gives its numbers, and `--json` writes them all (checks, alignment, recording summary, versions), without patient fields; unmatched annotation texts are the only free text in the output.
+
+  **Verified by** TST020.

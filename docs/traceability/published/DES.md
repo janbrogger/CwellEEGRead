@@ -22,6 +22,8 @@
  * 20 Sample clock and resampling policy (DES020)
  * 21 Event placement on the sample clock (DES021)
  * 22 EEGLAB plugin import dialog (DES022)
+ * 23 Standalone distribution (DES023)
+ * 24 Equivalence self-test (DES024)
 
 # 1.0 Input: Cadwell EEG recordings from around 2020 onward _(DES001)_ {#DES001}
 
@@ -164,9 +166,9 @@ Limits: export 1's Arc software version was not recorded (manifest: "version not
 3. Gaps are zero-padded at frame boundaries (`read_padded()`); `--start-at record-origin` pads from tick 0.
 4. Start = the first frame's stamp + the first PcTimeSync correction (`CadwellRecording.start_time`); the sub-second goes in each record's first TAL.
 5. Annotations use stamp placement. Deleted events, `SKIPPED_EVENT_TYPES` and the `Photic Stim` flashes are dropped.
-6. Physical range: Apollo ±562500 µV; Essentia ±32767 × 0.72998046 = ±23919.27 µV.
+6. Physical range: the vendor's, from its EDF headers: Apollo ±562500 µV; Essentia -23919.0 / 23919.03 µV (not the symmetric ±32767 × 0.72998046 = ±23919.27 µV used before 0.2.0, which the self-test showed to leave no sample bit-identical).
 
-The tests read both files with pyedflib and compare record count, array shape and every sample of every channel except column 14 (Cz-Cz); for export 1 also labels, rates and physical ranges. The tolerance is one step of the native file: Apollo 1125000/65535 = 17.17 µV (×1.001). Essentia is (23919.03 + 23919.0)/65535 µV with 1.05 steps; the extra 0.05 covers the vendor's asymmetric range against our symmetric one (observed maximum 1.04). Annotations are compared as sorted (onset rounded to 1 ms, text).
+The tests read both files with pyedflib and compare record count, array shape and every sample of every channel except column 14 (Cz-Cz); for export 1 also labels, rates and physical ranges. The tolerance is one step of the native file: Apollo 1125000/65535 = 17.17 µV (×1.001). Essentia is (23919.03 + 23919.0)/65535 µV (×1.001); with the vendor's range written, the digital values of the two files differ by at most one step (98.2 % identical). The self-test (DES024) repeats the comparison on the digital values, including a vendor export of part of a recording. Annotations are compared as sorted (onset rounded to 1 ms, text).
 
 Limits: annotation durations are not compared. Header start is asserted only for export 1 (for Essentia only the vendor file's start rule is checked). Patient and recording fields differ on purpose and are not compared. A user-chosen start (export 3 at frame 30) is unsupported, so `cadwell3.edf` is checked only spectrally.
 
@@ -513,7 +515,7 @@ Not done yet:
 
 **Implements** REQ020 - keep every raw sample by default (nominal rate, only the trailing partial second dropped, effective rate and drift reported) and offer a vendor-compatible mode reproducing the vendor's EDF export sample by sample, recording the policy in the recording-additional field and the report.
 
-**Design.** `cwelleegread/edf.py: convert(mode=...)`, CLI `--mode raw|vendor` (default raw). Both modes start from `read_padded()`: all stored frames, gaps padded with digital zero at the nominal rate. Raw mode only truncates to whole seconds and declares the nominal rate, so on Apollo (248/250/251 samples per frame) the EDF duration exceeds the stamped duration by the drift; accepted because every sample stays and events follow the sample clock (DES021). The report gives `samples_per_frame`, `raw_samples`, `written_samples`, `samples_dropped_at_end` and `effective_rate_hz` (samples of all frames but the last over the first-to-last frame-stamp span); drift appears only through that rate. Vendor mode runs `vendor_highpass()` then `vendor_resample()`. `vendor_resample()` keeps all frames but the last (N_out = frames x rate) and removes the surplus S = N_in - N_out at period T = ceil(N_in / (S + 1)) in output coordinates, replacing the two output samples at each removal by two-point means (export 1: T = 1224); constant-ratio interpolation was tested and does not match. `vendor_highpass()` applies `scipy.signal.butter(2, VENDOR_HIGHPASS_HZ = 0.16, 'high')` causally (`lfilter`) to each contiguous segment, primed on the time-reversed first min(20 s, segment) including the first sample, re-primed after each gap, gap seconds reset to zero; zero-state, steady-state and constant-extension start-ups were rejected (hundreds to thousands of steps off). `--highpass auto` filters only vendor-mode Essentia recordings (the Apollo vendor EDF was unfiltered; headbox or software version as the cause is unknown), `on|off` overrides. `--start-at record-origin` pads the leading missing frames. Physical range: `layout.py: HEADBOXES` gives ±562500 µV (Apollo) or ±32767 x UNIT_UV = ±23919.27 µV (Essentia; the vendor writes -23919.0/23919.03). Events follow `SKIPPED_EVENT_TYPES/TEXTS` and stamp timing. The policy goes into recording-additional as `CwellEEGRead_<mode>_<timezone>` (34 characters) and into the report (`mode`, `highpass_hz`, `start_at`, `event_timing`).
+**Design.** `cwelleegread/edf.py: convert(mode=...)`, CLI `--mode raw|vendor` (default raw). Both modes start from `read_padded()`: all stored frames, gaps padded with digital zero at the nominal rate. Raw mode only truncates to whole seconds and declares the nominal rate, so on Apollo (248/250/251 samples per frame) the EDF duration exceeds the stamped duration by the drift; accepted because every sample stays and events follow the sample clock (DES021). The report gives `samples_per_frame`, `raw_samples`, `written_samples`, `samples_dropped_at_end` and `effective_rate_hz` (samples of all frames but the last over the first-to-last frame-stamp span); drift appears only through that rate. Vendor mode runs `vendor_highpass()` then `vendor_resample()`. `vendor_resample()` keeps all frames but the last (N_out = frames x rate) and removes the surplus S = N_in - N_out at period T = ceil(N_in / (S + 1)) in output coordinates, replacing the two output samples at each removal by two-point means (export 1: T = 1224); constant-ratio interpolation was tested and does not match. `vendor_highpass()` applies `scipy.signal.butter(2, VENDOR_HIGHPASS_HZ = 0.16, 'high')` causally (`lfilter`) to each contiguous segment, primed on the time-reversed first min(20 s, segment) including the first sample, re-primed after each gap, gap seconds reset to zero; zero-state, steady-state and constant-extension start-ups were rejected (hundreds to thousands of steps off). `--highpass auto` filters only vendor-mode Essentia recordings (the Apollo vendor EDF was unfiltered; headbox or software version as the cause is unknown), `on|off` overrides. `--start-at record-origin` pads the leading missing frames. Physical range: `layout.py: HEADBOXES` gives the vendor's range: ±562500 µV (Apollo), -23919.0 / 23919.03 µV (Essentia, about ±32767 x UNIT_UV; one step 0.729961 µV). Events follow `SKIPPED_EVENT_TYPES/TEXTS` and stamp timing. The policy goes into recording-additional as `CwellEEGRead_<mode>_<timezone>` (34 characters) and into the report (`mode`, `highpass_hz`, `start_at`, `event_timing`).
 
 **Deviations found.** With `--start-at record-origin`, `effective_rate_hz` counts the leading padded samples but not their time (export 2: 500.57 instead of 500.05 Hz). `restart_filter_at_gaps` is accepted but unused. Recording-additional holds the mode only. A vendor export starting at a user-chosen frame cannot be reproduced.
 
@@ -555,4 +557,52 @@ Not done yet:
 *Parent links: REQ022*
 
 *Child links: TST017, TST018*
+
+# 23 Standalone distribution _(DES023)_ {#DES023}
+
+**Implements** REQ023 - a single-file program built from the package, with the self-test recording inside, a short README, its own release and CI on Linux, Windows and macOS.
+
+**Design.** *Program file.* `uses/standalone/build.py` (standard library only) builds a Python zip application (PEP 441, `zipapp`) `cwelleegread.pyz` from the package sources as they are, so there is no second copy of the converter to keep in step: it stages `cwelleegread/*.py`, the self-test files named in `cwelleegread.selftest.BUNDLED` (copied from `testdata/public/cadwell-export1` into `cwelleegread/selftest_data/`, their SHA-256 checked while copying) and a root `__main__.py` that calls `cwelleegread.__main__.main()` and passes its return value to `sys.exit` (zipapp's generated entry point would drop the exit code). Python puts the `.pyz` first on `sys.path`, so the bundled copy of the package is the one imported even where another version is installed. `python cwelleegread.pyz <command>` then offers `convert`, `batch`, `inspect` and `selftest`. numpy is imported at start; scipy only where the vendor high-pass is applied (vendor mode on Essentia), so the bundled self-test recording (Apollo) needs numpy alone. `build.py` then writes `cwelleegread-standalone-<version>.zip` (version = `cwelleegread.__version__`) with one folder holding `cwelleegread.pyz`, `README.md` (from `uses/standalone/`) and `LICENSE`, into `uses/standalone/dist/` (gitignored) or `--outdir`.
+
+*Test recording.* cadwell-export1 (REQ007): 46 s of amplifier noise, no patient, Apollo headbox, 250 Hz, 32 channels; the three SQLite files the converter reads (`.ezdataindex`, `-1.ezdata`, `.ezevents`, not the media databases or encrypted catalogues) and the vendor's `test.edf`, 2.1 MB in all. It is the smallest public recording and the one where the vendor's resampling of surplus samples is exercised.
+
+*Portability.* SQLite files are opened read-only through a `file:` URI built with `pathlib.Path.as_uri()` (percent-encoded, drive letters on Windows) instead of pasting the path into the URI. `--timezone` accepts `UTC+HH:MM` / `UTC-HH:MM` besides IANA names (`edf.resolve_timezone`), because IANA names need the `tzdata` package on Windows; the self-test uses such fixed offsets and so needs no time-zone database.
+
+*README.* `uses/standalone/README.md`: the commands, then one bullet per shortcoming (schema versions, headboxes, microvolt scale, raw-mode sample clock drift and event placement, gaps, vendor-mode high-pass, not handled, memory, platforms tested). It is the README shipped in the archive.
+
+*Release and CI.* `.github/workflows/release-standalone.yml`: tag `cwelleegread-standalone-v<version>` (or branch `release/cwelleegread-standalone-v<version>`, or a manual run), checked against `__version__`; one job builds the archive, a matrix job runs `python cwelleegread.pyz selftest` from the archive on ubuntu, windows and macos, and only then the release is published with the archive as its only asset. `.github/workflows/tests.yml` job `standalone` builds and runs the self-test and a conversion on the same three platforms (Python 3.10 on Linux, the oldest supported) on every push.
+
+**Verified by** TST019.
+
+*Parent links: REQ023*
+
+*Child links: TST019*
+
+# 24 Equivalence self-test _(DES024)_ {#DES024}
+
+**Implements** REQ024 - `cwelleegread selftest [RECORDING VENDOR_EDF]`: convert in vendor mode over the vendor export's range, compare with the vendor's EDF, one PASS/FAIL line per check.
+
+**Design.** `cwelleegread/selftest.py`, command `selftest` in `__main__.py` (options `--timezone`, `--labels`, `--highpass`, `--json`, `--keep-edf`).
+
+*Input.* Without arguments, `bundled_recording()` takes the files listed in `BUNDLED` from the package resource `selftest_data/` (standalone program, DES023) or, in a checkout, from `testdata/public/cadwell-export1`, checks each file's SHA-256 against `BUNDLED` (check *bundled files*) and copies them to a temporary `CadLink/Data` folder, since SQLite needs real files. With arguments, the recording is opened as by `convert` and the EDF is the user's. Check *recording* reports schema version, headbox, rate, channels, frames and gaps: WARN (not a failure) for a schema version outside `SUPPORTED_SCHEMA_VERSIONS` or an unknown headbox; the conversion then runs with `allow_unsupported`.
+
+*Reading the vendor file.* `cwelleegread/edfread.py`, a numpy EDF/EDF+ reader written for this (pyedflib misreads the vendor's 7-digit sub-second start, `+0.2766482`, as 0.027665 s): header, per-signal label, rate, physical and digital range, digital samples as int16, and the annotations from every TAL, onsets parsed from their decimal text; the sub-second start is the first TAL of the first record. The patient and recording identification fields are skipped, never returned.
+
+*Alignment* (`align`). The vendor's start instant (header date and time plus the sub-second TAL) is local time. Frame n is taken to start at the time stamp of stored frame n plus the recording's clock correction (the vendor's rule, REQ004), or, for a frame number not stored (gap, before the first frame), at the nearest stored frame's time plus the difference in frame numbers in seconds, as `convert` pads. For the UTC offset given with `--timezone` (IANA or `UTC±HH:MM`), or else for every offset from -12:00 to +14:00 in 15-minute steps, the start is converted to UTC and the nearest frame number N computed; a candidate is kept if that frame's start is within 2 ms (the vendor start equals a frame start plus correction to about 1 µs; wrong offsets land off by the stamp drift or jitter) and the export fits the recording: N >= 0 and N + R <= last frame number, R = number of vendor records. None: check *alignment* fails ("the EDF does not match this recording, or a wrong --timezone"), nothing is compared. More than one (possible for long Apollo recordings): fails, naming the offsets, and asks for `--timezone`. The vendor export of frames N ... N+R holds R records, since the vendor drops the last frame of the range (REQ020).
+
+*Conversion.* `CadwellRecording.frame_range(N, N + R)` returns a view of the recording holding only those frames, renumbered from N, so that `convert` treats N as the record origin: vendor mode, `start_at='record-origin'` when frame N itself is not stored (leading zero padding), stamp event timing (vendor-mode default), the resolved offset as time zone, patient fields `X`, the user's labels and high-pass choice, into a temporary EDF (or `--keep-edf`). The resampling of surplus samples depends on the frame range and the high-pass is primed at the range start, so converting the whole recording would not reproduce an export of part of it; with the view, public export 3's vendor EDF, which starts 29 s into the recording, is reproduced within one step. The file written is then read with the same reader.
+
+*Checks* (each PASS or FAIL; the verdict is PASS only if none fails; exit code 0 / 1):
+- *signals*: number, labels (trailing blanks ignored), rates, physical and digital ranges, record duration, number of records. Samples are compared channel by channel in file order even when labels differ, so that a label table problem does not hide the data comparison.
+- *start time*: header date and time equal, sub-second start within 1 ms.
+- *samples*: over the common records, |our digital - vendor digital| per sample (in physical units divided by the coarser step where the ranges differ); PASS if the maximum is <= 1 step. Reported: maximum per channel, share of bit-identical samples, channels with any difference. One step is the tolerance because two independent floating-point pipelines that round to the nearest step disagree by one where the exact value lies close to a rounding boundary; the vendor also writes a constant 0 µV (Cz-Cz) as digital -1, the program as 0.
+- *gain and lag*: gain = sum(v x) / sum(x x) over the physical samples of all channels that are not constant in either file; PASS if |gain - 1| <= 1e-4. Rounding alone gives |gain - 1| of about 1e-6 (exactly 0 on the bundled recording); a 0.1 % scale error on the bundled recording still passes the one-step check (its signals are about 4 steps rms at 17 µV per step) but gives gain - 1 = 6.6e-4. Lag: the shift in -rate/10 ... +rate/10 samples that maximises the summed cross-product of the first differences of the two files over up to 60 s from the middle of the common range; PASS if 0.
+- *annotations*: the multisets of (onset rounded to 1 ms, text) are equal; up to five unmatched on each side are listed.
+Every check line gives its numbers, and `--json` writes them all (checks, alignment, recording summary, versions), without patient fields; unmatched annotation texts are the only free text in the output.
+
+**Verified by** TST020.
+
+*Parent links: REQ024*
+
+*Child links: TST020*
 

@@ -135,5 +135,5 @@ def test_vendor_mode_reproduces_essentia_edf_in_full(tmp_path, export, vendor_ed
     lsb = (23919.03 + 23919.0) / 65535
     nz = [c for c in range(32) if c != 14]
     d = np.abs(X[:, nz] - V[:, nz]).max(axis=1) / lsb
-    assert d.max() <= 1.05, f"max {d.max():.2f} steps at row {d.argmax()}"
+    assert d.max() <= 1.001, f"max {d.max():.2f} steps at row {d.argmax()}"
     assert sorted((round(o, 3), t) for o, _, t in ann) == sorted((round(o, 3), t) for o, _, t in vann)

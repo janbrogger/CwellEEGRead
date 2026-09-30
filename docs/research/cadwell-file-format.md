@@ -471,7 +471,9 @@ high-pass / 15 Hz low-pass viewer filter. Findings:
    whole export-2 EDF (480 000 samples) and the whole export-3-withfilter
    EDF (608 500 samples) are reproduced within 1.04 steps (the 0.04 is the
    vendor's slightly asymmetric physical range −23919.0 / 23919.03 versus
-   our symmetric ±23919.27). Zero-state, steady-state-at-first-sample and
+   the symmetric ±23919.27 used until 0.2.0; with the vendor's range, as
+   written since, the digital values agree within one step and 98.2 % are
+   identical, see the self-test, DES024). Zero-state, steady-state-at-first-sample and
    constant-extension start-ups all fail (hundreds to thousands of steps).
 5. **Gaps**: the padded gap seconds are exactly digital zero in the vendor
    EDF; after a gap the filter is primed again on the resumed segment

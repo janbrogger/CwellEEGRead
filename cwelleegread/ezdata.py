@@ -45,6 +45,7 @@ Only the Python standard library plus numpy is used.
 """
 from __future__ import annotations
 
+import copy
 import datetime as dt
 import glob
 import os
@@ -52,6 +53,7 @@ import re
 import sqlite3
 import struct
 from dataclasses import dataclass, field
+from pathlib import Path
 
 import numpy as np
 
@@ -71,7 +73,8 @@ class UnsupportedVersionError(ValueError):
 
 
 def _ro(path: str) -> sqlite3.Connection:
-    return sqlite3.connect(f"file:{path}?mode=ro&immutable=1", uri=True)
+    # Path.as_uri() percent-encodes the path and handles Windows drive letters (DES023)
+    return sqlite3.connect(Path(path).resolve().as_uri() + "?mode=ro&immutable=1", uri=True)
 
 
 def parse_timestamp(s: str) -> dt.datetime:
@@ -214,6 +217,22 @@ class CadwellRecording:
                 f"unsupported Cadwell storage schema version {self.schema_version or 'unknown'} in "
                 f"{os.path.basename(self.index_path)} (supported: {', '.join(SUPPORTED_SCHEMA_VERSIONS)}); "
                 "use --allow-unsupported to try anyway")
+
+    def frame_range(self, first: int, last: int) -> "CadwellRecording":
+        """A view of this recording holding only frames first ... last (frame numbers,
+        inclusive), renumbered so that frame `first` becomes frame 0 - the record
+        origin as far as edf.convert is concerned. A range that starts before its
+        first stored frame is padded with leading zeros by convert(start_at=
+        'record-origin'). Used by the self-test to reproduce a vendor export of part of
+        a recording (DES024)."""
+        view = copy.copy(self)
+        view.frame_index = [dict(fi, number=fi["number"] - first) for fi in self.frame_index
+                            if first <= fi["number"] <= last]
+        if not view.frame_index:
+            raise ValueError(f"no stored frames in the range {first}-{last}")
+        view.origin = view.frame_index[0]["timestamp"]
+        view.start_time = view.origin + self.clock_correction
+        return view
 
     # ------------------------------------------------------------------ events
     def events(self) -> list[Event]:

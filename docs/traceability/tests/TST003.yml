@@ -5,11 +5,11 @@ header: |
 level: 3.0
 links:
 - DES003: ULhk-VMwY2qmxiiQwmmXUwW4u0CyHW_Q0s9jUsnrIUc=
-- DES008: llYdA52VLZBmbVNP10FRiFe_bgyGGhzdXpbgAK5RQ7I=
-- DES020: U22QmjyODGILeUkbLkWfgVI1qTnW7pXLgx-K0NguZ-8=
+- DES008: r9tUE_LbNjRfW1bpTX6H0kby6LmwQX325cHz97Oz5Eo=
+- DES020: sz39U2idDLo9ta7AqKBgHUXpd4QMWiaVVcRJbmxrhuk=
 normative: true
 ref: ''
-reviewed: oMLmAX2z2r09AOjnpC091ylkRIeTu9pkKYtwDtMuqpg=
+reviewed: Yc5I3A70xixfNFWD25ynQRYieYT3rPQRnhiCi_EEx9w=
 text: |
   For each test recording with an unfiltered vendor text export, prove raw
   fidelity against the text export (TST005). For each recording with a
@@ -17,8 +17,7 @@ text: |
   (first frame, record origin or user time) and compare every sample of
   every channel with the native EDF: the sample counts must match and the
   maximum absolute difference must not exceed one digital quantisation step
-  of the native export (a small allowance for the vendor's asymmetric
-  physical range is documented). Implemented: cadwell-export1 (Apollo,
+  of the native export (both files carry the vendor's physical range). Implemented: cadwell-export1 (Apollo,
   tests/test_convert_public.py, 11000/11000 samples) and cadwell-export2 and
   3-withfilter (Essentia, tests/test_vendor_exports_filtering.py, 480000 and
   608500 samples including a padded gap). Report the maximum and mean

@@ -10,6 +10,10 @@
 #          on a virtual display (xvfb; fonts-freefont-otf for Octave's text
 #          rendering) (TST017), and the screenshots for TST018 (xdotool,
 #          ImageMagick), kept as the artifact eeglab-screenshots.
+# standalone: the standalone program file (uses/standalone/build.py) built on
+#          Linux, Windows and macOS with only numpy and scipy installed, then
+#          its self-test and a conversion run from outside the checkout
+#          (REQ023, DES023, TST019); Python 3.10, the oldest supported, on Linux.
 name: tests
 
 on:
@@ -89,3 +93,37 @@ jobs:
           name: eeglab-screenshots
           path: screenshots/
           if-no-files-found: warn
+
+  standalone:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {os: ubuntu-latest, python: "3.10"}
+          - {os: windows-latest, python: "3.12"}
+          - {os: macos-latest, python: "3.12"}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Only the runtime libraries
+        run: python -m pip install -q numpy scipy
+
+      - name: Build the standalone program file
+        run: python uses/standalone/build.py --outdir "$RUNNER_TEMP/standalone"
+
+      - name: Self-test and a conversion, outside the checkout
+        working-directory: ${{ runner.temp }}
+        run: |
+          python standalone/cwelleegread.pyz --version
+          python standalone/cwelleegread.pyz selftest --json selftest.json
+          python standalone/cwelleegread.pyz convert "$GITHUB_WORKSPACE/testdata/public/cadwell-export1" e1.edf --timezone UTC+01:00
+          python standalone/cwelleegread.pyz selftest "$GITHUB_WORKSPACE/testdata/public/cadwell-export2" "$GITHUB_WORKSPACE/testdata/public/cadwell-export2/export-edf/cadwell2.edf"

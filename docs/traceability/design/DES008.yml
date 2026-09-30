@@ -7,7 +7,7 @@ links:
 - REQ008: abLUVQoV29OwxIKfVEk1xTZ0eWim7_0c7QqtOFiECo8=
 normative: true
 ref: ''
-reviewed: vBmpgRHp7lyZH2dXPO3XIxZS2lsslbSLxJ-wbbwWDHE=
+reviewed: n1KxpVtOMUENpyklvhRucez7epRwxwmNn8ZtR5qtxOM=
 text: |
   **Implements** REQ008 - an automated test proving that the program's EDF equals the native Cadwell EDF export in channels, rates, start time, annotations and every sample within one quantisation step, using the vendor-compatible mode (REQ020).
 
@@ -18,9 +18,9 @@ text: |
   3. Gaps are zero-padded at frame boundaries (`read_padded()`); `--start-at record-origin` pads from tick 0.
   4. Start = the first frame's stamp + the first PcTimeSync correction (`CadwellRecording.start_time`); the sub-second goes in each record's first TAL.
   5. Annotations use stamp placement. Deleted events, `SKIPPED_EVENT_TYPES` and the `Photic Stim` flashes are dropped.
-  6. Physical range: Apollo ±562500 µV; Essentia ±32767 × 0.72998046 = ±23919.27 µV.
+  6. Physical range: the vendor's, from its EDF headers: Apollo ±562500 µV; Essentia -23919.0 / 23919.03 µV (not the symmetric ±32767 × 0.72998046 = ±23919.27 µV used before 0.2.0, which the self-test showed to leave no sample bit-identical).
 
-  The tests read both files with pyedflib and compare record count, array shape and every sample of every channel except column 14 (Cz-Cz); for export 1 also labels, rates and physical ranges. The tolerance is one step of the native file: Apollo 1125000/65535 = 17.17 µV (×1.001). Essentia is (23919.03 + 23919.0)/65535 µV with 1.05 steps; the extra 0.05 covers the vendor's asymmetric range against our symmetric one (observed maximum 1.04). Annotations are compared as sorted (onset rounded to 1 ms, text).
+  The tests read both files with pyedflib and compare record count, array shape and every sample of every channel except column 14 (Cz-Cz); for export 1 also labels, rates and physical ranges. The tolerance is one step of the native file: Apollo 1125000/65535 = 17.17 µV (×1.001). Essentia is (23919.03 + 23919.0)/65535 µV (×1.001); with the vendor's range written, the digital values of the two files differ by at most one step (98.2 % identical). The self-test (DES024) repeats the comparison on the digital values, including a vendor export of part of a recording. Annotations are compared as sorted (onset rounded to 1 ms, text).
 
   Limits: annotation durations are not compared. Header start is asserted only for export 1 (for Essentia only the vendor file's start rule is checked). Patient and recording fields differ on purpose and are not compared. A user-chosen start (export 3 at frame 30) is unsupported, so `cadwell3.edf` is checked only spectrally.
 

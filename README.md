@@ -19,12 +19,23 @@ quantisation step, including its annotations and start time
 headboxes need `--labels`. Not yet handled: a user-chosen time range,
 anonymisation beyond the header and typed-text event types.
 
+`cwelleegread selftest` proves on the user's own computer that the
+vendor-compatible mode reproduces the vendor's EDF export, on the bundled
+public recording or, with `selftest <export> <vendor.edf>`, on the user's
+own recording and its vendor EDF (any part of the recording), so that
+other amplifiers and Cadwell versions can be checked (REQ024). A
+**standalone** single-file build, `cwelleegread.pyz` with the self-test
+recording inside, needs only Python with numpy and scipy
+(`uses/standalone/`, REQ023).
+
 ```bash
 ./setup.sh && source .venv/bin/activate      # installs the `cwelleegread` command into .venv
 cwelleegread inspect testdata/public/cadwell-export2
 cwelleegread convert testdata/public/cadwell-export2 out.edf --timezone Europe/Oslo --json out.json
 cwelleegread convert testdata/public/cadwell-export1 out.edf --mode vendor --timezone Europe/Oslo
 cwelleegread batch /path/to/exports edf-out/ --reports --json edf-out/batch.json
+cwelleegread selftest                                       # bundled recording vs its vendor EDF
+cwelleegread selftest testdata/public/cadwell-export3 testdata/public/cadwell-export3/export-edf/cadwell3.edf
 ```
 
 `python -m cwelleegread ...` works too. Exit code 0 means success; batch mode
@@ -33,7 +44,8 @@ continues past a failing recording, lists it in the summary and exits 1.
 **Supported versions.** Only recordings whose storage schema (the last
 `SchemaUpdateLog` entry, shown by `inspect`) has been verified on a test
 recording are converted; others are refused unless `--allow-unsupported` is
-given (a warning then goes into the report).
+given (a warning then goes into the report). `selftest` converts any version
+and shows whether it reproduces the vendor's EDF export.
 
 | Schema | Cadwell software | Test recordings (`testdata/manifest.json`) |
 |---|---|---|
@@ -72,6 +84,7 @@ whole repository to every release, which can be ignored).
 |---|---|---|---|
 | EEGLAB plugin `cadwellio` | `cadwellio-v<version>` (version = `vers` in `eegplugin_cadwellio.m`) | `cadwellio<version>.zip` | `.github/workflows/release-cadwellio.yml` |
 | Python converter `cwelleegread` | `cwelleegread-v<version>` (planned; version = `__version__`) | wheel / sdist | not yet |
+| Standalone converter | `cwelleegread-standalone-v<version>` (version = `__version__`) | `cwelleegread-standalone-<version>.zip` (`cwelleegread.pyz`, README, LICENSE); published only after its self-test passed on Linux, Windows and macOS | `.github/workflows/release-standalone.yml` |
 
 ## Repository layout
 
@@ -80,11 +93,11 @@ whole repository to every release, which can be ignored).
 | `docs/traceability/` | Requirements managed with [Doorstop](https://doorstop.readthedocs.io): `needs/` (NEED), `requirements/` (REQ), `design/` (DES, how each requirement is implemented), `tests/` (TST). Readable copies in `docs/traceability/published/*.md`, the whole tree as `docs/traceability/published/CwellEEGRead-traceability.pdf`. |
 | `docs/research/` | Research notes: the Cadwell file format, the BioSig toolbox and licensing, downstream uses. |
 | `llm-logs/` | Archive of every Claude Code session (prompts, responses, full transcripts) and `sessions.csv`. Filled automatically by hooks in `.claude/`. |
-| `cwelleegread/` | the Python package: `ezdata.py` reads a CadLink export (index, frames, events, supported schema versions); `layout.py` amplifier-input labels; `edf.py` conversion policies; `edfwrite.py` EDF / EDF+C / EDF+D writer; `__main__.py` CLI (`convert`, `batch`, `inspect`). `pyproject.toml` makes it installable with the `cwelleegread` command. |
+| `cwelleegread/` | the Python package: `ezdata.py` reads a CadLink export (index, frames, events, supported schema versions); `layout.py` amplifier-input labels; `edf.py` conversion policies; `edfwrite.py` EDF / EDF+C / EDF+D writer; `edfread.py` EDF reader and `selftest.py` equivalence self-test; `__main__.py` CLI (`convert`, `batch`, `inspect`, `selftest`). `pyproject.toml` makes it installable with the `cwelleegread` command. |
 | `tools/` | `cadwell_inspect.py`: stdlib inventory of a CadLink export. |
 | `tests/` | pytest suite, incl. `test_ezdata_public.py` (decoder vs vendor text/EDF export). Private-data tests skip until the recordings are present. Run on every push by `.github/workflows/tests.yml`. |
 | `testdata/` | `manifest.json` (every test recording with checksums, schema and Cadwell version), `public/` (non-patient recordings, committed), `private/` (clinical recordings, gitignored). |
-| `uses/` | Downstream-use scaffolds: `Morgoth/`, `SCOREAI/`, `EEGLAB/`. |
+| `uses/` | Downstream-use scaffolds: `Morgoth/`, `SCOREAI/`, `EEGLAB/`; `standalone/`: README and build script of the standalone converter. |
 | `setup.sh`, `requirements-dev.txt` | One-command developer setup into a gitignored `.venv`. |
 
 ## Getting started

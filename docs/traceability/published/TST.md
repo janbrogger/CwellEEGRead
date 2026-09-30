@@ -18,6 +18,8 @@
  * 16 Event timing on the sample clock (TST016)
  * 17 Import through the EEGLAB menu (TST017)
  * 18 EEGLAB plugin screenshots, manually verified (TST018)
+ * 19 Standalone program file and README (TST019)
+ * 20 Equivalence self-test on public and altered data (TST020)
 
 # 1.0 EDF structural validity _(TST001)_ {#TST001}
 
@@ -52,8 +54,7 @@ vendor EDF export, convert in vendor-compatible mode with the same start
 (first frame, record origin or user time) and compare every sample of
 every channel with the native EDF: the sample counts must match and the
 maximum absolute difference must not exceed one digital quantisation step
-of the native export (a small allowance for the vendor's asymmetric
-physical range is documented). Implemented: cadwell-export1 (Apollo,
+of the native export (both files carry the vendor's physical range). Implemented: cadwell-export1 (Apollo,
 tests/test_convert_public.py, 11000/11000 samples) and cadwell-export2 and
 3-withfilter (Essentia, tests/test_vendor_exports_filtering.py, 480000 and
 608500 samples including a padded gap). Report the maximum and mean
@@ -315,4 +316,57 @@ there. Pass if:
 Repeat the manual part whenever the plugin's dialogs or data path change.
 
 *Parent links: DES016, DES022*
+
+# 19 Standalone program file and README _(TST019)_ {#TST019}
+
+`tests/test_standalone.py`: build the archive with `uses/standalone/build.py
+--outdir <tmp>`. Pass if:
+- the archive holds exactly one folder `cwelleegread-standalone-<version>/`
+  with `cwelleegread.pyz`, `README.md` and `LICENSE`, and the program file
+  holds the package, a root `__main__.py` and the bundled self-test files
+  of `BUNDLED` with their checksums;
+- `python cwelleegread.pyz selftest`, run from a folder outside the
+  repository, exits 0, prints `RESULT: PASS` and reports the test data as
+  bundled in the program file (so the copy inside the `.pyz` was used, not
+  the checkout);
+- `python cwelleegread.pyz convert` of public export 1 exits 0 and writes
+  a readable EDF, and `--version` prints the package version;
+- `uses/standalone/README.md` is at most 45 lines and names each
+  shortcoming of REQ023 (schema version, headboxes, microvolt scale,
+  sample clock and event timing, gaps, high-pass, not handled, platforms).
+
+On every push, the `standalone` job of `.github/workflows/tests.yml` builds
+the archive and runs the self-test and a conversion from it on ubuntu
+(Python 3.10), windows and macos; the release workflow repeats the
+self-test on the three platforms before it publishes.
+
+*Parent links: DES023*
+
+# 20 Equivalence self-test on public and altered data _(TST020)_ {#TST020}
+
+`tests/test_selftest.py`, on the public exports. Pass if:
+- `cwelleegread selftest` (bundled recording) exits 0 with every check
+  PASS, the checksums verified, the UTC offset +01:00 inferred, 31 of 32
+  channels bit-identical (Cz-Cz one step, the vendor's rounding of 0 µV),
+  gain within 1e-4 and lag 0, 7 annotations matched; `--json` writes the
+  same checks and no patient field;
+- the user-data form passes for public export 2 with its EDF (starts at
+  frame 1), export 3 with the EDF of 3-withfilter (starts at the record
+  origin before the first stored frame, one gap) and export 3 with its
+  own EDF (starts at frame 30, i.e. part of the recording), each with
+  `--timezone Europe/Oslo` and with the offset inferred; `--keep-edf`
+  leaves the program's EDF;
+- a recording whose schema version has been set to one that is not
+  supported still passes, with a WARN on the recording line;
+- it fails, with exit code 1 and the failing check named, when: the
+  EDF belongs to another recording (alignment); a wrong `--timezone` is
+  given (alignment); one sample of the vendor EDF is changed by 3 steps
+  (samples); the vendor samples are scaled by 1.001, which stays within
+  one step (samples pass) but not within the gain tolerance (gain); one
+  annotation text is changed (annotations); a channel label is changed
+  (signals, while the samples are still compared);
+- `edfread.read_edf` reads the vendor's sub-second start of export 1 as
+  0.2766482 s, and its samples and annotations equal pyedflib's.
+
+*Parent links: DES024*
 
