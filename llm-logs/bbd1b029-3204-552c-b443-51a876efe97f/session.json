@@ -1,0 +1,26 @@
+{
+  "session_id": "bbd1b029-3204-552c-b443-51a876efe97f",
+  "start_utc": "2026-09-30T06:33:11.920Z",
+  "last_event_utc": "2026-09-30T07:04:21.817Z",
+  "span": "31 min",
+  "prompts": 1,
+  "models": [
+    "claude-opus-5-5"
+  ],
+  "tool_use_counts": {
+    "Bash": 51,
+    "Write": 6,
+    "Edit": 2,
+    "ToolSearch": 1,
+    "mcp__github__actions_list": 1
+  },
+  "claude_code_version": "2.1.285",
+  "git_branch": "claude/funny-fermi-3x57jz",
+  "user": "jan@brogger.no",
+  "source": "claude-code-remote",
+  "topic": "untagged",
+  "transcript_files": [
+    "transcript.jsonl"
+  ],
+  "transcript_bytes": 1848135
+}
