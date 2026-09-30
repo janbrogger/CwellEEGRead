@@ -2,10 +2,10 @@
 # Session `bbd1b029-3204-552c-b443-51a876efe97f`
 
 - Started (UTC): 2026-09-30T06:33:11.920Z  
-- Last event (UTC): 2026-09-30T07:06:45.980Z (span 33 min)  
+- Last event (UTC): 2026-09-30T07:20:19.266Z (span 47 min)  
 - User: jan@brogger.no; source: claude-code-remote; branch: `claude/funny-fermi-3x57jz`  
 - Models: claude-opus-5-5; Claude Code 2.1.285  
-- Prompts: 1; transcript: transcript.jsonl (2.0 MB)
+- Prompts: 1; transcript: transcript.jsonl (2.1 MB)
 
 This file is derived from the transcript for readers without an LLM. Prompts are verbatim; responses are the assistant's text messages (tool calls and their output are only summarised - see the JSONL for those).
 
@@ -15,7 +15,7 @@ This file is derived from the transcript for readers without an LLM. Prompts are
 Help me make a standalone version of the Cadwell to EDF converter tool in Python. First, let's make a top-folder uses/standalone . Stick a README.md in there. It should be as short as possible, but mention possible shortcomings (unsupported versions, timing issues etc). Then we should have one of the test EEGs in the release, and a self-test diagnostic mode in the Python code that tries to convert that test EEG using the tool and then proves (near) bit equivalence to the sideloaded native Cadwell EDF export. Also we should have the diagnostic self-test mode available for a user-specified native Cadwell file + native Cadwell EDF exported file, so user can self-verify equivalence on their data (for example if they have other amplifiers, other software versions). Write up the requirements, then write the design, then implement in code.
 ```
 
-_Tools used in this turn: Bash ×59, Write ×6, Edit ×2, ToolSearch ×2, mcp__github__actions_list ×1, Monitor ×1_
+_Tools used in this turn: Bash ×67, Write ×6, Edit ×2, ToolSearch ×2, mcp__github__actions_list ×1, Monitor ×1, mcp__github__get_job_logs ×1_
 
 ### Response 1
 
@@ -168,4 +168,68 @@ The monitor is watching the CI run for `6fc4104`. It reports each job as it fini
 **[07:06 UTC]**
 
 Found the run (36681832254); waiting for the jobs to finish.
+
+**[07:06 UTC]**
+
+Pushing now would cancel run 36681832254 again. I'll wait for it to finish within this turn, then commit and push the logs:
+
+**[07:11 UTC]**
+
+Windows failed; everything else passed. That's exactly why this job exists. Let me read the log:
+
+**[07:11 UTC]**
+
+The test fails without the fix and passes with it. I'll record this in DES023/TST019, regenerate the published docs and run the full suite:
+
+**[07:16 UTC]**
+
+All 92 tests pass. I'm committing the fix together with the pending session logs, then waiting for CI in this same turn so the next log push doesn't cancel it:
+
+**[07:16 UTC]**
+
+Pushed; the session logs had nothing new to commit. Now waiting for CI on `f61a06e` within this turn:
+
+**[07:20 UTC]**
+
+The standalone converter and its self-test are working. CI passes on Linux (Python 3.10), Windows and macOS, as do the Python 3.11/3.12 and Octave jobs, and all 92 local tests pass. Everything is pushed to `claude/funny-fermi-3x57jz`; I haven't opened a PR or tagged a release.
+
+**What a user gets:** a zip containing `cwelleegread.pyz` (one file, 717 KiB), `README.md` and `LICENSE`. It needs Python 3.10+ with numpy and scipy, and no install or checkout.
+
+```
+python cwelleegread.pyz selftest                     # checks the bundled test EEG
+python cwelleegread.pyz selftest EXPORT CADWELL.edf  # checks your own recording against its Cadwell EDF export
+python cwelleegread.pyz convert EXPORT out.edf
+```
+
+**Steps, as you asked:**
+- **Requirements:** REQ023 covers the standalone distribution, REQ024 the self-test.
+- **Design:** DES023 and DES024, with the tests specified in TST019 and TST020.
+- **Code:** the `selftest` command, its own EDF reader, the build script `uses/standalone/build.py`, the README, a cross-platform CI job and a release workflow.
+
+**How the self-test works:**
+- **Bundled data:** it uses test recording 1 (46 s of amplifier noise, no patient) plus Cadwell's EDF export of it, and checks their checksums before starting.
+- **Alignment:** it works out which part of the recording the Cadwell export covers, and the time zone of its start time unless you give `--timezone`. Exports of only part of a recording therefore work too: recording 3's export starts 29 s in and passes.
+- **Checks:** it converts that part the way Cadwell's export does, then compares:
+  - signal headers and start time;
+  - every sample, which must be within one quantisation step;
+  - gain and time lag;
+  - annotations.
+- **Why gain and lag:** a 0.1 % scale error stays within one step on the bundled recording, so the sample check alone would miss it; the gain check catches it.
+- **Other versions:** recordings from unsupported Cadwell versions are still converted, with a warning, so users with other amplifiers or software versions can check their own data.
+- **Result:** PASS/FAIL per check, exit code 0 only if all pass, optional JSON report. No patient fields are printed, but annotation texts can be.
+
+**Results on the public data:**
+- **Recording 1:** 31 of 32 channels bit-identical. The reference channel Cz-Cz differs by one step because Cadwell writes 0 µV as −1.
+- **Recordings 2 and 3 (Essentia amplifier):** 98.2 % of samples bit-identical, the rest within one step.
+
+**Two behaviour changes you should know about:**
+1. **Vendor mode now writes Cadwell's exact physical range for Essentia recordings** (−23919.0 / 23919.03 µV instead of ±23919.27). The self-test showed the old range left 0 % of samples bit-identical; now it is 98.2 %. The old range was a documented deviation from REQ020, so I updated DES008, DES020 and the research note, and tightened the existing Essentia test tolerance from 1.05 to 1 step.
+2. **SQLite files are now closed after reading.** The reader left them open until garbage collection, which Windows doesn't allow to be deleted: on Windows every self-test check passed, but it crashed cleaning up its temporary files. A regression test now catches this on Linux too.
+
+The package version is now 0.2.0. `--timezone` also accepts fixed offsets like `UTC+01:00`, because time-zone names such as `Europe/Oslo` need the extra `tzdata` package on Windows.
+
+**Decisions for you:**
+- **Release:** push the tag `cwelleegread-standalone-v0.2.0` when you want it. The workflow runs the self-test on all three platforms before publishing.
+- **Truly standalone executable:** the `.pyz` still needs Python. If your clinical users don't have Python, a per-platform frozen executable (e.g. PyInstaller) would be the next step.
+- **Cancelled CI runs:** the session-log hook commits and pushes at every turn end, and each push cancels the CI run in progress (`cancel-in-progress` in `tests.yml`). That's why the branch has several cancelled runs. The latest commit's run completed and is all green.
 
